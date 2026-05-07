@@ -152,7 +152,7 @@ export default function Reputation() {
                   </div>
                   
                   {/* Mock Activity Sparkline */}
-                  <div className="mt-6 flex items-end gap-1 h-8">
+                  <div className="mt-6 flex items-end gap-1 h-8 mb-6">
                      {[40, 70, 45, 90, 65, 80, 95].map((v, idx) => (
                        <div 
                          key={idx} 
@@ -161,6 +161,14 @@ export default function Reputation() {
                        ></div>
                      ))}
                   </div>
+
+                  <Link 
+                    href={`/explorer/entity/${entity.id}`}
+                    className="w-full py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest text-center hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Globe size={14} />
+                    Verify On-Chain Ledger
+                  </Link>
                 </div>
               </motion.div>
             ))
