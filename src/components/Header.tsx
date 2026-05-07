@@ -72,8 +72,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 transition-transform group-hover:scale-110">
-            <Sprout size={24} />
+          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
+            fwd
           </div>
           <div className="flex flex-col">
             <div className="flex items-baseline gap-1">

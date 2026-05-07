@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  ShieldCheck, Leaf, Search, Package, QrCode, ArrowRight, Star, Globe, Zap, Menu, X,
-  Activity, Layers, Clock, BarChart3, Cpu, Lock, Eye, Truck, Users, Sparkles, Sprout
+  ShieldCheck, Search, Package, QrCode, Star, Layers, Zap, Globe, Activity
 } from 'lucide-react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { API_URL } from '@/lib/config';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -19,14 +19,7 @@ export default function Home() {
     setMounted(true);
     const fetchData = async () => {
       try {
-        // 1. Fetch Featured Batches
-        const { data: batches, error: bError } = await supabase
-          .from('batches')
-          .select('*')
-          .order('timestamp', { ascending: false })
-          .limit(3);
-
-        if (bError) throw bError;
+        const { data: batches } = await supabase.from('batches').select('*').order('timestamp', { ascending: false }).limit(3);
         setProducts(batches || []);
 
         // 2. Fetch Network Stats

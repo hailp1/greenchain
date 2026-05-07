@@ -234,8 +234,8 @@ export default function ProducerPortal() {
       <aside className="w-20 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen">
         <div className="p-6 md:p-8 border-b border-white/5">
            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500">
-                 <Sprout size={20} />
+              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
+                fwd
               </div>
               <div className="flex flex-col">
                  <div className="flex items-baseline gap-1">
@@ -278,7 +278,7 @@ export default function ProducerPortal() {
       {/* Main Content Area */}
       <main className="flex-grow flex flex-col">
         {/* Top Header */}
-        <header className="h-20 bg-white border-b border-slate-100 px-8 flex items-center justify-between sticky top-0 z-50">
+        <header className="hidden h-20 bg-white border-b border-slate-100 px-8 lg:flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4">
               <div className="md:hidden w-8 h-8 rounded-full bg-slate-100"></div>
               <h2 className="text-lg font-black tracking-tight uppercase italic">{currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {currentEntity?.id?.slice(0, 8) || user?.id?.slice(0, 8)}</span></h2>

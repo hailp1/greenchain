@@ -25,9 +25,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={cn(inter.variable, ebGaramond.variable, "font-sans", geist.variable)}>
       <body className="antialiased font-sans">
-        <Header />
         {children}
-        <Footer />
       </body>
     </html>
   );
