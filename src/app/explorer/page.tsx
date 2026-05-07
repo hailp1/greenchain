@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/store/nosql-sim';
 import { 
   Globe, Search, Cpu, Activity, ShieldCheck, 
   ArrowRight, Box, Zap, Layers, Menu, X, TrendingUp, BarChart3, Clock, Lock
@@ -48,17 +47,17 @@ export default function ExplorerHome() {
         });
         
         // Real blocks from ledger
-        setLatestBlocks((batches || []).filter(b => b.blockchain_ledger?.[0]).map((batch: any, i: number) => ({
-          number: batch.blockchain_ledger?.[0]?.block_height,
-          timestamp: batch.blockchain_ledger?.[0]?.anchored_at,
+        setLatestBlocks((batches || []).filter(b => b.blockchain_ledger).map((batch: any, i: number) => ({
+          number: batch.blockchain_ledger.block_height,
+          timestamp: batch.blockchain_ledger.anchored_at,
           validator: "fwd-node-" + batch.id.slice(0, 4),
           transactionCount: 1,
           reward: "0.50 fwd"
         })));
         
-        setLatestTxns((batches || []).filter((batch: any) => batch.blockchain_ledger?.[0]?.tx_hash).map((batch: any) => ({
-          hash: batch.blockchain_ledger?.[0]?.tx_hash,
-          timestamp: batch.blockchain_ledger?.[0]?.anchored_at || batch.timestamp,
+        setLatestTxns((batches || []).filter((batch: any) => batch.blockchain_ledger?.tx_hash).map((batch: any) => ({
+          hash: batch.blockchain_ledger.tx_hash,
+          timestamp: batch.blockchain_ledger.anchored_at || batch.timestamp,
           from: batch.id.slice(0, 8),
           to: "0xLedger",
           value: "GAS: 1.2 fwd"

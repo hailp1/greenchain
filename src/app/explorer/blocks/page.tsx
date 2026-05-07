@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/store/nosql-sim';
 import { 
   Globe, Search, Box, Clock, ChevronRight, 
   ShieldCheck, ArrowLeft, Filter, Cpu
