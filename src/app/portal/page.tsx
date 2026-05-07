@@ -552,7 +552,7 @@ export default function ProducerPortal() {
                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Estimated APR</p>
                                 <p className="text-2xl font-black text-emerald-400">12.5% <span className="text-[10px] text-slate-400 font-bold ml-2">fwd/year</span></p>
                              </div>
-                             <button className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
+                             <button onClick={() => handleStake(100)} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
                                 START STAKING
                              </button>
                           </div>
@@ -575,7 +575,7 @@ export default function ProducerPortal() {
                              <p className="text-4xl font-black text-natural-950">42.85 <span className="text-xs text-slate-400 ml-1">fwd</span></p>
                           </div>
                        </div>
-                       <button className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6 active:scale-95">
+                       <button onClick={handleClaim} className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6 active:scale-95">
                           CLAIM REWARDS
                        </button>
                     </div>
