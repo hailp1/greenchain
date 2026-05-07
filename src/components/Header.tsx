@@ -7,10 +7,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
+import { useWeb3 } from '@/lib/web3';
+import { Wallet } from 'lucide-react';
+
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const { account, balance, loading: web3Loading, connectWallet } = useWeb3();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,6 +92,24 @@ const Header = () => {
           ))}
           
           <div className="flex items-center gap-4 ml-4">
+             {/* Web3 Wallet Section */}
+             {account ? (
+               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-100">
+                  <Wallet size={14} className="text-blue-600" />
+                  <span className="text-[9px] font-black text-blue-700 uppercase tracking-widest">
+                    {account.slice(0, 6)}...{account.slice(-4)} ({balance} ETH)
+                  </span>
+               </div>
+             ) : (
+               <button 
+                 onClick={connectWallet}
+                 className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200 hover:bg-slate-200 transition-all text-[9px] font-black text-slate-600 uppercase tracking-widest"
+               >
+                  <Wallet size={14} />
+                  Connect Wallet
+               </button>
+             )}
+
              {user ? (
                <div className="flex items-center gap-4">
                   {/* Token Balance Badge */}
