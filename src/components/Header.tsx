@@ -85,64 +85,70 @@ const Header = () => {
             </div>
             <p className="text-[7px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Farm · Worth · Driven</p>
           </div>
-        </Link>
-
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link 
-              key={link.href} 
-              href={link.href}
-              className={`text-xs font-bold uppercase tracking-widest transition-colors ${
-                pathname === link.href ? 'text-emerald-600' : 'text-slate-500 hover:text-emerald-600'
-              }`}
-            >
-              {link.name}
-            </Link>
-          ))}
+          {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-10">
+          <div className="flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.href} 
+                href={link.href}
+                className={`text-[10px] font-black uppercase tracking-[0.15em] transition-all relative group/link ${
+                  pathname === link.href ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'
+                }`}
+              >
+                {link.name}
+                <span className={`absolute -bottom-1 left-0 h-[2px] bg-emerald-500 transition-all duration-300 ${pathname === link.href ? 'w-full' : 'w-0 group-hover/link:w-full'}`}></span>
+              </Link>
+            ))}
+          </div>
           
-          <div className="flex items-center gap-4 ml-4">
+          <div className="h-6 w-px bg-slate-100 mx-2"></div>
+
+          <div className="flex items-center gap-3">
              {/* Web3 Wallet Section */}
              {account ? (
-               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-blue-50 rounded-full border border-blue-100">
-                  <Wallet size={14} className="text-blue-600" />
-                  <span className="text-[9px] font-black text-blue-700 uppercase tracking-widest">
-                    {account.slice(0, 6)}...{account.slice(-4)} ({balance} ETH)
+               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 backdrop-blur-sm rounded-full border border-blue-100 shadow-sm">
+                  <Wallet size={12} className="text-blue-500" />
+                  <span className="text-[9px] font-bold text-blue-700 tracking-tight">
+                    {account.slice(0, 4)}...{account.slice(-4)}
                   </span>
                </div>
              ) : (
                <button 
                  onClick={connectWallet}
-                 className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full border border-slate-200 hover:bg-slate-200 transition-all text-[9px] font-black text-slate-600 uppercase tracking-widest"
+                 className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-slate-100 hover:border-blue-200 hover:bg-blue-50 transition-all text-[9px] font-black text-slate-500 uppercase tracking-widest shadow-sm"
                >
-                  <Wallet size={14} />
-                  Connect Wallet
+                  <Wallet size={12} />
+                  Connect
                </button>
              )}
 
              {user ? (
-               <div className="flex items-center gap-4">
+               <div className="flex items-center gap-3">
                   {/* Token Balance Badge */}
-                  <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
-                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                     <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">{fwdBalance} fwd</span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/50 backdrop-blur-sm rounded-full border border-emerald-100 shadow-sm">
+                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                     <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">{fwdBalance} fwd</span>
                   </div>
 
-                  <div className="flex items-center gap-3 bg-slate-50 p-1 pr-4 rounded-full border border-slate-100 group relative">
-                     <img src={user.user_metadata?.avatar_url} alt="User" className="w-8 h-8 rounded-full border border-white" />
-                     <span className="text-[10px] font-black uppercase text-natural-900">{user.user_metadata?.full_name?.split(' ').pop()}</span>
-                  
-                  {/* Dropdown Simple */}
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2">
-                     <Link href="/portal" className="block w-full text-left p-3 text-[10px] font-black uppercase hover:bg-slate-50 rounded-xl">Portal Dashboard</Link>
-                     <button onClick={handleSignOut} className="block w-full text-left p-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl">Sign Out</button>
+                  <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800 group relative cursor-pointer hover:bg-black transition-all">
+                     <div className="w-6 h-6 rounded-full overflow-hidden border border-white/20">
+                        <img src={user.user_metadata?.avatar_url} alt="User" className="w-full h-full object-cover" />
+                     </div>
+                     <span className="text-[9px] font-black uppercase text-white tracking-widest">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+                     
+                     {/* Dropdown Simple */}
+                     <div className="absolute top-full right-0 mt-2 w-44 bg-white border border-slate-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-1.5 z-50">
+                        <Link href="/portal" className="block w-full text-left p-2.5 text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 rounded-xl">Portal Dashboard</Link>
+                        <div className="h-px bg-slate-50 my-1"></div>
+                        <button onClick={handleSignOut} className="block w-full text-left p-2.5 text-[9px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl">Sign Out</button>
+                     </div>
                   </div>
                </div>
-            </div>
              ) : (
                <Link 
                  href="/signin" 
-                 className="px-6 py-2.5 bg-natural-900 text-white text-[10px] font-black rounded-full hover:bg-black transition-all shadow-lg shadow-natural-900/10 uppercase tracking-widest"
+                 className="px-5 py-2 bg-slate-900 text-white text-[9px] font-black rounded-full hover:bg-black transition-all shadow-lg shadow-slate-900/10 uppercase tracking-widest"
                >
                  Login
                </Link>
@@ -150,9 +156,9 @@ const Header = () => {
              
              <Link 
                href="/verify" 
-               className="px-5 py-2.5 bg-emerald-600 text-white text-[10px] font-black rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 uppercase tracking-[0.2em]"
+               className="px-5 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-[0.15em] ml-2"
              >
-               Xác thực ngay
+               Verify
              </Link>
           </div>
         </nav>
