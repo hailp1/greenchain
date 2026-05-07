@@ -36,7 +36,7 @@ export const useWeb3 = () => {
         setLoading(false);
       }
     } else {
-      alert("Vui lòng cài đặt MetaMask hoặc ví Web3 để sử dụng tính năng này!");
+      alert("Vui lòng cài đặt MetaMask, Trust Wallet hoặc ứng dụng ví Web3 để sử dụng tính năng này!");
     }
   };
 

@@ -1,13 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, LogIn, Chrome, ArrowRight, Sprout, Globe, Lock } from 'lucide-react';
+import { ShieldCheck, Globe, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { useWeb3 } from '@/lib/web3';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const { account, connectWallet, loading: web3Loading } = useWeb3();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (account) {
+      // Simulation: If wallet connected, redirect to portal
+      // In a real app, we would verify the signature and check if the wallet is in 'entities' table
+      router.push('/portal');
+    }
+  }, [account, router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -41,8 +53,8 @@ export default function LoginPage() {
           {/* Logo Section */}
           <div className="text-center space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
-                <Sprout size={24} />
+              <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-sm border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+                fwd
               </div>
               <div className="text-left">
                  <div className="flex items-baseline gap-1">
@@ -75,16 +87,22 @@ export default function LoginPage() {
              
              <div className="relative flex items-center py-4">
                 <div className="flex-grow border-t border-white/5"></div>
-                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Hoặc</span>
+                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Hoặc đăng nhập bằng ví</span>
                 <div className="flex-grow border-t border-white/5"></div>
              </div>
 
-             <div className="grid grid-cols-2 gap-4">
-                <button className="py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                   <Globe size={14} className="text-slate-400" /> Web3 Wallet
-                </button>
-                <button className="py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                   <Lock size={14} className="text-slate-400" /> Passkey
+             <div className="grid grid-cols-1 gap-4">
+                <button 
+                  onClick={connectWallet}
+                  disabled={web3Loading}
+                  className="py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
+                >
+                   {web3Loading ? (
+                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                   ) : (
+                     <Globe size={18} />
+                   )}
+                   KẾT NỐI VÍ METAMASK / TRUST WALLET
                 </button>
              </div>
           </div>
