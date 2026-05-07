@@ -6,8 +6,9 @@ import {
   ShieldCheck, Star, Users, ArrowUpRight, 
   TrendingUp, AlertCircle, CheckCircle2, Award
 } from 'lucide-react';
-import { API_URL } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Reputation() {
   const [entities, setEntities] = useState<any[]>([]);
@@ -37,8 +38,9 @@ export default function Reputation() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a] pt-32 pb-20">
-      <main className="max-w-7xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a]">
+      <Header />
+      <main className="max-w-7xl mx-auto px-6 pt-32 pb-20">
         {/* Header */}
         <header className="mb-20 text-center">
           <motion.div
@@ -165,6 +167,7 @@ export default function Reputation() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

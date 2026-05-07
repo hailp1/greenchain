@@ -7,8 +7,9 @@ import {
   Fingerprint, Layers, Activity, Sparkles 
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { API_URL } from '@/lib/config';
 import QRScanner from '@/components/QRScanner';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function Verify() {
   const [batchId, setBatchId] = useState('');
@@ -25,8 +26,9 @@ export default function Verify() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a] pt-32 pb-20">
-      <main className="max-w-4xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a]">
+      <Header />
+      <main className="max-w-4xl mx-auto px-6 pt-32 pb-20">
         {/* Header Section */}
         <header className="text-center mb-16">
           <motion.div
@@ -154,6 +156,7 @@ export default function Verify() {
           )}
         </AnimatePresence>
       </main>
+      <Footer />
     </div>
   );
 }

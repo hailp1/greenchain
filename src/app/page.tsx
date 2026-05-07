@@ -55,6 +55,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a] overflow-x-hidden">
+      <Header />
       <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-12">
         {/* Hero Section */}
         <header className="mb-20 md:mb-32 text-center relative px-2">
@@ -150,6 +151,7 @@ export default function Home() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

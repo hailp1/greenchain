@@ -4,13 +4,16 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Quote, ShieldCheck, Heart, Award, 
-  MapPin, BookOpen, Microscope, Sparkles, Sprout
+  MapPin, BookOpen, Microscope, Sparkles
 } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a] pt-32 pb-20">
-      <main className="max-w-5xl mx-auto px-6">
+    <div className="min-h-screen bg-[#fdfcf8] text-[#1a2f1a]">
+      <Header />
+      <main className="max-w-5xl mx-auto px-6 pt-32 pb-20">
         {/* Hero Section */}
         <header className="mb-24 relative">
           <motion.div
@@ -19,7 +22,6 @@ export default function AboutPage() {
             className="space-y-6"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-              <Sprout size={14} />
               <span>Phát triển bởi NCS Lê Phúc Hải</span>
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-natural-950 tracking-tighter leading-[1.1] italic uppercase">
@@ -137,6 +139,7 @@ export default function AboutPage() {
            </p>
         </footer>
       </main>
+      <Footer />
     </div>
   );
 }
