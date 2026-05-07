@@ -20,8 +20,9 @@ export default function Reputation() {
         setLoading(true);
         const { data, error: sbError } = await supabase
           .from('entities')
-          .select('id, name, role, reputation_score, is_locked')
-          .order('reputation_score', { ascending: false });
+          .select('id, name, role, reputation_score, is_locked, staked_balance')
+          .order('reputation_score', { ascending: false })
+          .limit(100);
 
         if (sbError) throw sbError;
         setEntities(data || []);
@@ -137,6 +138,12 @@ export default function Reputation() {
                         <div className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black flex items-center gap-1.5 border border-emerald-100">
                           <TrendingUp size={12} />
                           ACTIVE
+                        </div>
+                      )}
+                      {entity.staked_balance > 0 && (
+                        <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black flex items-center gap-1.5 border border-blue-100 mt-2">
+                          <ShieldCheck size={12} />
+                          STAKED: {Number(entity.staked_balance).toFixed(0)}
                         </div>
                       )}
                     </div>
