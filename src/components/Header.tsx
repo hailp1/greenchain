@@ -19,6 +19,27 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/';
+  };
+
   const navLinks = [
     { name: 'Trang chủ', href: '/' },
     { name: 'Triết lý fwd', href: '/about' },
@@ -64,12 +85,35 @@ const Header = () => {
               {link.name}
             </Link>
           ))}
-          <Link 
-            href="/verify" 
-            className="px-5 py-2.5 bg-emerald-600 text-white text-[10px] font-black rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 uppercase tracking-[0.2em]"
-          >
-            Xác thực ngay
-          </Link>
+          
+          <div className="flex items-center gap-4 ml-4">
+             {user ? (
+               <div className="flex items-center gap-3 bg-slate-50 p-1 pr-4 rounded-full border border-slate-100 group relative">
+                  <img src={user.user_metadata?.avatar_url} alt="User" className="w-8 h-8 rounded-full border border-white" />
+                  <span className="text-[10px] font-black uppercase text-natural-900">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+                  
+                  {/* Dropdown Simple */}
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2">
+                     <Link href="/portal" className="block w-full text-left p-3 text-[10px] font-black uppercase hover:bg-slate-50 rounded-xl">Portal Dashboard</Link>
+                     <button onClick={handleSignOut} className="block w-full text-left p-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl">Sign Out</button>
+                  </div>
+               </div>
+             ) : (
+               <Link 
+                 href="/signin" 
+                 className="px-6 py-2.5 bg-natural-900 text-white text-[10px] font-black rounded-full hover:bg-black transition-all shadow-lg shadow-natural-900/10 uppercase tracking-widest"
+               >
+                 Login
+               </Link>
+             )}
+             
+             <Link 
+               href="/verify" 
+               className="px-5 py-2.5 bg-emerald-600 text-white text-[10px] font-black rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 uppercase tracking-[0.2em]"
+             >
+               Xác thực ngay
+             </Link>
+          </div>
         </nav>
 
         {/* Mobile Toggle */}
@@ -100,13 +144,20 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              <Link 
-                href="/verify" 
-                onClick={() => setIsOpen(false)}
-                className="w-full py-4 bg-emerald-600 text-white text-xs font-black rounded-xl text-center uppercase tracking-widest"
-              >
-                Xác thực ngay
-              </Link>
+              <div className="pt-4 border-t border-slate-50 flex flex-col gap-4">
+                 {user ? (
+                   <button onClick={handleSignOut} className="w-full py-4 bg-red-50 text-red-500 text-[10px] font-black rounded-xl uppercase tracking-widest">Sign Out</button>
+                 ) : (
+                   <Link href="/signin" onClick={() => setIsOpen(false)} className="w-full py-4 bg-slate-100 text-slate-900 text-[10px] font-black rounded-xl text-center uppercase tracking-widest">Login</Link>
+                 )}
+                 <Link 
+                   href="/verify" 
+                   onClick={() => setIsOpen(false)}
+                   className="w-full py-4 bg-emerald-600 text-white text-xs font-black rounded-xl text-center uppercase tracking-widest"
+                 >
+                   Xác thực ngay
+                 </Link>
+              </div>
             </div>
           </motion.div>
         )}

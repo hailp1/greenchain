@@ -25,6 +25,20 @@ export default function ProducerPortal() {
     gps: '12.0124, 108.3842'
   });
 
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '/signin';
+      } else {
+        setUser(session.user);
+      }
+    };
+    checkUser();
+  }, []);
+
   useEffect(() => {
     const fetchPortalData = async () => {
       try {
@@ -137,7 +151,7 @@ export default function ProducerPortal() {
         </nav>
 
         <div className="p-4 border-t border-white/5">
-           <button className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 transition-colors">
+           <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')} className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 transition-colors">
               <LogOut size={20} />
               <span className="hidden md:block font-bold text-sm">Logout</span>
            </button>
@@ -150,7 +164,7 @@ export default function ProducerPortal() {
         <header className="h-20 bg-white border-b border-slate-100 px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4">
               <div className="md:hidden w-8 h-8 rounded-full bg-slate-100"></div>
-              <h2 className="text-lg font-black tracking-tight uppercase italic">Nông trại Lạc Dương <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest">ID: FARM-LD-042</span></h2>
+              <h2 className="text-lg font-black tracking-tight uppercase italic">{user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {user?.id?.slice(0, 8)}</span></h2>
            </div>
            <div className="flex items-center gap-6">
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -162,7 +176,7 @@ export default function ProducerPortal() {
                  <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
               </button>
               <div className="w-10 h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100">
-                 <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80" alt="Avatar" />
+                 <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
               </div>
            </div>
         </header>
@@ -256,14 +270,26 @@ export default function ProducerPortal() {
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
-                         <select className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
-                            <option>Trà Atisô (Lạc Dương)</option>
-                            <option>Yến Sào (Ninh Hòa)</option>
+                         <select 
+                           value={newHarvest.product_name}
+                           onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
+                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                         >
+                            <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
+                            <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
+                            <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
+                            <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
                          </select>
                       </div>
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
-                         <input type="number" placeholder="250.00" className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" />
+                         <input 
+                           type="number" 
+                           value={newHarvest.quantity}
+                           onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
+                           placeholder="250.00" 
+                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
+                         />
                       </div>
                    </div>
 
