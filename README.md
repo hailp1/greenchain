@@ -1,40 +1,36 @@
-# GreenChain: Blockchain Supply Chain & Certification System
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-This repository contains the core components for the GreenChain system, a hybrid blockchain solution for supply chain traceability and digital certification.
+## Getting Started
 
-## Architecture
-- **Off-chain (Supabase)**: Stores raw data (batch details, images, entity profiles).
-- **On-chain (Cosmos SDK)**: Stores immutable proofs (hashes) and Soulbound Tokens (certificates).
-- **Bridge (Node.js)**: Synchronizes data by hashing database entries and anchoring them on the blockchain.
+First, run the development server:
 
-## Setup Instructions
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-### 1. Off-chain Database (Supabase)
-1. Create a new project in Supabase.
-2. Run the script in `supabase_schema.sql` in the SQL Editor.
-3. Configure **Row Level Security (RLS)** as defined in the script.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### 2. Blockchain (Cosmos SDK)
-1. Install [Ignite CLI](https://ignite.com/).
-2. Create the chain: `ignite scaffold chain greenchain`.
-3. Scaffold the traceability module: `ignite scaffold module traceability`.
-4. Copy the files from `blockchain/` into your scaffolded project.
-5. Run the chain: `ignite chain serve`.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-### 3. Bridge Service
-1. Navigate to the root directory.
-2. Create a `.env` file:
-   ```env
-   SUPABASE_URL=your_project_url
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   COSMOS_RPC_URL=http://localhost:26657
-   ```
-3. Install dependencies: `npm install @supabase/supabase-js dotenv`.
-4. Run the bridge: `node bridge.js`.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## API Flow
-1. **Entity Registration**: Admin adds a farm/company to the `entities` table.
-2. **Batch Creation**: Farm adds a record to the `batches` table.
-3. **Anchoring**: Bridge automatically detects the new batch, hashes it, and sends it to the Cosmos blockchain.
-4. **Verification**: Users scan a QR code (linked to the batch ID) and can verify the data against the `tx_hash` on the blockchain.
-5. **Certification**: Admin issues an SBT certificate which is recorded both in Supabase and on-chain.
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
