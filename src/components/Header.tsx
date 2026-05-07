@@ -56,11 +56,9 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: 'Trang chủ', href: '/' },
     { name: 'Triết lý fwd', href: '/about' },
     { name: 'Blockchain Explorer', href: '/explorer' },
     { name: 'Bảng xếp hạng', href: '/reputation' },
-    { name: 'Cổng Portal', href: '/portal' },
   ];
 
   return (
@@ -108,8 +106,8 @@ const Header = () => {
 
           <div className="flex items-center gap-4">
             {/* Wallet & Balance Cluster */}
-            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex flex-col items-end">
+            <div className="hidden sm:flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col items-end hidden md:flex">
                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Network fwd</span>
                 <span className="text-[11px] font-bold text-emerald-700 leading-none">{fwdBalance}</span>
               </div>
@@ -124,22 +122,22 @@ const Header = () => {
 
             {/* Profile/Auth Area */}
             {user ? (
-              <Link href="/portal" className="flex items-center gap-3 pl-2 group/profile">
+              <Link href="/portal" className="flex items-center gap-2 md:gap-3 pl-2 group/profile">
                 <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
                    <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
                 </div>
-                <div className="flex flex-col">
+                <div className="hidden xs:flex flex-col">
                   <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
-                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Entity Node</span>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
                 </div>
               </Link>
             ) : (
-              <Link href="/signin" className="text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-4 transition-colors">Sign In</Link>
+              <Link href="/signin" className="hidden sm:block text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-4 transition-colors">Sign In</Link>
             )}
 
             <Link 
               href="/verify"
-              className="px-6 py-3 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+              className="hidden xs:block px-4 md:px-6 py-2.5 md:py-3 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
             >
               Verify
             </Link>
