@@ -106,6 +106,19 @@ export default function ProducerPortal() {
   const [balance, setBalance] = useState("0.00");
 
   const fetchBalance = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data } = await supabase
+        .from('entities')
+        .select('fwd_balance')
+        .eq('id', session.user.id)
+        .maybeSingle();
+      if (data) {
+        setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        return;
+      }
+    }
+    
     if (walletAddress) {
       const { data } = await supabase
         .from('entities')
@@ -118,13 +131,29 @@ export default function ProducerPortal() {
 
   useEffect(() => {
     fetchBalance();
-  }, [walletAddress]);
+  }, [walletAddress, user]);
 
   useEffect(() => {
     const fetchEntityData = async () => {
-      if (!walletAddress) return;
+      const { data: { session } } = await supabase.auth.getSession();
       
-      const { data, error } = await supabase
+      // 1. Try fetching by User ID first (for Google rewards)
+      if (session?.user) {
+        const { data } = await supabase
+          .from('entities')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (data) {
+          setCurrentEntity(data);
+          fetchBalance();
+          return;
+        }
+      }
+
+      // 2. Fallback to Wallet Address
+      if (!walletAddress) return;
+      const { data } = await supabase
         .from('entities')
         .select('*')
         .ilike('wallet_address', walletAddress)
@@ -136,7 +165,7 @@ export default function ProducerPortal() {
       }
     };
     fetchEntityData();
-  }, [walletAddress]);
+  }, [walletAddress, user]);
 
   useEffect(() => {
     const fetchPortalData = async () => {
