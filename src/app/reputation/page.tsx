@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, Star, Users, ArrowUpRight, 
-  TrendingUp, AlertCircle, CheckCircle2, Award
+  TrendingUp, AlertCircle, CheckCircle2, Award, Globe
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
