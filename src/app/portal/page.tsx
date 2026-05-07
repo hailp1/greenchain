@@ -62,8 +62,8 @@ export default function ProducerPortal() {
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "Verified Origin", value: "100%", icon: ShieldCheck },
-    { label: "Network Trust", value: "A+", icon: Zap },
+    { label: "fwd Balance", value: "5,000.00", icon: Zap },
+    { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
 
@@ -167,6 +167,10 @@ export default function ProducerPortal() {
               <h2 className="text-lg font-black tracking-tight uppercase italic">{user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {user?.id?.slice(0, 8)}</span></h2>
            </div>
            <div className="flex items-center gap-6">
+              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                 <Zap size={14} className="animate-pulse" />
+                 5,000.00 fwd
+              </div>
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
                  Ledger Synced

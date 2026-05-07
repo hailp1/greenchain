@@ -5,8 +5,20 @@ CREATE TABLE IF NOT EXISTS entities (
     wallet_address TEXT UNIQUE NOT NULL,
     role TEXT CHECK (role IN ('FARM', 'COMPANY', 'ADMIN', 'AUDITOR')) NOT NULL,
     reputation_score INT DEFAULT 50 CHECK (reputation_score >= 0 AND reputation_score <= 100),
+    fwd_balance NUMERIC DEFAULT 1000.0,
     is_locked BOOLEAN DEFAULT FALSE,
     lock_until TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 1b. Token Transactions Table
+CREATE TABLE IF NOT EXISTS token_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID REFERENCES entities(id),
+    receiver_id UUID REFERENCES entities(id),
+    amount NUMERIC NOT NULL,
+    type TEXT CHECK (type IN ('GAS_FEE', 'REWARD', 'PAYMENT', 'MINT')),
+    description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -91,6 +103,8 @@ CREATE POLICY "Allow authenticated inserts on blockchain_ledger" ON blockchain_l
 CREATE POLICY "Allow authenticated selects on blockchain_ledger" ON blockchain_ledger FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Allow public read on blockchain_ledger" ON blockchain_ledger FOR SELECT TO public USING (true);
 
--- Certificates & Logs: Public read
-CREATE POLICY "Allow public read on certificates" ON certificates FOR SELECT TO public USING (true);
+CREATE POLICY "Allow public read on token_transactions" ON token_transactions FOR SELECT TO public USING (true);
+CREATE POLICY "Allow authenticated inserts on token_transactions" ON token_transactions FOR INSERT TO authenticated WITH CHECK (true);
+
+-- 8. Reputation Logs: Public read
 CREATE POLICY "Allow public read on reputation_logs" ON reputation_logs FOR SELECT TO public USING (true);

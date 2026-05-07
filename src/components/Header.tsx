@@ -89,9 +89,16 @@ const Header = () => {
           
           <div className="flex items-center gap-4 ml-4">
              {user ? (
-               <div className="flex items-center gap-3 bg-slate-50 p-1 pr-4 rounded-full border border-slate-100 group relative">
-                  <img src={user.user_metadata?.avatar_url} alt="User" className="w-8 h-8 rounded-full border border-white" />
-                  <span className="text-[10px] font-black uppercase text-natural-900">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+               <div className="flex items-center gap-4">
+                  {/* Token Balance Badge */}
+                  <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
+                     <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                     <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">5,000.00 fwd</span>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-slate-50 p-1 pr-4 rounded-full border border-slate-100 group relative">
+                     <img src={user.user_metadata?.avatar_url} alt="User" className="w-8 h-8 rounded-full border border-white" />
+                     <span className="text-[10px] font-black uppercase text-natural-900">{user.user_metadata?.full_name?.split(' ').pop()}</span>
                   
                   {/* Dropdown Simple */}
                   <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2">
