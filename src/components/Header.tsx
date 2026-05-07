@@ -89,79 +89,60 @@ const Header = () => {
         
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-10">
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-8">
             {navLinks.map((link) => (
               <Link 
                 key={link.href} 
                 href={link.href}
-                className={`text-[10px] font-black uppercase tracking-[0.15em] transition-all relative group/link ${
-                  pathname === link.href ? 'text-emerald-600' : 'text-slate-400 hover:text-emerald-600'
+                className={`text-[11px] font-semibold uppercase tracking-[0.2em] transition-all relative group/link ${
+                  pathname === link.href ? 'text-emerald-600' : 'text-slate-500 hover:text-emerald-900'
                 }`}
               >
                 {link.name}
-                <span className={`absolute -bottom-1 left-0 h-[2px] bg-emerald-500 transition-all duration-300 ${pathname === link.href ? 'w-full' : 'w-0 group-hover/link:w-full'}`}></span>
+                <span className={`absolute -bottom-1.5 left-0 h-[1.5px] bg-emerald-500 transition-all duration-300 ${pathname === link.href ? 'w-full' : 'w-0 group-hover/link:w-full'}`}></span>
               </Link>
             ))}
           </div>
-          
-          <div className="h-6 w-px bg-slate-100 mx-2"></div>
 
-          <div className="flex items-center gap-3">
-             {/* Web3 Wallet Section */}
-             {account ? (
-               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 backdrop-blur-sm rounded-full border border-blue-100 shadow-sm">
-                  <Wallet size={12} className="text-blue-500" />
-                  <span className="text-[9px] font-bold text-blue-700 tracking-tight">
-                    {account.slice(0, 4)}...{account.slice(-4)}
-                  </span>
-               </div>
-             ) : (
-               <button 
-                 onClick={connectWallet}
-                 className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-slate-100 hover:border-blue-200 hover:bg-blue-50 transition-all text-[9px] font-black text-slate-500 uppercase tracking-widest shadow-sm"
-               >
-                  <Wallet size={12} />
-                  Connect
-               </button>
-             )}
+          <div className="h-6 w-px bg-slate-200 mx-2"></div>
 
-             {user ? (
-               <div className="flex items-center gap-3">
-                  {/* Token Balance Badge */}
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50/50 backdrop-blur-sm rounded-full border border-emerald-100 shadow-sm">
-                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                     <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">{fwdBalance} fwd</span>
-                  </div>
+          <div className="flex items-center gap-4">
+            {/* Wallet & Balance Cluster */}
+            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col items-end">
+                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Network fwd</span>
+                <span className="text-[11px] font-bold text-emerald-700 leading-none">{fwdBalance}</span>
+              </div>
+              <button 
+                onClick={connectWallet}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                <Wallet size={12} className="text-emerald-500" />
+                {account ? `${account.slice(0, 4)}...${account.slice(-4)}` : 'CONNECT'}
+              </button>
+            </div>
 
-                  <div className="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800 group relative cursor-pointer hover:bg-black transition-all">
-                     <div className="w-6 h-6 rounded-full overflow-hidden border border-white/20">
-                        <img src={user.user_metadata?.avatar_url} alt="User" className="w-full h-full object-cover" />
-                     </div>
-                     <span className="text-[9px] font-black uppercase text-white tracking-widest">{user.user_metadata?.full_name?.split(' ').pop()}</span>
-                     
-                     {/* Dropdown Simple */}
-                     <div className="absolute top-full right-0 mt-2 w-44 bg-white border border-slate-100 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-1.5 z-50">
-                        <Link href="/portal" className="block w-full text-left p-2.5 text-[9px] font-black uppercase text-slate-600 hover:bg-slate-50 rounded-xl">Portal Dashboard</Link>
-                        <div className="h-px bg-slate-50 my-1"></div>
-                        <button onClick={handleSignOut} className="block w-full text-left p-2.5 text-[9px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl">Sign Out</button>
-                     </div>
-                  </div>
-               </div>
-             ) : (
-               <Link 
-                 href="/signin" 
-                 className="px-5 py-2 bg-slate-900 text-white text-[9px] font-black rounded-full hover:bg-black transition-all shadow-lg shadow-slate-900/10 uppercase tracking-widest"
-               >
-                 Login
-               </Link>
-             )}
-             
-             <Link 
-               href="/verify" 
-               className="px-5 py-2 bg-emerald-500 text-white text-[9px] font-black rounded-full hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20 uppercase tracking-[0.15em] ml-2"
-             >
-               Verify
-             </Link>
+            {/* Profile/Auth Area */}
+            {user ? (
+              <Link href="/portal" className="flex items-center gap-3 pl-2 group/profile">
+                <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
+                   <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Entity Node</span>
+                </div>
+              </Link>
+            ) : (
+              <Link href="/signin" className="text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-4 transition-colors">Sign In</Link>
+            )}
+
+            <Link 
+              href="/verify"
+              className="px-6 py-3 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
+            >
+              Verify
+            </Link>
           </div>
         </nav>
 
