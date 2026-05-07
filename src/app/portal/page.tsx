@@ -391,39 +391,62 @@ export default function ProducerPortal() {
                          {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
                        </p>
                     </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5 text-center flex flex-col justify-center">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Inter-Wallet Transfer</p>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
-                        <div className="space-y-3 text-left">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Recipient MetaMask Address</label>
-                          <input 
-                            type="text" 
-                            value={recipientWallet}
-                            onChange={(e) => setRecipientWallet(e.target.value)}
-                            placeholder="0x..." 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-mono outline-none shadow-inner" 
-                          />
-                        </div>
-                        <div className="space-y-3 text-left">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Amount (fwd)</label>
-                          <input 
-                            type="number" 
-                            value={transferAmount}
-                            onChange={(e) => setTransferAmount(e.target.value)}
-                            placeholder="0.00" 
-                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black outline-none shadow-inner" 
-                          />
-                        </div>
-                      </div>
-                      <button 
-                        onClick={handleTransfer}
-                        disabled={isTransferring}
-                        className="w-full mt-6 py-4 bg-natural-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                      >
-                        {isTransferring ? 'Processing...' : <><Send size={14} /> Execute Transfer</>}
-                      </button>
+                  </div>
+
+                  {/* Inter-Wallet Transfer Section */}
+                  <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden p-8 md:p-12">
+                    <div className="max-w-3xl mx-auto space-y-8">
+                       <div className="text-center space-y-2">
+                          <h3 className="text-2xl font-black text-natural-900 uppercase tracking-tighter italic">Inter-Wallet <span className="text-emerald-500">Transfer</span></h3>
+                          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Giao dịch fwd coin tức thời trên mạng lưới</p>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                <Users size={12} /> Địa chỉ ví người nhận (MetaMask)
+                             </label>
+                             <input 
+                               type="text" 
+                               value={recipientWallet}
+                               onChange={(e) => setRecipientWallet(e.target.value)}
+                               placeholder="0x..." 
+                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-mono outline-none shadow-inner focus:ring-2 focus:ring-emerald-500 transition-all" 
+                             />
+                             <p className="text-[8px] text-slate-400 font-medium ml-2">Nhập đúng địa chỉ 0x để đảm bảo giao dịch chính xác.</p>
+                          </div>
+                          <div className="space-y-3">
+                             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
+                                <Zap size={12} /> Số lượng fwd muốn chuyển
+                             </label>
+                             <input 
+                               type="number" 
+                               value={transferAmount}
+                               onChange={(e) => setTransferAmount(e.target.value)}
+                               placeholder="0.00" 
+                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-lg font-black outline-none shadow-inner focus:ring-2 focus:ring-emerald-500 transition-all" 
+                             />
+                          </div>
+                       </div>
+
+                       <button 
+                         onClick={handleTransfer}
+                         disabled={isTransferring}
+                         className="w-full py-5 bg-natural-900 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all flex items-center justify-center gap-4 shadow-xl shadow-natural-900/10 active:scale-[0.98] disabled:opacity-50"
+                       >
+                         {isTransferring ? (
+                           <>
+                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                             ĐANG XỬ LÝ GIAO DỊCH...
+                           </>
+                         ) : (
+                           <>
+                             <Send size={18} /> THỰC THI CHUYỂN COIN (EXECUTE)
+                           </>
+                         )}
+                       </button>
                     </div>
-                 </div>
+                  </section>
 
                  <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
                     <div className="p-8 border-b border-slate-50 flex justify-between items-center">
