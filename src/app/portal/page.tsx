@@ -21,6 +21,8 @@ export default function ProducerPortal() {
   const [recipientWallet, setRecipientWallet] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [currentEntity, setCurrentEntity] = useState<any>(null);
 
   // Form states for new harvest
   const [newHarvest, setNewHarvest] = useState({
@@ -41,25 +43,77 @@ export default function ProducerPortal() {
       }
     };
     checkUser();
+
+    // MetaMask Detection
+    const detectWallet = async () => {
+      if (typeof window !== 'undefined' && (window as any).ethereum) {
+        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+        }
+      }
+    };
+    detectWallet();
+
+    if (typeof window !== 'undefined' && (window as any).ethereum) {
+      (window as any).ethereum.on('accountsChanged', (accounts: string[]) => {
+        setWalletAddress(accounts[0] || "");
+      });
+    }
   }, []);
+  const [balance, setBalance] = useState("0.00");
+
+  const fetchBalance = async () => {
+    if (walletAddress) {
+      const { data } = await supabase
+        .from('entities')
+        .select('fwd_balance')
+        .ilike('wallet_address', walletAddress)
+        .single();
+      if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    }
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, [walletAddress]);
+
+  useEffect(() => {
+    const fetchEntityData = async () => {
+      if (!walletAddress) return;
+      
+      const { data, error } = await supabase
+        .from('entities')
+        .select('*')
+        .ilike('wallet_address', walletAddress)
+        .single();
+      
+      if (data) {
+        setCurrentEntity(data);
+        fetchBalance();
+      }
+    };
+    fetchEntityData();
+  }, [walletAddress]);
 
   useEffect(() => {
     const fetchPortalData = async () => {
+      if (!currentEntity) return;
       try {
         setLoading(true);
-        // In a real app, we would filter by the current user's entity_id
         const { data, error } = await supabase
           .from('batches')
           .select('*, blockchain_ledger(tx_hash)')
+          .eq('entity_id', currentEntity.id)
           .order('timestamp', { ascending: false });
 
         if (error) throw error;
         setBatches(data || []);
 
-        // Fetch transactions
         const { data: txData } = await supabase
           .from('token_transactions')
           .select('*')
+          .or(`sender_id.eq.${currentEntity.id},receiver_id.eq.${currentEntity.id}`)
           .order('created_at', { ascending: false });
         setTransactions(txData || []);
       } catch (err) {
@@ -69,23 +123,7 @@ export default function ProducerPortal() {
       }
     };
     fetchPortalData();
-  }, []);
-
-  const [balance, setBalance] = useState("5,000.00");
-
-  const fetchBalance = async () => {
-    if (user) {
-      const { data } = await supabase
-        .from('entities')
-        .select('fwd_balance')
-        .single();
-      if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
-    }
-  };
-
-  useEffect(() => {
-    fetchBalance();
-  }, [user]);
+  }, [currentEntity]);
 
   const handleTransfer = async () => {
     if (!recipientWallet || !transferAmount) return alert("Vui lòng nhập đầy đủ thông tin chuyển tiền.");
@@ -94,11 +132,10 @@ export default function ProducerPortal() {
     try {
       setIsTransferring(true);
       
-      // Get current user's entity_id
-      const { data: entityData } = await supabase.from('entities').select('id').single();
+      if (!currentEntity) throw new Error("Chưa kết nối danh tính Blockchain.");
       
       const { error } = await supabase.rpc('transfer_fwd', {
-        p_sender_id: entityData?.id,
+        p_sender_id: currentEntity.id,
         p_receiver_wallet: recipientWallet,
         p_amount: Number(transferAmount),
         p_description: `Transfer to Wallet ${recipientWallet.slice(0, 6)}...`
