@@ -555,13 +555,3 @@ export default function ProducerPortal() {
   );
 }
 
-// Icons for stats grid
-function Layers({ size, className }: { size: number, className?: string }) {
-  return <Cpu size={size} className={className} />;
-}
-function BarChart3({ size, className }: { size: number, className?: string }) {
-  return <Activity size={size} className={className} />;
-}
-function ChevronRight({ size, className }: { size: number, className?: string }) {
-  return <ArrowRight size={size} className={className} />;
-}
