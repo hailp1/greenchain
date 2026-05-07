@@ -68,3 +68,29 @@ INSERT INTO entities (name, wallet_address, role, reputation_score) VALUES
 ('Hợp tác xã Yến sào Ninh Hòa', '0xBc29...A1f0', 'COMPANY', 88),
 ('Hệ thống Kiểm định fwd', '0xAdmin...Root', 'ADMIN', 100)
 ON CONFLICT (wallet_address) DO NOTHING;
+
+-- 7. Row Level Security Policies
+-- Enable RLS on all tables
+ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE batches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE blockchain_ledger ENABLE ROW LEVEL SECURITY;
+ALTER TABLE certificates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reputation_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audits ENABLE ROW LEVEL SECURITY;
+
+-- Entities: Public read, Admin write
+CREATE POLICY "Allow public read on entities" ON entities FOR SELECT TO public USING (true);
+
+-- Batches: Authenticated read/write
+CREATE POLICY "Allow authenticated inserts on batches" ON batches FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow authenticated selects on batches" ON batches FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow public read on batches" ON batches FOR SELECT TO public USING (true);
+
+-- Ledger: Authenticated read/write
+CREATE POLICY "Allow authenticated inserts on blockchain_ledger" ON blockchain_ledger FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "Allow authenticated selects on blockchain_ledger" ON blockchain_ledger FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Allow public read on blockchain_ledger" ON blockchain_ledger FOR SELECT TO public USING (true);
+
+-- Certificates & Logs: Public read
+CREATE POLICY "Allow public read on certificates" ON certificates FOR SELECT TO public USING (true);
+CREATE POLICY "Allow public read on reputation_logs" ON reputation_logs FOR SELECT TO public USING (true);
