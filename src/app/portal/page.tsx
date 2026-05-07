@@ -66,17 +66,40 @@ export default function ProducerPortal() {
     // MetaMask Detection
     const detectWallet = async () => {
       if (typeof window !== 'undefined' && (window as any).ethereum) {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
+        try {
+          const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            const addr = accounts[0];
+            setWalletAddress(addr);
+            
+            // Trigger reward claim if user is logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              await supabase.rpc('claim_wallet_connection_reward', {
+                p_user_id: session.user.id,
+                p_wallet_address: addr
+              });
+              fetchBalance();
+            }
+          }
+        } catch (err) {
+          console.error("Wallet detection error:", err);
         }
       }
     };
     detectWallet();
 
     if (typeof window !== 'undefined' && (window as any).ethereum) {
-      (window as any).ethereum.on('accountsChanged', (accounts: string[]) => {
-        setWalletAddress(accounts[0] || "");
+      (window as any).ethereum.on('accountsChanged', async (accounts: string[]) => {
+        const addr = accounts[0] || "";
+        setWalletAddress(addr);
+        if (addr && user) {
+          await supabase.rpc('claim_wallet_connection_reward', {
+            p_user_id: user.id,
+            p_wallet_address: addr
+          });
+          fetchBalance();
+        }
       });
     }
   }, []);
