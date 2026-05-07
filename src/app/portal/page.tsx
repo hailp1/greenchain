@@ -88,7 +88,7 @@ export default function ProducerPortal() {
         .from('entities')
         .select('fwd_balance')
         .ilike('wallet_address', walletAddress)
-        .single();
+        .maybeSingle();
       if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
     }
   };
@@ -105,7 +105,7 @@ export default function ProducerPortal() {
         .from('entities')
         .select('*')
         .ilike('wallet_address', walletAddress)
-        .single();
+        .maybeSingle();
       
       if (data) {
         setCurrentEntity(data);
@@ -328,7 +328,7 @@ export default function ProducerPortal() {
   const refreshData = async () => {
     const { data: b } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
     setBatches(b || []);
-    const { data: e } = await supabase.from('entities').select('*').eq('id', currentEntity?.id || '').single();
+    const { data: e } = await supabase.from('entities').select('*').eq('id', currentEntity?.id || '').maybeSingle();
     if (e) {
       setCurrentEntity(e);
       setBalance(Number(e.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
@@ -340,7 +340,7 @@ export default function ProducerPortal() {
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans selection:bg-emerald-100">
       {/* Sidebar Navigation */}
-      <aside className="w-20 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen">
+      <aside className="w-16 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen z-[60]">
         <div className="p-6 md:p-8 border-b border-white/5">
            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
@@ -371,8 +371,8 @@ export default function ProducerPortal() {
                onClick={() => setActiveTab(item.id)}
                className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
              >
-                <item.icon size={20} />
-                <span className="hidden md:block font-bold text-sm">{item.label}</span>
+                <item.icon size={20} className="shrink-0" />
+                <span className="hidden md:block font-bold text-sm truncate">{item.label}</span>
              </button>
            ))}
         </nav>
@@ -388,40 +388,44 @@ export default function ProducerPortal() {
       {/* Main Content Area */}
       <main className="flex-grow flex flex-col">
         {/* Top Header */}
-        <header className="hidden h-20 bg-white border-b border-slate-100 px-8 lg:flex items-center justify-between sticky top-0 z-50">
+        <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4">
-              <div className="md:hidden w-8 h-8 rounded-full bg-slate-100"></div>
-              <h2 className="text-lg font-black tracking-tight uppercase italic">{currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {currentEntity?.id?.slice(0, 8) || user?.id?.slice(0, 8)}</span></h2>
+              <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate max-w-[120px] md:max-w-none">
+                {currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} 
+                <span className="hidden sm:inline text-slate-300 text-[10px] font-bold not-italic ml-2 tracking-widest uppercase">
+                  ID: {currentEntity?.id?.slice(0, 8) || user?.id?.slice(0, 8)}
+                </span>
+              </h2>
            </div>
-           <div className="flex items-center gap-6">
-              <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-                 <Zap size={14} className="animate-pulse" />
-                 {balance} fwd
+           <div className="flex items-center gap-3 md:gap-6">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                 <Zap size={12} className="animate-pulse" />
+                 {balance}
               </div>
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                 Ledger Synced
+                 Synced
               </div>
               <button className="relative p-2 text-slate-400 hover:text-natural-950 transition-colors">
-                 <Bell size={20} />
-                 <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></div>
+                 <Bell size={18} />
+                 <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-white"></div>
               </button>
-              <div className="w-10 h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100 shrink-0">
                  <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
               </div>
            </div>
         </header>
 
-        <div className="p-8 md:p-12 space-y-12 overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <div className="p-4 md:p-12 space-y-8 md:space-y-12 overflow-y-auto max-h-[calc(100vh-4rem)]">
            {activeTab === 'dashboard' && (
-             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                    {stats.map((s, i) => (
-                     <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                        <div className="text-emerald-500 mb-6 bg-emerald-50 w-12 h-12 rounded-2xl flex items-center justify-center"><s.icon size={24} /></div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
-                        <p className="text-3xl font-black text-natural-950">{s.value}</p>
+                     <div key={i} className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-emerald-500 mb-4 md:mb-6 bg-emerald-50 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center"><s.icon size={20} /></div>
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
+                        <p className="text-xl md:text-3xl font-black text-natural-950">{s.value}</p>
                      </div>
                    ))}
                 </div>
@@ -432,7 +436,7 @@ export default function ProducerPortal() {
                       <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Live Farm Telemetry</h3>
                       <button className="text-[10px] font-black text-emerald-500 hover:underline">VIEW SENSOR MAP</button>
                    </div>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                       {[
                         { label: "Soil Moisture", value: "64.5%", icon: Droplets, color: "text-blue-500" },
                         { label: "Ambient Temp", value: "18.2°C", icon: Thermometer, color: "text-orange-500" },
@@ -463,7 +467,7 @@ export default function ProducerPortal() {
                       ) : batches.length === 0 ? (
                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No batches found</div>
                       ) : batches.map((batch, i) => (
-                        <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                        <div key={i} className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-slate-50/50 transition-colors">
                            <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                                  <Activity size={18} />

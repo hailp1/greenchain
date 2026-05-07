@@ -38,7 +38,7 @@ const Header = () => {
           .from('entities')
           .select('fwd_balance')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
         if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
       }
     };
