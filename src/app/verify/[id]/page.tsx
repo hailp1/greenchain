@@ -547,7 +547,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
             <AnimatePresence mode="wait">
               {selectedNode && (
                 <motion.div 
-                  key={selectedNode.id || selectedNode.title}
+                  key={selectedNode?.id || selectedNode?.title}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -559,8 +559,8 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                     <motion.img 
                       initial={{ scale: 1.1 }}
                       animate={{ scale: 1 }}
-                      src={selectedNode.images[0]} 
-                      alt={selectedNode.title}
+                      src={selectedNode?.images[0]} 
+                      alt={selectedNode?.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-natural-950 via-natural-950/40 to-transparent"></div>
@@ -581,7 +581,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                           className="flex flex-wrap items-center gap-3 mb-4"
                         >
                            <span className="px-3 py-1 rounded-lg bg-white/10 backdrop-blur-md text-white text-[9px] font-black uppercase tracking-[0.2em] border border-white/20">
-                             {selectedNode.type}
+                             {selectedNode?.type}
                            </span>
                            <span className="px-3 py-1 rounded-lg bg-emerald-500 text-white text-[9px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/40">
                              Verified Origin
@@ -593,7 +593,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                           transition={{ delay: 0.1 }}
                           className="text-3xl md:text-6xl font-black text-white tracking-tighter leading-tight italic uppercase"
                         >
-                          {selectedNode.title}
+                          {selectedNode?.title}
                         </motion.h2>
                       </div>
                       <motion.div 
@@ -604,7 +604,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                       >
                          <div className="flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-2xl rounded-2xl border border-white/10 text-white/90 text-[11px] font-mono shadow-2xl">
                             <Fingerprint size={16} className="text-emerald-400" />
-                            <span className="opacity-60">TX:</span> {selectedNode.hash.substring(0, 24)}...
+                            <span className="opacity-60">TX:</span> {selectedNode?.hash.substring(0, 24)}...
                          </div>
                          <div className="flex items-center gap-6 text-white/40 text-[10px] font-black uppercase tracking-[0.2em]">
                             <span className="flex items-center gap-2 hover:text-emerald-400 transition-colors cursor-help"><Globe size={12} /> IPFS Secured</span>
@@ -643,7 +643,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                       <div>
                         <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 md:mb-6">Mô tả quy trình</h3>
                         <p className="text-slate-600 leading-relaxed text-xs md:text-sm font-light">
-                          {selectedNode.description}
+                          {selectedNode?.description}
                         </p>
                       </div>
 
@@ -654,9 +654,9 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                            </div>
                            <div>
                              <p className="text-[8px] md:text-[10px] font-black text-natural-400 uppercase tracking-widest mb-1">Vị trí thực tế</p>
-                             <p className="text-sm md:text-base font-bold text-natural-900 leading-tight">{selectedNode.location}</p>
+                             <p className="text-sm md:text-base font-bold text-natural-900 leading-tight">{selectedNode?.location}</p>
                              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-white rounded-full text-[8px] md:text-[10px] font-mono text-slate-500 border border-slate-100">
-                                <Globe size={10} /> {selectedNode.coordinates}
+                                <Globe size={10} /> {selectedNode?.coordinates}
                              </div>
                            </div>
                         </div>
@@ -681,14 +681,14 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                         </div>
 
                         {/* Network Vital Signs (Telemetry Grid) */}
-                        {selectedNode.telemetry && selectedNode.telemetry.length > 0 && (
+                        {selectedNode?.telemetry && selectedNode?.telemetry.length > 0 && (
                           <div className="space-y-6">
                              <div className="flex items-center gap-2 mb-4">
                                 <Activity size={14} className="text-emerald-500" />
                                 <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Network Vital Signs (IoT)</h3>
                              </div>
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                {selectedNode.telemetry.map((t, idx) => (
+                                {selectedNode?.telemetry.map((t, idx) => (
                                   <motion.div 
                                     key={idx}
                                     initial={{ opacity: 0, scale: 0.95 }}
@@ -751,7 +751,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                             </div>
                             <div className="bg-black/50 p-4 rounded-2xl border border-white/5 relative z-10 mb-4">
                                <p className="text-[10px] md:text-sm font-mono text-emerald-400/90 break-all leading-relaxed tracking-wider">
-                                 {selectedNode.hash}
+                                 {selectedNode?.hash}
                                </p>
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
@@ -803,7 +803,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                       <div>
                         <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 md:mb-6">Bảo chứng kỹ thuật số (Paperwork)</h3>
                         <div className="grid grid-cols-1 gap-2 md:gap-3">
-                          {selectedNode.documents.map((doc, i) => (
+                          {selectedNode?.documents.map((doc, i) => (
                             <motion.a 
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.99 }}
@@ -848,7 +848,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                       <div>
                         <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 md:mb-6">Hình ảnh lưu trữ</h3>
                         <div className="grid grid-cols-2 gap-3 md:gap-4">
-                          {selectedNode.images.map((img, i) => (
+                          {selectedNode?.images.map((img, i) => (
                             <motion.div 
                               key={i} 
                               whileHover={{ scale: 1.05 }}
