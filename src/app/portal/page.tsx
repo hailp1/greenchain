@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Globe, ShieldCheck, Cpu, LayoutDashboard, PackagePlus, 
   Settings, Bell, LogOut, Search, MapPin, Activity, 
-  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Sprout
+  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Sprout, Layers, BarChart3, Send
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,9 @@ export default function ProducerPortal() {
   const [batches, setBatches] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recipientWallet, setRecipientWallet] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
+  const [isTransferring, setIsTransferring] = useState(false);
 
   // Form states for new harvest
   const [newHarvest, setNewHarvest] = useState({
@@ -70,18 +73,57 @@ export default function ProducerPortal() {
 
   const [balance, setBalance] = useState("5,000.00");
 
+  const fetchBalance = async () => {
+    if (user) {
+      const { data } = await supabase
+        .from('entities')
+        .select('fwd_balance')
+        .single();
+      if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    }
+  };
+
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (user) {
-        const { data } = await supabase
-          .from('entities')
-          .select('fwd_balance')
-          .single();
-        if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
-      }
-    };
     fetchBalance();
   }, [user]);
+
+  const handleTransfer = async () => {
+    if (!recipientWallet || !transferAmount) return alert("Vui lòng nhập đầy đủ thông tin chuyển tiền.");
+    if (Number(transferAmount) <= 0) return alert("Số lượng chuyển không hợp lệ.");
+
+    try {
+      setIsTransferring(true);
+      
+      // Get current user's entity_id
+      const { data: entityData } = await supabase.from('entities').select('id').single();
+      
+      const { error } = await supabase.rpc('transfer_fwd', {
+        p_sender_id: entityData?.id,
+        p_receiver_wallet: recipientWallet,
+        p_amount: Number(transferAmount),
+        p_description: `Transfer to Wallet ${recipientWallet.slice(0, 6)}...`
+      });
+
+      if (error) throw error;
+
+      alert("Chuyển FWD thành công!");
+      setRecipientWallet("");
+      setTransferAmount("");
+      fetchBalance();
+      
+      // Refresh transactions
+      const { data: txData } = await supabase
+        .from('token_transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      setTransactions(txData || []);
+
+    } catch (err: any) {
+      alert(err.message || "Giao dịch thất bại. Vui lòng kiểm tra lại địa chỉ ví người nhận.");
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
@@ -313,8 +355,36 @@ export default function ProducerPortal() {
                        </p>
                     </div>
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5 text-center flex flex-col justify-center">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Stake to Burn</p>
-                       <button className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-emerald-500 transition-all uppercase tracking-widest">STAKE TOKEN</button>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Inter-Wallet Transfer</p>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+                        <div className="space-y-3 text-left">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Recipient MetaMask Address</label>
+                          <input 
+                            type="text" 
+                            value={recipientWallet}
+                            onChange={(e) => setRecipientWallet(e.target.value)}
+                            placeholder="0x..." 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-mono outline-none shadow-inner" 
+                          />
+                        </div>
+                        <div className="space-y-3 text-left">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Amount (fwd)</label>
+                          <input 
+                            type="number" 
+                            value={transferAmount}
+                            onChange={(e) => setTransferAmount(e.target.value)}
+                            placeholder="0.00" 
+                            className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-xs font-black outline-none shadow-inner" 
+                          />
+                        </div>
+                      </div>
+                      <button 
+                        onClick={handleTransfer}
+                        disabled={isTransferring}
+                        className="w-full mt-6 py-4 bg-natural-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                      >
+                        {isTransferring ? 'Processing...' : <><Send size={14} /> Execute Transfer</>}
+                      </button>
                     </div>
                  </div>
 
