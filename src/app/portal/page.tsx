@@ -16,6 +16,7 @@ export default function ProducerPortal() {
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [batches, setBatches] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form states for new harvest
@@ -51,6 +52,13 @@ export default function ProducerPortal() {
 
         if (error) throw error;
         setBatches(data || []);
+
+        // Fetch transactions
+        const { data: txData } = await supabase
+          .from('token_transactions')
+          .select('*')
+          .order('created_at', { ascending: false });
+        setTransactions(txData || []);
       } catch (err) {
         console.error('Portal data error:', err);
       } finally {
@@ -114,9 +122,15 @@ export default function ProducerPortal() {
       if (lError) throw lError;
 
       setIsSuccess(true);
-      // Refresh list
-      const { data: updated } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
-      setBatches(updated || []);
+      // Refresh all data
+      const { data: updatedBatches } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
+      setBatches(updatedBatches || []);
+      
+      const { data: updatedBalance } = await supabase.from('entities').select('fwd_balance').single();
+      if (updatedBalance) setBalance(Number(updatedBalance.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+
+      const { data: updatedTx } = await supabase.from('token_transactions').select('*').order('created_at', { ascending: false });
+      setTransactions(updatedTx || []);
       
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (err) {
@@ -152,6 +166,7 @@ export default function ProducerPortal() {
              { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
              { id: 'harvest', label: 'Sign Harvest', icon: PackagePlus },
              { id: 'sensors', label: 'IoT Sensors', icon: Cpu },
+             { id: 'tokenomics', label: 'Tokenomics', icon: Zap },
              { id: 'settings', label: 'Settings', icon: Settings }
            ].map((item) => (
              <button 
@@ -273,6 +288,59 @@ export default function ProducerPortal() {
                 </section>
              </motion.div>
            )}
+
+           {activeTab === 'tokenomics' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Gas Spent</p>
+                       <p className="text-3xl font-black text-orange-500">
+                         {transactions.filter(t => t.type === 'GAS_FEE').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
+                       </p>
+                    </div>
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards Earned</p>
+                       <p className="text-3xl font-black text-emerald-500">
+                         {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
+                       </p>
+                    </div>
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5 text-center flex flex-col justify-center">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 italic">Stake to Burn</p>
+                       <button className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-emerald-500 transition-all uppercase tracking-widest">STAKE TOKEN</button>
+                    </div>
+                 </div>
+
+                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Transaction Ledger</h3>
+                       <span className="text-[10px] font-bold text-slate-400">Total: {transactions.length}</span>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                       {transactions.length === 0 ? (
+                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No transactions yet</div>
+                       ) : transactions.map((tx, i) => (
+                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                            <div className="flex items-center gap-4">
+                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'GAS_FEE' ? 'bg-orange-50 text-orange-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                  {tx.type === 'GAS_FEE' ? <ArrowRight size={18} className="rotate-45" /> : <ShieldCheck size={18} />}
+                               </div>
+                               <div>
+                                  <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest leading-none">{tx.description}</p>
+                               </div>
+                            </div>
+                            <div className="text-right">
+                               <p className={`text-sm font-black ${tx.type === 'GAS_FEE' ? 'text-orange-500' : 'text-emerald-500'}`}>
+                                 {tx.type === 'GAS_FEE' ? '-' : '+'}{Number(tx.amount).toFixed(2)} fwd
+                               </p>
+                               <p className="text-[8px] text-slate-300 font-bold uppercase">{new Date(tx.created_at).toLocaleString()}</p>
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </section>
+              </motion.div>
+            )}
 
            {activeTab === 'harvest' && (
              <motion.div 
