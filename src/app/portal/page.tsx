@@ -281,7 +281,7 @@ export default function ProducerPortal() {
         <header className="h-20 bg-white border-b border-slate-100 px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4">
               <div className="md:hidden w-8 h-8 rounded-full bg-slate-100"></div>
-              <h2 className="text-lg font-black tracking-tight uppercase italic">{user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {user?.id?.slice(0, 8)}</span></h2>
+              <h2 className="text-lg font-black tracking-tight uppercase italic">{currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} <span className="text-slate-300 text-xs font-bold not-italic ml-2 tracking-widest uppercase">ID: {currentEntity?.id?.slice(0, 8) || user?.id?.slice(0, 8)}</span></h2>
            </div>
            <div className="flex items-center gap-6">
               <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
