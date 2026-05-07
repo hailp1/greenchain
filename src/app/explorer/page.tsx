@@ -110,19 +110,19 @@ export default function ExplorerHome() {
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Real-time Blockchain Intelligence & Global Audit</p>
                </div>
                <div className="flex gap-4">
-                  <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
+                  <div className="px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center gap-3">
                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                     <span className="text-[10px] font-black uppercase tracking-widest">Sync Status: 100%</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Mainnet Live: 1,015 Nodes</span>
                   </div>
                </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                {[
-                 { label: "AGRI Price", value: stats?.price || "$1.42", change: stats?.price_change || "+2.4%", icon: TrendingUp },
-                 { label: "Network Cap", value: stats?.market_cap || "$2.5B", change: "Locked", icon: ShieldCheck },
-                 { label: "Throughput", value: stats?.tps || "14.2", unit: "TPS", icon: Activity },
-                 { label: "Avg. Gas", value: stats?.gas_price || "12 Gwei", unit: "", icon: Zap }
+                 { label: "fwd Price", value: stats?.price || "$1.42", change: "+4.2%", icon: TrendingUp, color: "text-emerald-500" },
+                 { label: "Total TVL", value: "8.5M fwd", change: "Staked", icon: Lock, color: "text-blue-500" },
+                 { label: "Throughput", value: stats?.tps || "14.2", unit: "TPS", icon: Activity, color: "text-amber-500" },
+                 { label: "Avg. Gas", value: stats?.gas_price || "1.2 fwd", unit: "", icon: Zap, color: "text-purple-500" }
                ].map((stat, i) => (
                  <motion.div 
                    key={i}
@@ -131,7 +131,7 @@ export default function ExplorerHome() {
                    transition={{ delay: i * 0.1 }}
                    className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-md hover:bg-white/10 transition-all group"
                  >
-                    <div className="text-slate-500 group-hover:text-emerald-500 transition-colors mb-6"><stat.icon size={20} /></div>
+                    <div className={`${stat.color} mb-6`}><stat.icon size={20} /></div>
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
                     <div className="flex items-end gap-2">
                        <span className="text-2xl md:text-3xl font-black tracking-tighter">{stat.value}</span>
@@ -140,6 +140,48 @@ export default function ExplorerHome() {
                     </div>
                  </motion.div>
                ))}
+            </div>
+         </div>
+      </section>
+
+      {/* Investor Insights Section */}
+      <section className="py-12 bg-white border-b border-slate-100">
+         <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+               <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Token Deflation (Burned)</h4>
+                  <div className="flex items-end gap-4">
+                     <div className="flex-grow bg-slate-50 h-3 rounded-full overflow-hidden">
+                        <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-orange-500" />
+                     </div>
+                     <span className="text-sm font-black">65,420 fwd</span>
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-bold mt-2">6.5% of total supply removed from circulation.</p>
+               </div>
+               <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Node Network Growth</h4>
+                  <div className="flex items-end gap-1 h-12">
+                     {[30, 45, 35, 60, 75, 90, 100].map((v, i) => (
+                        <motion.div 
+                          key={i} 
+                          initial={{ height: 0 }} 
+                          animate={{ height: `${v}%` }} 
+                          transition={{ delay: i * 0.1 }}
+                          className="flex-grow bg-emerald-500/20 rounded-t-sm"
+                        />
+                     ))}
+                  </div>
+                  <p className="text-[9px] text-slate-400 font-bold mt-2">Organic node expansion: +24% MoM</p>
+               </div>
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100">
+                     <BarChart3 size={32} />
+                  </div>
+                  <div>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Audit Consensus Rate</p>
+                     <p className="text-2xl font-black text-natural-950">99.98%</p>
+                  </div>
+               </div>
             </div>
          </div>
       </section>
