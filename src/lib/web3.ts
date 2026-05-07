@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
+
 export const useWeb3 = () => {
   const [account, setAccount] = useState<string | null>(null);
   const [balance, setBalance] = useState<string>('0.00');
