@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Globe, ShieldCheck, Cpu, LayoutDashboard, PackagePlus, 
   Settings, Bell, LogOut, Search, MapPin, Activity, 
-  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Layers, BarChart3, Send, Award
+  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Layers, BarChart3, Send, Award, Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -599,26 +599,23 @@ export default function ProducerPortal() {
                        {transactions.length === 0 ? (
                          <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No transactions yet</div>
                        ) : transactions.map((tx, i) => (
-                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
-                            <div className="flex items-center gap-4">
-                               <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'GAS_FEE' ? 'bg-orange-50 text-orange-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                                  {tx.type === 'GAS_FEE' ? <ArrowRight size={18} className="rotate-45" /> : <ShieldCheck size={18} />}
-                               </div>
-                               <div>
-                                  <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
-                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest leading-none">{tx.description}</p>
-                               </div>
-                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
-                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
-                               </div>
-                            </div>
-                            <button 
-                              onClick={() => handleApprove(batch.id)}
-                              className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
-                            >
-                              Approve Data
-                            </button>
-                         </div>
+                          <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                             <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'GAS_FEE' ? 'bg-orange-50 text-orange-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                   {tx.type === 'GAS_FEE' ? <ArrowRight size={18} className="rotate-45" /> : <ShieldCheck size={18} />}
+                                </div>
+                                <div>
+                                   <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
+                                   <p className="text-[10px] text-slate-400 font-bold tracking-widest leading-none">{tx.description}</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className={`text-sm font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
+                                   {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} fwd
+                                </p>
+                                <p className="text-[9px] text-slate-400 font-bold tracking-widest">{new Date(tx.created_at).toLocaleDateString()}</p>
+                             </div>
+                          </div>
                        ))}
                     </div>
                  </section>
@@ -671,98 +668,132 @@ export default function ProducerPortal() {
               </motion.div>
             )}
 
-           {activeTab === 'harvest' && (
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }} 
-               animate={{ opacity: 1, scale: 1 }} 
-               className="max-w-4xl mx-auto space-y-12 pt-12"
-             >
-                <div className="text-center space-y-4">
-                   <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
-                   <p className="text-slate-400 text-lg font-light">Ghi nhận dữ liệu thu hoạch mới lên mạng lưới AgriChain thông qua chữ ký số xác thực.</p>
-                </div>
+            {activeTab === 'harvest' && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }} 
+                className="max-w-4xl mx-auto space-y-12 pt-12"
+              >
+                 <div className="text-center space-y-4">
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
+                    <p className="text-slate-400 text-lg font-light">Ghi nhận dữ liệu thu hoạch mới lên mạng lưới AgriChain thông qua chữ ký số xác thực.</p>
+                 </div>
 
-                <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
-                         <select 
-                           value={newHarvest.product_name}
-                           onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
-                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                         >
-                            <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
-                            <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
-                            <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
-                            <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
-                         </select>
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
-                         <input 
-                           type="number" 
-                           value={newHarvest.quantity}
-                           onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
-                           placeholder="250.00" 
-                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
-                         />
-                      </div>
-                   </div>
+                 <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
+                          <select 
+                            value={newHarvest.product_name}
+                            onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
+                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                          >
+                             <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
+                             <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
+                             <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
+                             <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
+                          </select>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
+                          <input 
+                            type="number" 
+                            value={newHarvest.quantity}
+                            onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
+                            placeholder="250.00" 
+                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
+                          />
+                       </div>
+                    </div>
 
-                   <div className="p-8 rounded-[2rem] bg-emerald-500/5 border border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center gap-4 group hover:border-emerald-500/50 transition-all cursor-pointer">
-                      <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/10"><CloudUpload size={32} /></div>
-                      <div>
-                         <p className="text-sm font-black text-natural-950">Tải lên chứng từ thu hoạch</p>
-                         <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max 10MB)</p>
-                      </div>
-                   </div>
+                    <div className="p-8 rounded-[2rem] bg-emerald-500/5 border border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center gap-4 group hover:border-emerald-500/50 transition-all cursor-pointer">
+                       <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/10"><CloudUpload size={32} /></div>
+                       <div>
+                          <p className="text-sm font-black text-natural-950">Tải lên chứng từ thu hoạch</p>
+                          <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max 10MB)</p>
+                       </div>
+                    </div>
 
-                   <div className="flex flex-col items-center gap-6 pt-6">
-                      <button 
-                        onClick={handleSign}
-                        disabled={isSigning || isSuccess}
-                        className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-4 ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black hover:-translate-y-1'}`}
+                    <div className="flex flex-col items-center gap-6 pt-6">
+                       <button 
+                         onClick={handleSign}
+                         disabled={isSigning || isSuccess}
+                         className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-4 ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black hover:-translate-y-1'}`}
+                       >
+                          {isSigning ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                              SIGNING LEDGER...
+                            </>
+                          ) : isSuccess ? (
+                            <>
+                              <CheckCircle2 size={24} /> HARVEST VERIFIED & LOCKED
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck size={24} /> SIGN DATA TO BLOCKCHAIN
+                            </>
+                          )}
+                       </button>
+                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature: 0x82f...a12c • Secured by Ethereum Node</p>
+                    </div>
+                 </div>
+
+                 <AnimatePresence>
+                    {isSuccess && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="bg-emerald-500 p-6 rounded-2xl text-white flex items-center justify-between shadow-2xl"
                       >
-                         {isSigning ? (
-                           <>
-                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                             SIGNING LEDGER...
-                           </>
-                         ) : isSuccess ? (
-                           <>
-                             <CheckCircle2 size={24} /> HARVEST VERIFIED & LOCKED
-                           </>
-                         ) : (
-                           <>
-                             <ShieldCheck size={24} /> SIGN DATA TO BLOCKCHAIN
-                           </>
-                         )}
-                      </button>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature: 0x82f...a12c • Secured by Ethereum Node</p>
-                   </div>
-                </div>
+                         <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
+                            <div>
+                               <p className="text-sm font-black uppercase">Transaction Confirmed!</p>
+                               <p className="text-[10px] font-bold opacity-80">Block #19482416 • 12 Nodes Validated</p>
+                            </div>
+                         </div>
+                         <button className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">View Transaction</button>
+                      </motion.div>
+                    )}
+                 </AnimatePresence>
+              </motion.div>
+            )}
 
-                <AnimatePresence>
-                   {isSuccess && (
-                     <motion.div 
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       exit={{ opacity: 0, y: -20 }}
-                       className="bg-emerald-500 p-6 rounded-2xl text-white flex items-center justify-between shadow-2xl"
-                     >
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
-                           <div>
-                              <p className="text-sm font-black uppercase">Transaction Confirmed!</p>
-                              <p className="text-[10px] font-bold opacity-80">Block #19482416 • 12 Nodes Validated</p>
-                           </div>
-                        </div>
-                        <button className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">View Transaction</button>
-                     </motion.div>
-                   )}
-                </AnimatePresence>
-             </motion.div>
-           )}
+            {activeTab === 'audit' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
+                       <span className="text-[10px] font-bold text-slate-400">Pending: {batches.filter(b => b.status === 'PENDING').length}</span>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                       {batches.filter(b => b.status === 'PENDING').length === 0 ? (
+                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches for audit</div>
+                       ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
+                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                                  <ShieldCheck size={18} />
+                               </div>
+                               <div>
+                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
+                               </div>
+                            </div>
+                            <button 
+                              onClick={() => handleApprove(batch.id)}
+                              className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                            >
+                              Approve Data
+                            </button>
+                         </div>
+                       ))}
+                    </div>
+                 </section>
+              </motion.div>
+            )}
         </div>
       </main>
     </div>
