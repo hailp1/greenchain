@@ -85,7 +85,9 @@ const Header = () => {
             </div>
             <p className="text-[7px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Farm · Worth · Driven</p>
           </div>
-          {/* Desktop Nav */}
+        </Link>
+        
+        {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-10">
           <div className="flex items-center gap-6">
             {navLinks.map((link) => (
