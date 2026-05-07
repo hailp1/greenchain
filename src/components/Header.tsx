@@ -128,6 +128,7 @@ const Header = () => {
                      <button onClick={handleSignOut} className="block w-full text-left p-3 text-[10px] font-black uppercase text-red-500 hover:bg-red-50 rounded-xl">Sign Out</button>
                   </div>
                </div>
+            </div>
              ) : (
                <Link 
                  href="/signin" 
