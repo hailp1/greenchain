@@ -174,7 +174,8 @@ export default function ProducerPortal() {
     try {
       // 0. Pre-flight check: Ensure enough balance for gas fee (1.2 fwd)
       const currentBalanceRaw = balance.replace(/,/g, '');
-      if (parseFloat(currentBalanceRaw) < 1.2) {
+      const gasFee = 1.2;
+      if (parseFloat(currentBalanceRaw) < gasFee) {
         alert('Số dư fwd Token không đủ để trả phí Gas (1.2 fwd). Vui lòng nạp thêm để tiếp tục.');
         setIsSigning(false);
         return;
@@ -187,38 +188,38 @@ export default function ProducerPortal() {
           product_name: newHarvest.product_name,
           quantity: newHarvest.quantity,
           gps: newHarvest.gps,
-          status: 'PENDING'
+          status: 'PENDING',
+          producer_id: currentEntity?.id
         }])
         .select()
         .single();
 
       if (bError) throw bError;
 
-      // 2. Anchoring to Blockchain (Real-time Hash generation)
+      // 2. Anchoring to Blockchain & Deduct Gas Fee
       const mockTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
       
-      const { error: lError } = await supabase
-        .from('blockchain_ledger')
-        .insert([{
+      // Update balance and record gas transaction
+      const newBalance = parseFloat(currentBalanceRaw) - gasFee;
+      
+      await Promise.all([
+        supabase.from('entities').update({ fwd_balance: newBalance }).eq('id', currentEntity.id),
+        supabase.from('token_transactions').insert([{
+          entity_id: currentEntity.id,
+          amount: gasFee,
+          type: 'GAS_FEE',
+          description: `Gas fee for signing batch ${batch.id.slice(0,8)}`
+        }]),
+        supabase.from('blockchain_ledger').insert([{
           batch_id: batch.id,
           tx_hash: mockTxHash,
           block_height: 19400 + Math.floor(Math.random() * 1000),
           merkle_root: '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')
-        }]);
-
-      if (lError) throw lError;
+        }])
+      ]);
 
       setIsSuccess(true);
-      // Refresh all data
-      const { data: updatedBatches } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
-      setBatches(updatedBatches || []);
-      
-      const { data: updatedBalance } = await supabase.from('entities').select('fwd_balance').single();
-      if (updatedBalance) setBalance(Number(updatedBalance.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
-
-      const { data: updatedTx } = await supabase.from('token_transactions').select('*').order('created_at', { ascending: false });
-      setTransactions(updatedTx || []);
-      
+      await refreshData();
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (err) {
       console.error('Sign error:', err);
@@ -226,6 +227,95 @@ export default function ProducerPortal() {
     } finally {
       setIsSigning(false);
     }
+  };
+
+  const handleStake = async (amount: number) => {
+    if (!amount || amount <= 0) return;
+    try {
+      const currentBalance = parseFloat(balance.replace(/,/g, ''));
+      if (currentBalance < amount) {
+        alert("Số dư không đủ để thực hiện Staking.");
+        return;
+      }
+
+      const newBalance = currentBalance - amount;
+      const newStaked = (currentEntity?.staked_balance || 0) + amount;
+
+      await Promise.all([
+        supabase.from('entities').update({ fwd_balance: newBalance, staked_balance: newStaked }).eq('id', currentEntity.id),
+        supabase.from('token_transactions').insert([{
+          entity_id: currentEntity.id,
+          amount: amount,
+          type: 'STAKE',
+          description: `Staked ${amount} fwd to upgrade Node authority`
+        }])
+      ]);
+      
+      alert(`Đã Stake thành công ${amount} fwd! Quyền biểu quyết của bạn đã được cập nhật.`);
+      await refreshData();
+    } catch (err) {
+      console.error('Stake error:', err);
+    }
+  };
+
+  const handleClaim = async () => {
+    try {
+      const rewardAmount = 42.85; // Simulated claimable amount
+      const currentBalance = parseFloat(balance.replace(/,/g, ''));
+      const newBalance = currentBalance + rewardAmount;
+
+      await Promise.all([
+        supabase.from('entities').update({ fwd_balance: newBalance }).eq('id', currentEntity.id),
+        supabase.from('token_transactions').insert([{
+          entity_id: currentEntity.id,
+          amount: rewardAmount,
+          type: 'REWARD',
+          description: `Claimed validation rewards`
+        }])
+      ]);
+      
+      alert(`Đã nhận thành công ${rewardAmount} fwd vào ví!`);
+      await refreshData();
+    } catch (err) {
+      console.error('Claim error:', err);
+    }
+  };
+
+  const handleApprove = async (batchId: string) => {
+    try {
+      const rewardAmount = 5.0; // Higher reward for auditing
+      const currentBalance = parseFloat(balance.replace(/,/g, ''));
+      const newBalance = currentBalance + rewardAmount;
+      const newReputation = (currentEntity?.reputation_score || 0) + 1;
+
+      await Promise.all([
+        supabase.from('batches').update({ status: 'VERIFIED' }).eq('id', batchId),
+        supabase.from('entities').update({ fwd_balance: newBalance, reputation_score: newReputation }).eq('id', currentEntity.id),
+        supabase.from('token_transactions').insert([{
+          entity_id: currentEntity.id,
+          amount: rewardAmount,
+          type: 'REWARD',
+          description: `Audit reward for batch ${batchId.slice(0,8)}`
+        }])
+      ]);
+      
+      alert(`Đã xác thực lô hàng thành công! Bạn nhận được ${rewardAmount} fwd thưởng và +1 điểm uy tín.`);
+      await refreshData();
+    } catch (err) {
+      console.error('Approve error:', err);
+    }
+  };
+
+  const refreshData = async () => {
+    const { data: b } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
+    setBatches(b || []);
+    const { data: e } = await supabase.from('entities').select('*').eq('id', currentEntity?.id || '').single();
+    if (e) {
+      setCurrentEntity(e);
+      setBalance(Number(e.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    }
+    const { data: tx } = await supabase.from('token_transactions').select('*').order('created_at', { ascending: false });
+    setTransactions(tx || []);
   };
 
   return (
@@ -250,12 +340,13 @@ export default function ProducerPortal() {
 
         <nav className="flex-grow p-4 space-y-2 mt-6">
            {[
-             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-             { id: 'harvest', label: 'Sign Harvest', icon: PackagePlus },
-             { id: 'sensors', label: 'IoT Sensors', icon: Cpu },
+             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+             { id: 'harvest', label: 'Sign Harvest', icon: PackagePlus, roles: ['PRODUCER', 'FARMER'] },
+             { id: 'audit', label: 'Audit & Verify', icon: ShieldCheck, roles: ['AUDITOR', 'GOVERNMENT'] },
              { id: 'tokenomics', label: 'Tokenomics', icon: Zap },
+             { id: 'governance', label: 'DAO Governance', icon: Globe },
              { id: 'settings', label: 'Settings', icon: Settings }
-           ].map((item) => (
+           ].filter(item => !item.roles || item.roles.includes(currentEntity?.role)).map((item) => (
              <button 
                key={item.id}
                onClick={() => setActiveTab(item.id)}
@@ -517,17 +608,66 @@ export default function ProducerPortal() {
                                   <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
                                   <p className="text-[10px] text-slate-400 font-bold tracking-widest leading-none">{tx.description}</p>
                                </div>
+                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
+                               </div>
                             </div>
-                            <div className="text-right">
-                               <p className={`text-sm font-black ${tx.type === 'GAS_FEE' ? 'text-orange-500' : 'text-emerald-500'}`}>
-                                 {tx.type === 'GAS_FEE' ? '-' : '+'}{Number(tx.amount).toFixed(2)} fwd
-                               </p>
-                               <p className="text-[8px] text-slate-300 font-bold uppercase">{new Date(tx.created_at).toLocaleString()}</p>
-                            </div>
+                            <button 
+                              onClick={() => handleApprove(batch.id)}
+                              className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                            >
+                              Approve Data
+                            </button>
                          </div>
                        ))}
                     </div>
                  </section>
+              </motion.div>
+            )}
+
+            {activeTab === 'governance' && (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-natural-950 text-white rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+                       <div className="relative z-10 space-y-8">
+                          <div>
+                             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">My Influence</p>
+                             <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Voting <br/><span className="text-white">Power</span></h3>
+                          </div>
+                          <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem]">
+                             <p className="text-5xl font-black text-white">{(Number(currentEntity?.reputation_score || 0) + (Number(currentEntity?.staked_balance || 0) * 0.1)).toFixed(1)}</p>
+                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">vPoints</p>
+                          </div>
+                          <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                             Quyền biểu quyết của bạn được tính dựa trên điểm uy tín (Reputation) và 10% số dư Token đã đặt cọc (Stake). Càng đóng góp nhiều cho mạng lưới, tiếng nói của bạn càng quan trọng.
+                          </p>
+                       </div>
+                    </div>
+
+                    <div className="space-y-8">
+                       <section className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl">
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 italic">Active Proposals</h4>
+                          <div className="space-y-4">
+                             {[
+                               { title: "Nâng mức thưởng xác thực thêm 5%", votes: "82% Yes" },
+                               { title: "Mở rộng mạng lưới xác thực tại Lâm Đồng", votes: "95% Yes" }
+                             ].map((prop, i) => (
+                               <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                  <p className="text-sm font-black text-natural-900">{prop.title}</p>
+                                  <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">{prop.votes}</span>
+                               </div>
+                             ))}
+                          </div>
+                       </section>
+                       <div className="bg-emerald-600 text-white p-10 rounded-[3rem] shadow-xl relative overflow-hidden group cursor-pointer hover:bg-emerald-500 transition-all">
+                          <div className="relative z-10">
+                             <h4 className="text-sm font-black uppercase tracking-widest mb-2 italic">Sáng kiến mới</h4>
+                             <p className="text-2xl font-black tracking-tighter leading-none">Đề xuất cải tiến <br/>mạng lưới</p>
+                             <ArrowRight size={24} className="mt-6 group-hover:translate-x-2 transition-transform" />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
               </motion.div>
             )}
 
