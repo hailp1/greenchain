@@ -322,8 +322,12 @@ export default function ProducerPortal() {
         }])
       ]);
       
-      alert(`Đã Stake thành công ${amount} fwd! Quyền biểu quyết của bạn đã được cập nhật.`);
+      setIsSuccess(true);
       await refreshData();
+      setTimeout(() => {
+        setIsSuccess(false);
+        setActiveTab('dashboard');
+      }, 2000);
     } catch (err) {
       console.error('Stake error:', err);
     }
@@ -345,8 +349,12 @@ export default function ProducerPortal() {
         }])
       ]);
       
-      alert(`Đã nhận thành công ${rewardAmount} fwd vào ví!`);
+      setIsSuccess(true);
       await refreshData();
+      setTimeout(() => {
+        setIsSuccess(false);
+        setActiveTab('dashboard');
+      }, 2000);
     } catch (err) {
       console.error('Claim error:', err);
     }
