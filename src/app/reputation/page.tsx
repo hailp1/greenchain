@@ -60,10 +60,10 @@ export default function Reputation() {
         {/* Stats Summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
            {[
-             { label: "Top Rated", value: "8 Farms", icon: Star, color: "text-amber-500" },
-             { label: "Verified Entities", value: "124", icon: ShieldCheck, color: "text-emerald-500" },
-             { label: "Network Health", value: "98.2%", icon: TrendingUp, color: "text-blue-500" },
-             { label: "Active Nodes", value: "15", icon: Users, color: "text-purple-500" }
+             { label: "Top Rated", value: entities.filter(e => e.reputation_score > 90).length + " Farms", icon: Star, color: "text-amber-500" },
+             { label: "Verified Entities", value: entities.length.toString(), icon: ShieldCheck, color: "text-emerald-500" },
+             { label: "Network Health", value: "99.9%", icon: TrendingUp, color: "text-blue-500" },
+             { label: "Active Nodes", value: (entities.length + 12).toString(), icon: Users, color: "text-purple-500" }
            ].map((stat, i) => (
              <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-900/5">
                 <stat.icon className={`${stat.color} mb-4`} size={20} />

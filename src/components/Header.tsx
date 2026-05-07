@@ -25,11 +25,21 @@ const Header = () => {
   }, []);
 
   const [user, setUser] = useState<any>(null);
+  const [fwdBalance, setFwdBalance] = useState("0.00");
 
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Fetch real balance from entities table
+        const { data } = await supabase
+          .from('entities')
+          .select('fwd_balance')
+          .single();
+        if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+      }
     };
     checkUser();
 
@@ -115,7 +125,7 @@ const Header = () => {
                   {/* Token Balance Badge */}
                   <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                     <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">5,000.00 fwd</span>
+                     <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">{fwdBalance} fwd</span>
                   </div>
 
                   <div className="flex items-center gap-3 bg-slate-50 p-1 pr-4 rounded-full border border-slate-100 group relative">

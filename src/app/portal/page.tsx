@@ -60,9 +60,24 @@ export default function ProducerPortal() {
     fetchPortalData();
   }, []);
 
+  const [balance, setBalance] = useState("5,000.00");
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      if (user) {
+        const { data } = await supabase
+          .from('entities')
+          .select('fwd_balance')
+          .single();
+        if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+      }
+    };
+    fetchBalance();
+  }, [user]);
+
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "fwd Balance", value: "5,000.00", icon: Zap },
+    { label: "fwd Balance", value: balance, icon: Zap },
     { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
@@ -169,7 +184,7 @@ export default function ProducerPortal() {
            <div className="flex items-center gap-6">
               <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
                  <Zap size={14} className="animate-pulse" />
-                 5,000.00 fwd
+                 {balance} fwd
               </div>
               <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
