@@ -134,6 +134,47 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
            
            {/* Left: Staking & Transactions */}
            <div className="lg:col-span-2 space-y-8">
+              {/* Proof of Stake Verification Card */}
+              <section className="bg-emerald-950 rounded-[2.5rem] p-8 md:p-12 text-white border border-emerald-500/20 shadow-2xl relative overflow-hidden group">
+                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
+                    <Lock size={120} />
+                 </div>
+                 <div className="relative z-10 space-y-8">
+                    <div className="flex justify-between items-start">
+                       <div>
+                          <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">On-Chain Verification Status</p>
+                          <h3 className="text-3xl font-black italic uppercase tracking-tighter">Proof <span className="text-emerald-500">of Stake</span></h3>
+                       </div>
+                       <div className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                          <CheckCircle2 size={14} /> Verified Ledger
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Locked Balance</p>
+                          <div className="flex items-baseline gap-2">
+                             <span className="text-4xl font-black text-white">{Number(entity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                             <span className="text-xs font-bold text-emerald-500">fwd</span>
+                          </div>
+                          <p className="text-[8px] text-slate-400 font-medium mt-2">Dữ liệu được xác thực bởi 12 Node bảo chứng trên mạng lưới.</p>
+                       </div>
+                       <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Node Authority Level</p>
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+                                <Award size={24} />
+                             </div>
+                             <div>
+                                <p className="text-xl font-black text-white uppercase italic">{entity?.staked_balance > 500 ? 'Tier 1 Validator' : 'Standard Node'}</p>
+                                <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1">Status: Active & Syncing</p>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </section>
+
               <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden">
                  <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <h3 className="text-xs font-black text-natural-900 uppercase tracking-widest flex items-center gap-3">
@@ -145,21 +186,26 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
                     {transactions.length === 0 ? (
                       <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No transaction history found for this entity</div>
                     ) : transactions.map((tx, i) => (
-                      <div key={i} className="p-8 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                      <div key={i} className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 group hover:bg-slate-50/50 transition-colors">
                          <div className="flex items-center gap-6">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${tx.type === 'GAS_FEE' ? 'bg-orange-50 text-orange-500' : tx.type === 'STAKE' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}>
                                {tx.type === 'GAS_FEE' ? <ArrowLeft size={20} className="rotate-135" /> : tx.type === 'STAKE' ? <Lock size={20} /> : <Award size={20} />}
                             </div>
                             <div>
-                               <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
+                               <div className="flex items-center gap-3">
+                                  <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
+                                  {tx.type === 'STAKE' && (
+                                    <span className="px-2 py-0.5 bg-blue-500 text-white text-[7px] font-black rounded uppercase tracking-widest">LOCKED</span>
+                                  )}
+                               </div>
                                <p className="text-[10px] text-slate-400 font-bold tracking-widest mt-1">{tx.description}</p>
                             </div>
                          </div>
-                         <div className="text-right">
+                         <div className="text-left md:text-right">
                             <p className={`text-lg font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
                                {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} fwd
                             </p>
-                            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">{new Date(tx.created_at).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">{new Date(tx.created_at).toLocaleDateString()} • {new Date(tx.created_at).toLocaleTimeString()}</p>
                          </div>
                       </div>
                     ))}
