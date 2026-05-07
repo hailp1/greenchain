@@ -391,7 +391,58 @@ export default function ProducerPortal() {
                          {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
                        </p>
                     </div>
-                  </div>
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Hold)</p>
+                       <p className="text-3xl font-black text-blue-600">
+                         {currentEntity?.staked_balance || "0.00"} fwd
+                       </p>
+                    </div>
+                 </div>
+
+                 {/* Staking & Rewards Console */}
+                 <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-natural-950 text-white rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+                       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                          <ShieldCheck size={120} />
+                       </div>
+                       <div className="relative z-10 space-y-6">
+                          <div className="space-y-1">
+                             <h3 className="text-2xl font-black italic uppercase tracking-tighter">Stake <span className="text-emerald-500">to Verify</span></h3>
+                             <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Nâng cấp quyền hạn Node & Nhận thưởng</p>
+                          </div>
+                          <div className="space-y-4">
+                             <div className="p-6 bg-white/5 border border-white/10 rounded-3xl">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Estimated APR</p>
+                                <p className="text-2xl font-black text-emerald-400">12.5% <span className="text-[10px] text-slate-400 font-bold ml-2">fwd/year</span></p>
+                             </div>
+                             <button className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
+                                START STAKING
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="bg-white rounded-[3rem] p-8 md:p-12 border border-slate-100 shadow-2xl flex flex-col justify-between">
+                       <div className="space-y-6">
+                          <div className="flex justify-between items-center">
+                             <div className="space-y-1">
+                                <h3 className="text-2xl font-black italic uppercase tracking-tighter">Yield <span className="text-blue-500">Rewards</span></h3>
+                                <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Phần thưởng xác thực tích lũy</p>
+                             </div>
+                             <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/10">
+                                <Award size={24} />
+                             </div>
+                          </div>
+                          <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 text-center">
+                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Available to Claim</p>
+                             <p className="text-4xl font-black text-natural-950">42.85 <span className="text-xs text-slate-400 ml-1">fwd</span></p>
+                          </div>
+                       </div>
+                       <button className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6 active:scale-95">
+                          CLAIM REWARDS
+                       </button>
+                    </div>
+                 </section>
 
                   {/* Inter-Wallet Transfer Section */}
                   <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden p-8 md:p-12">
