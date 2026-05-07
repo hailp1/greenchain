@@ -28,24 +28,31 @@ const Header = () => {
   const [fwdBalance, setFwdBalance] = useState("0.00");
 
   useEffect(() => {
+    const fetchFwdBalance = async (userId: string) => {
+      const { data } = await supabase
+        .from('entities')
+        .select('fwd_balance')
+        .eq('id', userId)
+        .maybeSingle();
+      if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    };
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-      
       if (session?.user) {
-        // Fetch real balance from entities table for this specific user
-        const { data } = await supabase
-          .from('entities')
-          .select('fwd_balance')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+        fetchFwdBalance(session.user.id);
       }
     };
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchFwdBalance(session.user.id);
+      } else {
+        setFwdBalance("0.00");
+      }
     });
 
     return () => subscription.unsubscribe();
