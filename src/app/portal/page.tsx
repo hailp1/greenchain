@@ -42,6 +42,7 @@ export default function ProducerPortal() {
   const [isTransferring, setIsTransferring] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [currentEntity, setCurrentEntity] = useState<any>(null);
+  const [stakeInput, setStakeInput] = useState("100");
 
   // Form states for new harvest
   const [newHarvest, setNewHarvest] = useState({
@@ -310,7 +311,7 @@ export default function ProducerPortal() {
       }
 
       const newBalance = currentBalance - amount;
-      const newStaked = (currentEntity?.staked_balance || 0) + amount;
+      const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
 
       await Promise.all([
         supabase.from('entities').update({ fwd_balance: newBalance, staked_balance: newStaked }).eq('id', currentEntity.id),
@@ -568,7 +569,7 @@ export default function ProducerPortal() {
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Hold)</p>
                        <p className="text-3xl font-black text-blue-600">
-                         {currentEntity?.staked_balance || "0.00"} fwd
+                         {Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} fwd
                        </p>
                     </div>
                  </div>
@@ -585,12 +586,33 @@ export default function ProducerPortal() {
                              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Nâng cấp quyền hạn Node & Nhận thưởng</p>
                           </div>
                           <div className="space-y-4">
-                             <div className="p-6 bg-white/5 border border-white/10 rounded-3xl">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Estimated APR</p>
-                                <p className="text-2xl font-black text-emerald-400">12.5% <span className="text-[10px] text-slate-400 font-bold ml-2">fwd/year</span></p>
+                             <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
+                                <div className="flex justify-between items-end">
+                                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount to Stake</p>
+                                   <p className="text-[10px] font-bold text-emerald-500 uppercase">Available: {balance}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                   <input 
+                                      type="number" 
+                                      value={stakeInput}
+                                      onChange={(e) => setStakeInput(e.target.value)}
+                                      className="flex-grow bg-transparent border-none text-2xl font-black text-white focus:outline-none focus:ring-0 p-0"
+                                      placeholder="0.00"
+                                   />
+                                   <button 
+                                      onClick={() => setStakeInput(balance.replace(/,/g, ''))}
+                                      className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/30 transition-all"
+                                   >
+                                      MAX
+                                   </button>
+                                </div>
                              </div>
-                             <button onClick={() => handleStake(100)} className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95">
-                                START STAKING
+                             <button 
+                                onClick={() => handleStake(Number(stakeInput))}
+                                disabled={!stakeInput || Number(stakeInput) <= 0}
+                                className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                             >
+                                CONFIRM STAKING
                              </button>
                           </div>
                        </div>
@@ -703,183 +725,182 @@ export default function ProducerPortal() {
                     </div>
                  </section>
               </motion.div>
-            )}
+           )}
 
-            {activeTab === 'governance' && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="bg-natural-950 text-white rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
-                       <div className="relative z-10 space-y-8">
-                          <div>
-                             <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">My Influence</p>
-                             <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Voting <br/><span className="text-white">Power</span></h3>
-                          </div>
-                          <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem]">
-                             <p className="text-5xl font-black text-white">{(Number(currentEntity?.reputation_score || 0) + (Number(currentEntity?.staked_balance || 0) * 0.1)).toFixed(1)}</p>
-                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">vPoints</p>
-                          </div>
-                          <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                             Quyền biểu quyết của bạn được tính dựa trên điểm uy tín (Reputation) và 10% số dư Token đã đặt cọc (Stake). Càng đóng góp nhiều cho mạng lưới, tiếng nói của bạn càng quan trọng.
-                          </p>
-                       </div>
-                    </div>
+           {activeTab === 'governance' && (
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="bg-natural-950 text-white rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+                      <div className="relative z-10 space-y-8">
+                         <div>
+                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">My Influence</p>
+                            <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Voting <br/><span className="text-white">Power</span></h3>
+                         </div>
+                         <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem]">
+                            <p className="text-5xl font-black text-white">{(Number(currentEntity?.reputation_score || 0) + (Number(currentEntity?.staked_balance || 0) * 0.1)).toFixed(1)}</p>
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">vPoints</p>
+                         </div>
+                         <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            Quyền biểu quyết của bạn được tính dựa trên điểm uy tín (Reputation) và 10% số dư Token đã đặt cọc (Stake). Càng đóng góp nhiều cho mạng lưới, tiếng nói của bạn càng quan trọng.
+                         </p>
+                      </div>
+                   </div>
 
-                    <div className="space-y-8">
-                       <section className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl">
-                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 italic">Active Proposals</h4>
-                          <div className="space-y-4">
-                             {[
-                               { title: "Nâng mức thưởng xác thực thêm 5%", votes: "82% Yes" },
-                               { title: "Mở rộng mạng lưới xác thực tại Lâm Đồng", votes: "95% Yes" }
-                             ].map((prop, i) => (
-                               <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
-                                  <p className="text-sm font-black text-natural-900">{prop.title}</p>
-                                  <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">{prop.votes}</span>
-                               </div>
-                             ))}
-                          </div>
-                       </section>
-                       <div className="bg-emerald-600 text-white p-10 rounded-[3rem] shadow-xl relative overflow-hidden group cursor-pointer hover:bg-emerald-500 transition-all">
-                          <div className="relative z-10">
-                             <h4 className="text-sm font-black uppercase tracking-widest mb-2 italic">Sáng kiến mới</h4>
-                             <p className="text-2xl font-black tracking-tighter leading-none">Đề xuất cải tiến <br/>mạng lưới</p>
-                             <ArrowRight size={24} className="mt-6 group-hover:translate-x-2 transition-transform" />
-                          </div>
-                       </div>
-                    </div>
-                 </div>
-              </motion.div>
-            )}
+                   <div className="space-y-8">
+                      <section className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl">
+                         <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 italic">Active Proposals</h4>
+                         <div className="space-y-4">
+                            {[
+                              { title: "Nâng mức thưởng xác thực thêm 5%", votes: "82% Yes" },
+                              { title: "Mở rộng mạng lưới xác thực tại Lâm Đồng", votes: "95% Yes" }
+                            ].map((prop, i) => (
+                              <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                 <p className="text-sm font-black text-natural-900">{prop.title}</p>
+                                 <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">{prop.votes}</span>
+                              </div>
+                            ))}
+                         </div>
+                      </section>
+                      <div className="bg-emerald-600 text-white p-10 rounded-[3rem] shadow-xl relative overflow-hidden group cursor-pointer hover:bg-emerald-500 transition-all">
+                         <div className="relative z-10">
+                            <h4 className="text-sm font-black uppercase tracking-widest mb-2 italic">Sáng kiến mới</h4>
+                            <p className="text-2xl font-black tracking-tighter leading-none">Đề xuất cải tiến <br/>mạng lưới</p>
+                            <ArrowRight size={24} className="mt-6 group-hover:translate-x-2 transition-transform" />
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             </motion.div>
+           )}
 
-            {activeTab === 'harvest' && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                className="max-w-4xl mx-auto space-y-12 pt-12"
-              >
-                 <div className="text-center space-y-4">
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
-                    <p className="text-slate-400 text-lg font-light">Ghi nhận dữ liệu thu hoạch mới lên mạng lưới AgriChain thông qua chữ ký số xác thực.</p>
-                 </div>
+           {activeTab === 'harvest' && (
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.95 }} 
+               animate={{ opacity: 1, scale: 1 }} 
+               className="max-w-4xl mx-auto space-y-12 pt-12"
+             >
+                <div className="text-center space-y-4">
+                   <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
+                   <p className="text-slate-400 text-lg font-light">Ghi nhận dữ liệu thu hoạch mới lên mạng lưới AgriChain thông qua chữ ký số xác thực.</p>
+                </div>
 
-                 <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
-                          <select 
-                            value={newHarvest.product_name}
-                            onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
-                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                          >
-                             <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
-                             <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
-                             <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
-                             <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
-                          </select>
-                       </div>
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
-                          <input 
-                            type="number" 
-                            value={newHarvest.quantity}
-                            onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
-                            placeholder="250.00" 
-                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
-                          />
-                       </div>
-                    </div>
+                <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
+                         <select 
+                           value={newHarvest.product_name}
+                           onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
+                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                         >
+                            <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
+                            <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
+                            <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
+                            <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
+                         </select>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
+                         <input 
+                           type="number" 
+                           value={newHarvest.quantity}
+                           onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
+                           placeholder="250.00" 
+                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
+                         />
+                      </div>
+                   </div>
 
-                    <div className="p-8 rounded-[2rem] bg-emerald-500/5 border border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center gap-4 group hover:border-emerald-500/50 transition-all cursor-pointer">
-                       <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/10"><CloudUpload size={32} /></div>
-                       <div>
-                          <p className="text-sm font-black text-natural-950">Tải lên chứng từ thu hoạch</p>
-                          <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max 10MB)</p>
-                       </div>
-                    </div>
+                   <div className="p-8 rounded-[2rem] bg-emerald-500/5 border border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center gap-4 group hover:border-emerald-500/50 transition-all cursor-pointer">
+                      <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/10"><CloudUpload size={32} /></div>
+                      <div>
+                         <p className="text-sm font-black text-natural-950">Tải lên chứng từ thu hoạch</p>
+                         <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max 10MB)</p>
+                      </div>
+                   </div>
 
-                    <div className="flex flex-col items-center gap-6 pt-6">
-                       <button 
-                         onClick={handleSign}
-                         disabled={isSigning || isSuccess}
-                         className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-4 ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black hover:-translate-y-1'}`}
-                       >
-                          {isSigning ? (
-                            <>
-                              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                              SIGNING LEDGER...
-                            </>
-                          ) : isSuccess ? (
-                            <>
-                              <CheckCircle2 size={24} /> HARVEST VERIFIED & LOCKED
-                            </>
-                          ) : (
-                            <>
-                              <ShieldCheck size={24} /> SIGN DATA TO BLOCKCHAIN
-                            </>
-                          )}
-                       </button>
-                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature: 0x82f...a12c • Secured by Ethereum Node</p>
-                    </div>
-                 </div>
-
-                 <AnimatePresence>
-                    {isSuccess && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="bg-emerald-500 p-6 rounded-2xl text-white flex items-center justify-between shadow-2xl"
+                   <div className="flex flex-col items-center gap-6 pt-6">
+                      <button 
+                        onClick={handleSign}
+                        disabled={isSigning || isSuccess}
+                        className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-4 ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black hover:-translate-y-1'}`}
                       >
-                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
-                            <div>
-                               <p className="text-sm font-black uppercase">Transaction Confirmed!</p>
-                               <p className="text-[10px] font-bold opacity-80">Block #19482416 • 12 Nodes Validated</p>
-                            </div>
-                         </div>
-                         <button className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">View Transaction</button>
-                      </motion.div>
-                    )}
-                 </AnimatePresence>
-              </motion.div>
-            )}
+                         {isSigning ? (
+                           <>
+                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                             SIGNING LEDGER...
+                           </>
+                         ) : isSuccess ? (
+                           <>
+                             <CheckCircle2 size={24} /> HARVEST VERIFIED & LOCKED
+                           </>
+                         ) : (
+                           <>
+                             <ShieldCheck size={24} /> SIGN DATA TO BLOCKCHAIN
+                           </>
+                         )}
+                      </button>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature: 0x82f...a12c • Secured by Ethereum Node</p>
+                   </div>
+                </div>
 
-            {activeTab === 'audit' && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
-                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
-                       <span className="text-[10px] font-bold text-slate-400">Pending: {batches.filter(b => b.status === 'PENDING').length}</span>
-                    </div>
-                    <div className="divide-y divide-slate-50">
-                       {batches.filter(b => b.status === 'PENDING').length === 0 ? (
-                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches for audit</div>
-                       ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
-                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
-                            <div className="flex items-center gap-4">
-                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                                  <ShieldCheck size={18} />
-                               </div>
-                               <div>
-                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
-                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
-                               </div>
-                            </div>
-                            <button 
-                              onClick={() => handleApprove(batch.id)}
-                              className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
-                            >
-                              Approve Data
-                            </button>
-                         </div>
-                       ))}
-                    </div>
-                 </section>
-              </motion.div>
-            )}
+                <AnimatePresence>
+                   {isSuccess && (
+                     <motion.div 
+                       initial={{ opacity: 0, y: 20 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       exit={{ opacity: 0, y: -20 }}
+                       className="bg-emerald-500 p-6 rounded-2xl text-white flex items-center justify-between shadow-2xl"
+                     >
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
+                           <div>
+                              <p className="text-sm font-black uppercase">Transaction Confirmed!</p>
+                              <p className="text-[10px] font-bold opacity-80">Block #19482416 • 12 Nodes Validated</p>
+                           </div>
+                        </div>
+                        <button className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">View Transaction</button>
+                     </motion.div>
+                   )}
+                </AnimatePresence>
+             </motion.div>
+           )}
+
+           {activeTab === 'audit' && (
+             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                   <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                      <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
+                      <span className="text-[10px] font-bold text-slate-400">Pending: {batches.filter(b => b.status === 'PENDING').length}</span>
+                   </div>
+                   <div className="divide-y divide-slate-50">
+                      {batches.filter(b => b.status === 'PENDING').length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches for audit</div>
+                      ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
+                        <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                           <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                                 <ShieldCheck size={18} />
+                              </div>
+                              <div>
+                                 <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
+                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
+                              </div>
+                           </div>
+                           <button 
+                             onClick={() => handleApprove(batch.id)}
+                             className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                           >
+                             Approve Data
+                           </button>
+                        </div>
+                      ))}
+                   </div>
+                </section>
+             </motion.div>
+           )}
         </div>
       </main>
     </div>
   );
 }
-
