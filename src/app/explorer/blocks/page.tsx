@@ -120,15 +120,6 @@ export default function BlocksPage() {
                  </button>
               </div>
            </div>
-              <div className="flex gap-2">
-                 <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled>
-                    <ChevronRight size={16} className="rotate-180" />
-                 </button>
-                 <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50">
-                    <ChevronRight size={16} />
-                 </button>
-              </div>
-           </div>
         </div>
       </main>
     </div>
