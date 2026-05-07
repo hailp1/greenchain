@@ -33,10 +33,11 @@ const Header = () => {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Fetch real balance from entities table
+        // Fetch real balance from entities table for this specific user
         const { data } = await supabase
           .from('entities')
           .select('fwd_balance')
+          .eq('id', session.user.id)
           .single();
         if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
       }
@@ -145,7 +146,7 @@ const Header = () => {
         </nav>
 
         {/* Mobile Toggle */}
-        <button className="md:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
+        <button className="lg:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -157,7 +158,7 @@ const Header = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-slate-100 overflow-hidden"
+            className="lg:hidden bg-white border-b border-slate-100 overflow-hidden"
           >
             <div className="p-6 flex flex-col gap-6">
               {navLinks.map((link) => (
