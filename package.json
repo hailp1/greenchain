@@ -1,0 +1,16 @@
+{
+  "name": "greenchain-bridge",
+  "version": "1.0.0",
+  "description": "Bridge between Supabase and Cosmos SDK for GreenChain",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}

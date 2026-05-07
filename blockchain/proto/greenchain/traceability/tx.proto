@@ -1,0 +1,27 @@
+syntax = "proto3";
+package greenchain.traceability;
+
+option go_package = "greenchain/x/traceability/types";
+
+service Msg {
+  rpc CreateBatch(MsgCreateBatch) returns (MsgCreateBatchResponse);
+  rpc IssueCertificate(MsgIssueCertificate) returns (MsgIssueCertificateResponse);
+}
+
+message MsgCreateBatch {
+  string creator = 1;
+  string hash = 2;
+}
+
+message MsgCreateBatchResponse {}
+
+message MsgIssueCertificate {
+  string creator = 1; // Admin
+  string recipient = 2;
+  string certType = 3;
+  string data = 4;
+}
+
+message MsgIssueCertificateResponse {
+  string sbtId = 1;
+}

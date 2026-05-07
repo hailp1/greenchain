@@ -1,0 +1,19 @@
+# Use Node.js LTS
+FROM node:20-slim
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Expose API port
+EXPOSE 3000
+
+# Run both API and Bridge (using pm2 or background processes)
+# For simplicity in docker, we'll use a shell script
+CMD ["sh", "-c", "node api.js & node bridge.js"]

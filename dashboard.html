@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenChain | Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --card-bg: #151b23;
+            --accent: #00ff88;
+            --red-alert: #ff4444;
+            --text: #e6edf3;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: #8b949e;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-up { background: rgba(0, 255, 136, 0.1); color: var(--accent); }
+        .status-down { background: rgba(255, 68, 68, 0.1); color: var(--red-alert); }
+
+        .logs {
+            margin-top: 30px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            overflow: hidden;
+        }
+
+        .logs-header {
+            padding: 15px 20px;
+            background: #1c2128;
+            border-bottom: 1px solid #30363d;
+            font-weight: 600;
+            color: var(--red-alert);
+        }
+
+        .log-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #30363d;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-item:last-child { border-bottom: none; }
+        .log-time { color: #8b949e; }
+        .log-msg { color: var(--text); flex-grow: 1; margin-left: 20px; }
+
+        .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 0 rgba(0, 255, 136, 0.4);
+            animation: pulse 2s infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><span class="pulse"></span>GreenChain Monitor v1.0</div>
+        <div id="connection-status" class="status-badge status-up">BRIDGE ACTIVE</div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="card-title">Total Batches</div>
+            <div id="total-batches" class="card-value">0</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Anchored on Chain</div>
+            <div id="anchored-batches" class="card-value">0</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Pending Anchoring</div>
+            <div id="pending-batches" class="card-value">0</div>
+        </div>
+    </div>
+
+    <div class="logs">
+        <div class="logs-header">RED ALERT | SYSTEM INCIDENTS</div>
+        <div id="log-container">
+            <div class="log-item">
+                <span class="log-time">--:--:--</span>
+                <span class="log-msg">Waiting for logs...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration - Please update with your credentials
+        const SUPABASE_URL = "https://your-project.supabase.co";
+        const SUPABASE_KEY = "your-anon-key";
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function updateStats() {
+            const { count: total } = await supabase.from('batches').select('*', { count: 'exact', head: true });
+            const { count: anchored } = await supabase.from('batches').select('*', { count: 'exact', head: true }).eq('status', 'ANCHORED');
+            const { count: pending } = await supabase.from('batches').select('*', { count: 'exact', head: true }).eq('status', 'PENDING');
+
+            document.getElementById('total-batches').innerText = total || 0;
+            document.getElementById('anchored-batches').innerText = anchored || 0;
+            document.getElementById('pending-batches').innerText = pending || 0;
+        }
+
+        async function fetchLogs() {
+            const { data: logs } = await supabase
+                .from('system_logs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (logs && logs.length > 0) {
+                const container = document.getElementById('log-container');
+                container.innerHTML = logs.map(log => `
+                    <div class="log-item">
+                        <span class="log-time">${new Date(log.created_at).toLocaleTimeString()}</span>
+                        <span class="log-msg">[${log.level}] ${log.message}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Auto-refresh
+        setInterval(() => {
+            updateStats();
+            fetchLogs();
+        }, 5000);
+
+        updateStats();
+        fetchLogs();
+    </script>
+</body>
+</html>

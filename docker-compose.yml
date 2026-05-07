@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3000:3000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - COSMOS_RPC_URL=http://cosmos:26657
+    depends_on:
+      - cosmos
+
+  cosmos:
+    image: golang:1.21-bullseye
+    volumes:
+      - ./blockchain:/blockchain
+    working_dir: /blockchain
+    ports:
+      - "26657:26657"
+      - "1317:1317"
+      - "9090:9090"
+    command: sh -c "go install github.com/ignite/cli/v28@latest && ignite chain serve --address tcp://0.0.0.0:26657"
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3002:3000"
+    depends_on:
+      - backend
