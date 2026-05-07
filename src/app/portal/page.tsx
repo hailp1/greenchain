@@ -9,25 +9,93 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { supabase } from '@/lib/supabase';
+
 export default function ProducerPortal() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [batches, setBatches] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Form states for new harvest
+  const [newHarvest, setNewHarvest] = useState({
+    product_name: 'Trà Atisô (Lạc Dương)',
+    quantity: 250,
+    gps: '12.0124, 108.3842'
+  });
+
+  useEffect(() => {
+    const fetchPortalData = async () => {
+      try {
+        setLoading(true);
+        // In a real app, we would filter by the current user's entity_id
+        const { data, error } = await supabase
+          .from('batches')
+          .select('*, blockchain_ledger(tx_hash)')
+          .order('timestamp', { ascending: false });
+
+        if (error) throw error;
+        setBatches(data || []);
+      } catch (err) {
+        console.error('Portal data error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPortalData();
+  }, []);
 
   const stats = [
-    { label: "Active Batches", value: "12", icon: Layers },
+    { label: "Active Batches", value: batches.length.toString(), icon: Layers },
     { label: "Verified Origin", value: "100%", icon: ShieldCheck },
     { label: "Network Trust", value: "A+", icon: Zap },
-    { label: "Total Yield", value: "2.4 Tons", icon: BarChart3 }
+    { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
 
-  const handleSign = () => {
+  const handleSign = async () => {
     setIsSigning(true);
-    setTimeout(() => {
-      setIsSigning(false);
+    try {
+      // 1. Create the batch in Supabase
+      const { data: batch, error: bError } = await supabase
+        .from('batches')
+        .insert([{
+          product_name: newHarvest.product_name,
+          quantity: newHarvest.quantity,
+          gps: newHarvest.gps,
+          status: 'PENDING'
+        }])
+        .select()
+        .single();
+
+      if (bError) throw bError;
+
+      // 2. Simulate blockchain anchoring (In real app, this would be a server-side trigger or background worker)
+      const mockTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
+      
+      const { error: lError } = await supabase
+        .from('blockchain_ledger')
+        .insert([{
+          batch_id: batch.id,
+          tx_hash: mockTxHash,
+          block_height: 19400 + Math.floor(Math.random() * 1000),
+          merkle_root: '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')
+        }]);
+
+      if (lError) throw lError;
+
       setIsSuccess(true);
-      setTimeout(() => setIsSuccess(false), 3000);
-    }, 2500);
+      // Refresh list
+      const { data: updated } = await supabase.from('batches').select('*, blockchain_ledger(tx_hash)').order('timestamp', { ascending: false });
+      setBatches(updated || []);
+      
+      setTimeout(() => setIsSuccess(false), 5000);
+    } catch (err) {
+      console.error('Sign error:', err);
+      alert('Không thể ký dữ liệu. Vui lòng kiểm tra lại kết nối.');
+    } finally {
+      setIsSigning(false);
+    }
   };
 
   return (
@@ -145,26 +213,26 @@ export default function ProducerPortal() {
                       <button className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all">MANAGE ALL</button>
                    </div>
                    <div className="divide-y divide-slate-50">
-                      {[
-                        { id: "TRA-003", product: "Trà Atisô Lạc Dương", status: "In Transit", date: "2026-04-02" },
-                        { id: "TRA-004", product: "Trà Atisô Lạc Dương", status: "Verified", date: "2026-04-01" },
-                        { id: "TRA-005", product: "Trà Atisô Lạc Dương", status: "Processing", date: "2026-04-03" }
-                      ].map((batch, i) => (
+                      {loading ? (
+                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading ledger data...</div>
+                      ) : batches.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No batches found</div>
+                      ) : batches.map((batch, i) => (
                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
                            <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
                                  <Activity size={18} />
                               </div>
                               <div>
-                                 <p className="text-sm font-black text-natural-950">{batch.id} - {batch.product}</p>
-                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Harvest Date: {batch.date}</p>
+                                 <p className="text-sm font-black text-natural-950">{batch.id.slice(0,8)} - {batch.product_name}</p>
+                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Harvest Date: {new Date(batch.timestamp).toLocaleDateString()}</p>
                               </div>
                            </div>
                            <div className="flex items-center gap-6">
-                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${batch.status === 'Verified' ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-blue-50 text-blue-500 border-blue-100'}`}>
-                                 {batch.status}
+                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${batch.blockchain_ledger?.[0]?.tx_hash ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-amber-50 text-amber-500 border-amber-100'}`}>
+                                 {batch.blockchain_ledger?.[0]?.tx_hash ? 'VERIFIED' : 'PENDING'}
                               </span>
-                              <ChevronRight size={16} className="text-slate-300" />
+                              <ArrowRight size={16} className="text-slate-300" />
                            </div>
                         </div>
                       ))}

@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.3",
     "@tailwindcss/postcss": "^4.2.4",
     "clsx": "^2.1.1",
     "framer-motion": "^11.2.10",

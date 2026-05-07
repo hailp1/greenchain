@@ -23,6 +23,7 @@ const Header = () => {
     { name: 'Trang chủ', href: '/' },
     { name: 'Triết lý fwd', href: '/about' },
     { name: 'Blockchain Explorer', href: '/explorer' },
+    { name: 'Bảng xếp hạng', href: '/reputation' },
     { name: 'Cổng Portal', href: '/portal' },
   ];
 
@@ -64,7 +65,7 @@ const Header = () => {
             </Link>
           ))}
           <Link 
-            href="/verify/YEN-001" 
+            href="/verify" 
             className="px-5 py-2.5 bg-emerald-600 text-white text-[10px] font-black rounded-full hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 uppercase tracking-[0.2em]"
           >
             Xác thực ngay
@@ -100,7 +101,7 @@ const Header = () => {
                 </Link>
               ))}
               <Link 
-                href="/verify/YEN-001" 
+                href="/verify" 
                 onClick={() => setIsOpen(false)}
                 className="w-full py-4 bg-emerald-600 text-white text-xs font-black rounded-xl text-center uppercase tracking-widest"
               >

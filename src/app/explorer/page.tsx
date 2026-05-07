@@ -10,49 +10,64 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { API_URL } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
 
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>(null);
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
   const [latestTxns, setLatestTxns] = useState<any[]>([]);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statRes, batchRes] = await Promise.all([
-          fetch('http://localhost:3000/stats'),
-          fetch('http://localhost:3000/batches')
-        ]);
-        const s = await statRes.json();
-        const b = await batchRes.json();
-        
+        setLoading(true);
+        // 1. Fetch Batches with Ledger info
+        const { data: batches, error: bError } = await supabase
+          .from('batches')
+          .select('*, blockchain_ledger(tx_hash, block_height, anchored_at)')
+          .order('timestamp', { ascending: false })
+          .limit(10);
+
+        if (bError) throw bError;
+
+        // 2. Fetch Entities count for stats
+        const { count: entityCount } = await supabase
+          .from('entities')
+          .select('*', { count: 'exact', head: true });
+
         setStats({
           price: '$1.42',
           price_change: '+2.4%',
           market_cap: '$2.5B',
-          tps: s.throughput,
-          gas_price: '12 Gwei'
+          tps: '14.2',
+          gas_price: '12 Gwei',
+          activeNodes: (entityCount || 0) + 120
         });
         
         // Mocking blocks from batches for UI
-        setLatestBlocks(b.map((batch: any, i: number) => ({
-          number: 19400 + i,
-          timestamp: batch.timestamp,
+        setLatestBlocks((batches || []).map((batch: any, i: number) => ({
+          number: batch.blockchain_ledger?.[0]?.block_height || (19400 + i),
+          timestamp: batch.blockchain_ledger?.[0]?.anchored_at || batch.timestamp,
           validator: "FWD-Validator-" + (i % 5),
           transactionCount: 1,
           reward: "0.02 AGRI"
         })));
         
-        setLatestTxns(b.filter((batch: any) => batch.tx_hash).map((batch: any) => ({
-          hash: batch.tx_hash,
-          timestamp: batch.timestamp,
+        setLatestTxns((batches || []).filter((batch: any) => batch.blockchain_ledger?.[0]?.tx_hash).map((batch: any) => ({
+          hash: batch.blockchain_ledger?.[0]?.tx_hash,
+          timestamp: batch.blockchain_ledger?.[0]?.anchored_at || batch.timestamp,
           from: batch.entity_id.slice(0, 8),
           to: "0xBlockchain",
           value: "0 AGRI"
         })));
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error('Explorer fetch error:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();

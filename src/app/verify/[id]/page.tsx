@@ -14,6 +14,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { API_URL } from '@/lib/config';
+import { supabase } from '@/lib/supabase';
 
 export default function VerifyPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -30,38 +32,80 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     const fetchData = async () => {
       const { id } = unwrappedParams;
-      const data = await db.findOne('products', { id });
-      
-      // Simulate scanning animation
-      setTimeout(() => {
-        setIsScanning(false);
-        setIsAuditing(true);
-        setProduct(data);
-        if (data && data.nodes.length > 0) {
-          setSelectedNode(data.nodes[0]);
+      try {
+        setLoading(true);
+        // Query batch with related entity and ledger data
+        const { data: batchData, error: sbError } = await supabase
+          .from('batches')
+          .select('*, entities(*), blockchain_ledger(*)')
+          .eq('id', id)
+          .single();
+
+        if (sbError || !batchData) {
+           console.error('Verification data not found:', sbError);
+           setLoading(false);
+           setIsScanning(false);
+           return;
         }
-        
-        // Start audit progress
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 5;
-          setAuditProgress(progress);
-          if (progress >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setIsAuditing(false);
-              confetti({
-                particleCount: 150,
-                spread: 100,
-                origin: { y: 0.6 },
-                colors: ['#10b981', '#3b82f6', '#fdfcf8']
-              });
-            }, 800);
-          }
-        }, 50);
-        
+
+        // Simulate scanning animation for UX
+        setTimeout(() => {
+          setIsScanning(false);
+          setIsAuditing(true);
+          
+          const ledger = batchData.blockchain_ledger?.[0] || {};
+          const entity = batchData.entities || {};
+
+          // Map real data to UI structure
+          setProduct({
+            id: batchData.id,
+            name: batchData.product_name,
+            category: entity.role === 'FARM' ? 'Nông sản sạch' : 'Sản phẩm chế biến',
+            image: batchData.image_url || "https://images.unsplash.com/photo-1590402444816-a1284b33e1d1?w=800&q=80",
+            attributes: {
+              quantity: batchData.quantity + " KG",
+              gps: batchData.gps,
+              tx: ledger.tx_hash || 'PENDING_ANCHOR'
+            },
+            nodes: [
+              {
+                title: "Ghi nhận nguồn gốc",
+                type: "PRODUCTION",
+                location: batchData.gps,
+                timestamp: batchData.timestamp,
+                hash: ledger.tx_hash,
+                images: [batchData.image_url],
+                documents: [{ name: "Chứng nhận VietGAP", url: "#" }]
+              }
+            ]
+          } as any);
+
+          // Start audit progress simulation
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 5;
+            setAuditProgress(progress);
+            if (progress >= 100) {
+              clearInterval(interval);
+              setTimeout(() => {
+                setIsAuditing(false);
+                confetti({
+                  particleCount: 150,
+                  spread: 100,
+                  origin: { y: 0.6 },
+                  colors: ['#10b981', '#3b82f6', '#fdfcf8']
+                });
+              }, 800);
+            }
+          }, 30);
+          
+          setLoading(false);
+        }, 2000);
+      } catch (err) {
+        console.error('Fetch error:', err);
         setLoading(false);
-      }, 2000);
+        setIsScanning(false);
+      }
     };
     fetchData();
   }, [unwrappedParams]);
