@@ -89,7 +89,7 @@ export default function BlocksPage() {
                             <span className="text-[11px] text-slate-500 font-bold uppercase tracking-tight">{new Date(block.anchored_at).toLocaleString()}</span>
                          </td>
                          <td className="px-6 py-5">
-                            <span className="text-[11px] font-mono text-slate-400 group-hover:text-blue-600 transition-colors cursor-pointer">{block.tx_hash.slice(0, 20)}...</span>
+                            <Link href={`/explorer/${block.tx_hash}`} className="text-[11px] font-mono text-slate-400 group-hover:text-blue-600 transition-colors cursor-pointer hover:underline">{block.tx_hash.slice(0, 20)}...</Link>
                          </td>
                          <td className="px-6 py-5">
                             <div className="flex items-center gap-2">

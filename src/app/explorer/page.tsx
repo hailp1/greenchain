@@ -243,10 +243,10 @@ export default function ExplorerHome() {
                           <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
                              <Cpu size={18} />
                           </div>
-                          <div className="min-w-0">
-                             <p className="text-sm font-black text-blue-600 hover:underline truncate max-w-[120px]">{tx.hash.substring(0, 16)}...</p>
-                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(tx.timestamp).toLocaleTimeString()}</p>
-                          </div>
+                           <div className="min-w-0">
+                              <Link href={`/explorer/${tx.hash}`} className="text-sm font-black text-blue-600 hover:underline truncate block max-w-[120px]">{tx.hash.substring(0, 16)}...</Link>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(tx.timestamp).toLocaleTimeString()}</p>
+                           </div>
                        </div>
                        <div className="flex-1 px-8 hidden md:block">
                           <div className="flex items-center gap-2 text-[11px] font-bold">

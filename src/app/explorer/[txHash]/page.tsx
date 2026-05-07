@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { db } from '@/lib/store/nosql-sim';
+import { supabase } from '@/lib/supabase';
 import { 
   ShieldCheck, Hash, Clock, Box, FileText, Zap, Activity, 
   Globe, ArrowLeft, Copy, ExternalLink, Search, Menu, X,
@@ -20,58 +20,57 @@ export default function ExplorerPage({ params }: { params: Promise<{ txHash: str
 
   useEffect(() => {
     const fetchTxData = async () => {
-      // Find the transaction in our mock store
-      const products = await db.getCollection('products');
-      let foundNode = null;
-      let foundProduct = null;
+      try {
+        setLoading(true);
+        const { data: ledger, error: lError } = await supabase
+          .from('blockchain_ledger')
+          .select('*, batches(*, entities(name))')
+          .eq('tx_hash', txHash)
+          .single();
 
-      for (const p of products) {
-        const node = p.nodes.find((n: any) => n.txHash === txHash || n.hash === txHash);
-        if (node) {
-          foundNode = node;
-          foundProduct = p;
-          break;
+        if (lError || !ledger) {
+          // Fallback mock for non-existent hashes
+          setTxDetails({
+            hash: txHash,
+            status: "Success",
+            block: 19482412,
+            timestamp: new Date().toISOString(),
+            from: "0x3d4e...e5f6",
+            to: "0xfwdLife_Ledger_Main",
+            gasLimit: "120,000",
+            gasUsed: "42,109",
+            value: "0 fwd",
+            fee: "1.2 fwd",
+            productName: "Unknown Transaction",
+            nodeType: "EXTERNAL",
+            rawHash: txHash
+          });
+        } else {
+          setTxDetails({
+            hash: ledger.tx_hash,
+            status: "Success",
+            block: ledger.block_height,
+            timestamp: ledger.anchored_at,
+            from: ledger.batches?.entities?.name || "fwd-node-" + ledger.batches?.id?.slice(0, 4),
+            to: "fwdLife_Ledger_Main",
+            gasLimit: "150,000",
+            gasUsed: "120,000",
+            value: "0 fwd",
+            fee: "1.2 fwd",
+            productName: ledger.batches?.product_name || "IoT Data Sync",
+            nodeType: "LEDGER_ANCHOR",
+            rawHash: ledger.tx_hash,
+            quantity: ledger.batches?.quantity
+          });
         }
+      } catch (err) {
+        console.error('Fetch Tx error:', err);
+      } finally {
+        setLoading(false);
       }
-
-      if (foundNode) {
-        setTxDetails({
-          hash: foundNode.txHash || foundNode.hash,
-          status: "Success",
-          block: foundNode.blockNumber || 19482041,
-          timestamp: foundNode.timestamp,
-          from: "0x7a2d4E813F0C5...f9e1",
-          to: "0xAgriChain_V3_Main",
-          gasLimit: "120,000",
-          gasUsed: foundNode.gasUsed || "21,000",
-          value: "0 ETH",
-          fee: "0.00042 ETH",
-          productName: foundProduct?.name,
-          nodeType: foundNode.type,
-          rawHash: foundNode.hash
-        });
-      } else {
-        // Mock fallback if not found in specific product nodes
-        setTxDetails({
-          hash: txHash,
-          status: "Success",
-          block: 19482412,
-          timestamp: new Date().toISOString(),
-          from: "0x3d4e...e5f6",
-          to: "0xAgriChain_V3_Main",
-          gasLimit: "120,000",
-          gasUsed: "42,109",
-          value: "0 ETH",
-          fee: "0.00084 ETH",
-          productName: "Unknown Transaction",
-          nodeType: "GENERAL",
-          rawHash: txHash
-        });
-      }
-      setLoading(false);
     };
     fetchTxData();
-  }, [txHash]);
+  }, [txHash, supabase]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
