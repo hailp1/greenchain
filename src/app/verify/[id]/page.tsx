@@ -965,7 +965,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                             Xuất Certificate
                           </button>
                           <Link 
-                            href={`/explorer/${selectedNode.txHash || selectedNode.hash}`}
+                            href={`/explorer/${selectedNode?.txHash || selectedNode?.hash || ''}`}
                             className="w-full py-5 bg-white/10 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                           >
                             <Globe size={16} />
