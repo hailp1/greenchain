@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { 
   Globe, ShieldCheck, Cpu, LayoutDashboard, PackagePlus, 
   Settings, Bell, LogOut, Search, MapPin, Activity, 
-  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Layers, BarChart3, Send, Award, Users
+  Thermometer, Droplets, Zap, CheckCircle2, CloudUpload, ArrowRight, Layers, BarChart3, Send, Award, User
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -546,7 +546,7 @@ export default function ProducerPortal() {
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                <Users size={12} /> Địa chỉ ví người nhận (MetaMask)
+                                <User size={12} /> Địa chỉ ví người nhận (MetaMask)
                              </label>
                              <input 
                                type="text" 
