@@ -69,10 +69,10 @@ export default function Home() {
               <span>fwd LIFEchain: Future of Trust</span>
             </div>
             <h1 className="text-4xl md:text-8xl font-black mb-6 md:mb-8 text-natural-950 tracking-tighter leading-[1.1]">
-              Farm Worth <span className="text-slate-400 font-light italic">Driven</span>
+              Farm Worth <span className="text-emerald-500 font-light italic">Driven</span>
             </h1>
             <p className="text-slate-500 text-sm md:text-xl max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12">
-              Bảo chứng minh bạch nông sản từ gốc rễ nông trại bằng công nghệ Blockchain & AI.
+              Hệ sinh thái **fwd LIFEchain**: Bảo chứng minh bạch và nâng tầm giá trị Nông nghiệp bền vững thông qua công nghệ Blockchain.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
@@ -96,7 +96,7 @@ export default function Home() {
               </div>
               <div>
                  <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">Network <span className="text-emerald-500">Pulse</span></h2>
-                 <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Real-time fwd LIFEchain Activity</p>
+                 <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Real-time AGRI Lifechain Activity</p>
               </div>
            </div>
 

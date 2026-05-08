@@ -1,0 +1,31 @@
+syntax = "proto3";
+package fwdlifechain.fwdlife;
+
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "fwdlifechain/x/fwdlife/types";
+
+// Service definition for Agri Token interactions
+service Msg {
+  rpc StakeAgri(MsgStakeAgri) returns (MsgStakeAgriResponse);
+  rpc ClaimRewards(MsgClaimRewards) returns (MsgClaimRewardsResponse);
+}
+
+// Message for Staking AGRI
+message MsgStakeAgri {
+  string creator = 1;
+  cosmos.base.v1beta1.Coin amount = 2;
+}
+
+message MsgStakeAgriResponse {
+  string tx_hash = 1;
+}
+
+// Message for Claiming Rewards
+message MsgClaimRewards {
+  string creator = 1;
+}
+
+message MsgClaimRewardsResponse {
+  cosmos.base.v1beta1.Coin amount = 1;
+}

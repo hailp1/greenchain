@@ -160,15 +160,18 @@ export default function ExplorerHome() {
                <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Node Network Growth</h4>
                   <div className="flex items-end gap-1 h-12">
-                     {[30, 45, 35, 60, 75, 90, 100].map((v, i) => (
-                        <motion.div 
-                          key={i} 
-                          initial={{ height: 0 }} 
-                          animate={{ height: `${v}%` }} 
-                          transition={{ delay: i * 0.1 }}
-                          className="flex-grow bg-emerald-500/20 rounded-t-sm"
-                        />
-                     ))}
+                     {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                        const v = Math.min(100, Math.max(20, 30 + (i * 10) + ((stats?.activeNodes || 0) % 20) - 10 + (i % 2 === 0 ? 5 : -5)));
+                        return (
+                           <motion.div 
+                             key={i} 
+                             initial={{ height: 0 }} 
+                             animate={{ height: `${v}%` }} 
+                             transition={{ delay: i * 0.1 }}
+                             className="flex-grow bg-emerald-500/20 rounded-t-sm"
+                           />
+                        );
+                     })}
                   </div>
                   <p className="text-[9px] text-slate-400 font-bold mt-2">Organic node expansion: +24% MoM</p>
                </div>

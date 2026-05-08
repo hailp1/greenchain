@@ -1,23 +1,16 @@
-# Use Node.js LTS
-FROM node:20-slim
+# Dockerfile for FWD Blockchain Node ONLY
+FROM node:20-alpine
 
-# Create app directory
 WORKDIR /app
 
-# Install dependencies
 COPY package*.json ./
+# Chỉ cài các dependencies cần thiết cho Hardhat
 RUN npm install
 
-# Copy source code
 COPY . .
 
-# Build the app
-RUN npm run build
+# Mở cổng 8545 cho RPC Blockchain
+EXPOSE 8545
 
-# Expose port
-EXPOSE 3000
-
-ENV HOSTNAME "0.0.0.0"
-
-# Start the app
-CMD ["npm", "start"]
+# Chạy Hardhat Node với cấu hình cố định 31337
+CMD npx hardhat node --hostname 0.0.0.0

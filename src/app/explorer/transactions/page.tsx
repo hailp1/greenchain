@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/store/nosql-sim';
+import { supabase } from '@/lib/supabase';
 import { 
   Globe, Search, Activity, ArrowLeft, Clock, FileText, 
   ChevronRight, ShieldCheck, Filter, Download
@@ -15,10 +15,44 @@ export default function TransactionsPage() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
-      const t = await db.getCollection('latest_transactions');
-      setTransactions(t);
+      try {
+        setLoading(true);
+        const { data } = await supabase
+          .from('blockchain_ledger')
+          .select(`
+            tx_hash,
+            block_height,
+            anchored_at,
+            batches (
+              id,
+              producer_id,
+              entities ( name )
+            )
+          `)
+          .order('anchored_at', { ascending: false })
+          .limit(50);
+        
+        if (data) {
+          const formatted = data.map((item: any) => ({
+            hash: item.tx_hash,
+            blockNumber: item.block_height || 19482412,
+            timestamp: new Date(item.anchored_at).toLocaleString(),
+            from: item.batches?.entities?.name || item.batches?.producer_id?.slice(0, 8) || 'Unknown',
+            to: '0xAgri_V3_Contract',
+            value: 'DATA_ANCHOR',
+            fee: '1.2 fwd'
+          }));
+          setTransactions(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching transactions:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -75,7 +109,7 @@ export default function TransactionsPage() {
              <h1 className="text-2xl font-black tracking-tight mb-2">Transactions</h1>
              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
                 <Activity size={12} className="text-emerald-500" />
-                Latest 500,000 Transactions found
+                Latest Verified Transactions
              </p>
            </div>
            <div className="flex items-center gap-3">
@@ -103,33 +137,45 @@ export default function TransactionsPage() {
                     </tr>
                  </thead>
                  <tbody>
-                    {transactions.map((tx, i) => (
+                    {loading ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          Synchronizing Ledger...
+                        </td>
+                      </tr>
+                    ) : transactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                          No transactions found
+                        </td>
+                      </tr>
+                    ) : transactions.map((tx, i) => (
                       <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
                          <td className="px-6 py-5">
                             <div className="flex items-center gap-2">
                                <FileText size={14} className="text-slate-300 group-hover:text-blue-500 transition-colors" />
-                               <Link href={`/explorer/${tx.hash}`} className="text-xs font-mono font-bold text-blue-600 hover:underline">{tx.hash}</Link>
+                               <Link href={`/explorer/${tx.hash}`} className="text-xs font-mono font-bold text-blue-600 hover:underline">{tx.hash.substring(0,16)}...</Link>
                             </div>
                          </td>
                          <td className="px-6 py-5">
-                            <span className="text-xs font-bold text-blue-600 cursor-pointer hover:underline">19482412</span>
+                            <span className="text-xs font-bold text-blue-600 cursor-pointer hover:underline">{tx.blockNumber}</span>
                          </td>
                          <td className="px-6 py-5">
-                            <span className="text-xs text-slate-500 font-medium">{tx.timestamp}</span>
+                            <span className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">{tx.timestamp}</span>
                          </td>
                          <td className="px-6 py-5">
                             <div className="flex items-center gap-2">
-                               <span className="text-xs font-mono font-bold text-blue-600 cursor-pointer hover:underline truncate max-w-[100px]">{tx.from}</span>
+                               <span className="text-[10px] font-bold text-blue-600 cursor-pointer hover:underline truncate max-w-[120px]">{tx.from}</span>
                             </div>
                          </td>
                          <td className="px-6 py-5 flex items-center gap-2">
-                            <div className="p-1 bg-emerald-50 rounded text-emerald-500">
+                            <div className="p-1 bg-emerald-50 rounded text-emerald-500 mt-2">
                                <ArrowLeft size={10} className="rotate-180" />
                             </div>
-                            <span className="text-xs font-mono font-bold text-blue-600 cursor-pointer hover:underline truncate max-w-[100px]">{tx.to}</span>
+                            <span className="text-[10px] font-mono font-bold text-blue-600 cursor-pointer hover:underline truncate max-w-[120px] mt-2">{tx.to}</span>
                          </td>
                          <td className="px-6 py-5">
-                            <span className="text-xs font-black text-slate-900">{tx.value}</span>
+                            <span className="text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-md">{tx.value}</span>
                          </td>
                          <td className="px-6 py-5">
                             <span className="text-[10px] font-mono text-slate-400">{tx.fee}</span>
@@ -141,7 +187,7 @@ export default function TransactionsPage() {
            </div>
            
            <div className="p-6 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Showing 25 of 500,000 transactions</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Showing latest transactions</p>
               <div className="flex gap-2">
                  <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled>
                     <ChevronRight size={16} className="rotate-180" />

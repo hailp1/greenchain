@@ -29,8 +29,10 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { supabase } from '@/lib/supabase';
+import { useWeb3 } from '@/lib/web3/Web3Provider';
 
 export default function ProducerPortal() {
+  const web3 = useWeb3();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -64,46 +66,25 @@ export default function ProducerPortal() {
     };
     checkUser();
 
-    // MetaMask Detection
-    const detectWallet = async () => {
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
+    // MetaMask Detection via Web3 Provider
+    if (web3.isConnected && web3.address) {
+      setWalletAddress(web3.address);
+      // Trigger reward claim if user is logged in
+      const claimReward = async () => {
         try {
-          const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0) {
-            const addr = accounts[0];
-            setWalletAddress(addr);
-            
-            // Trigger reward claim if user is logged in
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              await supabase.rpc('claim_wallet_connection_reward', {
-                p_user_id: session.user.id,
-                p_wallet_address: addr
-              });
-              fetchBalance();
-            }
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            await supabase.rpc('claim_wallet_connection_reward', {
+              p_user_id: session.user.id,
+              p_wallet_address: web3.address!
+            });
+            fetchBalance();
           }
-        } catch (err) {
-          console.error("Wallet detection error:", err);
-        }
-      }
-    };
-    detectWallet();
-
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      (window as any).ethereum.on('accountsChanged', async (accounts: string[]) => {
-        const addr = accounts[0] || "";
-        setWalletAddress(addr);
-        if (addr && user) {
-          await supabase.rpc('claim_wallet_connection_reward', {
-            p_user_id: user.id,
-            p_wallet_address: addr
-          });
-          fetchBalance();
-        }
-      });
+        } catch (_) { /* silent */ }
+      };
+      claimReward();
     }
-  }, []);
+  }, [web3.isConnected, web3.address]);
   const [balance, setBalance] = useState("0.00");
 
   const fetchBalance = async () => {
@@ -198,37 +179,28 @@ export default function ProducerPortal() {
   }, [currentEntity]);
 
   const handleTransfer = async () => {
-    if (!recipientWallet || !transferAmount) return alert("Vui lòng nhập đầy đủ thông tin chuyển tiền.");
-    if (Number(transferAmount) <= 0) return alert("Số lượng chuyển không hợp lệ.");
-
+    if (!recipientWallet || !transferAmount) return;
     try {
       setIsTransferring(true);
+      const txHash = await web3.transferTokens(recipientWallet, transferAmount);
       
-      if (!currentEntity) throw new Error("Chưa kết nối danh tính Blockchain.");
-      
-      const { error } = await supabase.rpc('transfer_fwd', {
-        p_sender_id: currentEntity.id,
-        p_receiver_wallet: recipientWallet,
-        p_amount: Number(transferAmount),
-        p_description: `Transfer to Wallet ${recipientWallet.slice(0, 6)}...`
-      });
+      if (txHash) {
+        // Log to Supabase for explorer visibility
+        await supabase.from('token_transactions').insert([{
+          entity_id: currentEntity?.id,
+          amount: parseFloat(transferAmount),
+          type: 'TRANSFER',
+          description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}... (Tx: ${txHash.slice(0, 10)}...)`
+        }]);
 
-      if (error) throw error;
-
-      alert("Chuyển FWD thành công!");
-      setRecipientWallet("");
-      setTransferAmount("");
-      fetchBalance();
-      
-      // Refresh transactions
-      const { data: txData } = await supabase
-        .from('token_transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      setTransactions(txData || []);
-
+        alert(`Giao dịch thành công! Mã giao dịch: ${txHash}`);
+        setRecipientWallet('');
+        setTransferAmount('');
+        await refreshData();
+      }
     } catch (err: any) {
-      alert(err.message || "Giao dịch thất bại. Vui lòng kiểm tra lại địa chỉ ví người nhận.");
+      console.error('Transfer error:', err);
+      alert(err.message || 'Giao dịch thất bại. Vui lòng kiểm tra lại số dư hoặc địa chỉ ví.');
     } finally {
       setIsTransferring(false);
     }
@@ -236,7 +208,7 @@ export default function ProducerPortal() {
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "fwd Balance", value: balance, icon: Zap },
+    { label: "AGRI Balance", value: web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance, icon: Zap },
     { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
@@ -244,11 +216,11 @@ export default function ProducerPortal() {
   const handleSign = async () => {
     setIsSigning(true);
     try {
-      // 0. Pre-flight check: Ensure enough balance for gas fee (1.2 fwd)
-      const currentBalanceRaw = balance.replace(/,/g, '');
+      // 0. Pre-flight check: Ensure enough balance for gas fee (1.2 AGRI)
+      const currentBalanceRaw = web3.isConnected ? web3.fwdBalance : balance.replace(/,/g, '');
       const gasFee = 1.2;
       if (parseFloat(currentBalanceRaw) < gasFee) {
-        alert('Số dư fwd Token không đủ để trả phí Gas (1.2 fwd). Vui lòng nạp thêm để tiếp tục.');
+        alert('Số dư AGRI Token không đủ để trả phí Gas (1.2 AGRI). Vui lòng nạp thêm để tiếp tục.');
         setIsSigning(false);
         return;
       }
@@ -302,62 +274,62 @@ export default function ProducerPortal() {
   };
 
   const handleStake = async (amount: number) => {
-    if (!amount || amount <= 0) return;
+    if (amount <= 0) return;
     try {
-      const currentBalance = parseFloat(balance.replace(/,/g, ''));
-      if (currentBalance < amount) {
-        alert("Số dư không đủ để thực hiện Staking.");
-        return;
-      }
-
-      const newBalance = currentBalance - amount;
-      const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
-
-      await Promise.all([
-        supabase.from('entities').update({ fwd_balance: newBalance, staked_balance: newStaked }).eq('id', currentEntity.id),
-        supabase.from('token_transactions').insert([{
-          entity_id: currentEntity.id,
-          amount: amount,
-          type: 'STAKE',
-          description: `Staked ${amount} fwd to upgrade Node authority`
-        }])
-      ]);
+      setIsSigning(true);
+      const txHash = await web3.stakeTokens(amount.toString());
       
-      setIsSuccess(true);
-      await refreshData();
-      setTimeout(() => {
-        setIsSuccess(false);
-        setActiveTab('dashboard');
-      }, 2000);
+      if (txHash) {
+        // Sync with Supabase for history/indexing
+        const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
+        await Promise.all([
+          supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
+          supabase.from('token_transactions').insert([{
+            entity_id: currentEntity.id,
+            amount: amount,
+            type: 'STAKE',
+            description: `Staked AGRI for node validation (Tx: ${txHash.slice(0, 10)}...)`
+          }])
+        ]);
+        
+        setIsSuccess(true);
+        setStakeInput('');
+        await refreshData();
+        setTimeout(() => setIsSuccess(false), 3000);
+      }
     } catch (err) {
       console.error('Stake error:', err);
+    } finally {
+      setIsSigning(false);
     }
   };
 
   const handleClaim = async () => {
     try {
-      const rewardAmount = 42.85; // Simulated claimable amount
-      const currentBalance = parseFloat(balance.replace(/,/g, ''));
-      const newBalance = currentBalance + rewardAmount;
-
-      await Promise.all([
-        supabase.from('entities').update({ fwd_balance: newBalance }).eq('id', currentEntity.id),
-        supabase.from('token_transactions').insert([{
-          entity_id: currentEntity.id,
+      setIsSigning(true);
+      const txHash = await web3.claimRewards();
+      
+      if (txHash) {
+        const rewardAmount = parseFloat(web3.pendingRewards);
+        // We sync with Supabase for transaction history
+        await supabase.from('token_transactions').insert([{
+          entity_id: currentEntity?.id,
           amount: rewardAmount,
           type: 'REWARD',
-          description: `Claimed validation rewards`
-        }])
-      ]);
-      
-      setIsSuccess(true);
-      await refreshData();
-      setTimeout(() => {
-        setIsSuccess(false);
-        setActiveTab('dashboard');
-      }, 2000);
+          description: `Claimed validation rewards from contract (Tx: ${txHash.slice(0, 10)}...)`
+        }]);
+        
+        setIsSuccess(true);
+        await refreshData();
+        setTimeout(() => {
+          setIsSuccess(false);
+          setActiveTab('dashboard');
+        }, 2000);
+      }
     } catch (err) {
       console.error('Claim error:', err);
+    } finally {
+      setIsSigning(false);
     }
   };
 
@@ -557,19 +529,19 @@ export default function ProducerPortal() {
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Gas Spent</p>
                        <p className="text-3xl font-black text-orange-500">
-                         {transactions.filter(t => t.type === 'GAS_FEE').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
+                         {transactions.filter(t => t.type === 'GAS_FEE').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} AGRI
                        </p>
                     </div>
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards Earned</p>
                        <p className="text-3xl font-black text-emerald-500">
-                         {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} fwd
+                         {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} AGRI
                        </p>
                     </div>
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Hold)</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Live)</p>
                        <p className="text-3xl font-black text-blue-600">
-                         {Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} fwd
+                         {web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} AGRI
                        </p>
                     </div>
                  </div>
@@ -589,7 +561,7 @@ export default function ProducerPortal() {
                              <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
                                 <div className="flex justify-between items-end">
                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount to Stake</p>
-                                   <p className="text-[10px] font-bold text-emerald-500 uppercase">Available: {balance}</p>
+                                   <p className="text-[10px] font-bold text-emerald-500 uppercase">Available: {web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance}</p>
                                 </div>
                                 <div className="flex gap-2">
                                    <input 
@@ -600,7 +572,7 @@ export default function ProducerPortal() {
                                       placeholder="0.00"
                                    />
                                    <button 
-                                      onClick={() => setStakeInput(balance.replace(/,/g, ''))}
+                                      onClick={() => setStakeInput(web3.isConnected ? web3.fwdBalance : balance.replace(/,/g, ''))}
                                       className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/30 transition-all"
                                    >
                                       MAX
@@ -631,11 +603,40 @@ export default function ProducerPortal() {
                           </div>
                           <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 text-center">
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Available to Claim</p>
-                             <p className="text-4xl font-black text-natural-950">42.85 <span className="text-xs text-slate-400 ml-1">fwd</span></p>
+                             <p className="text-4xl font-black text-natural-950">
+                               {web3.isConnected ? Number(web3.pendingRewards).toFixed(2) : '0.00'} 
+                               <span className="text-xs text-slate-400 ml-1">AGRI</span>
+                             </p>
                           </div>
                        </div>
                        <button onClick={handleClaim} className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6 active:scale-95">
                           CLAIM REWARDS
+                       </button>
+                       <button 
+                         onClick={async () => {
+                           if (window.ethereum) {
+                             try {
+                               await window.ethereum.request({
+                                 method: 'wallet_watchAsset',
+                                 params: {
+                                   type: 'ERC20',
+                                   options: {
+                                     address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+                                     symbol: 'AGRI',
+                                     decimals: 18,
+                                     image: 'https://chain.fwdlife.vn/favicon.ico',
+                                   },
+                                 },
+                               });
+                             } catch (error) {
+                               console.error(error);
+                             }
+                           }
+                         }}
+                         className="w-full py-4 bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all mt-3 flex items-center justify-center gap-3"
+                       >
+                          <img src="/favicon.ico" alt="AGRI" className="w-4 h-4 rounded-full shadow-sm" />
+                          Add AGRI Logo to MetaMask
                        </button>
                     </div>
                  </section>
@@ -645,7 +646,7 @@ export default function ProducerPortal() {
                     <div className="max-w-3xl mx-auto space-y-8">
                        <div className="text-center space-y-2">
                           <h3 className="text-2xl font-black text-natural-900 uppercase tracking-tighter italic">Inter-Wallet <span className="text-emerald-500">Transfer</span></h3>
-                          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Giao dịch fwd coin tức thời trên mạng lưới</p>
+                          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Gửi Token AGRI an toàn trên mạng lưới Lifechain</p>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

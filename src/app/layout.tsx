@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { cn } from "@/lib/utils";
+import Providers from "./providers";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang="vi" className={cn(inter.variable, ebGaramond.variable, "font-sans", geist.variable)}>
       <body className="antialiased font-sans">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

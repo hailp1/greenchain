@@ -10,16 +10,14 @@ import { useWeb3 } from '@/lib/web3';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
-  const { account, connectWallet, loading: web3Loading } = useWeb3();
+  const { address, isConnected, isConnecting, connect, error: web3Error } = useWeb3();
   const router = useRouter();
 
   useEffect(() => {
-    if (account) {
-      // Simulation: If wallet connected, redirect to portal
-      // In a real app, we would verify the signature and check if the wallet is in 'entities' table
+    if (isConnected && address) {
       router.push('/portal');
     }
-  }, [account, router]);
+  }, [isConnected, address, router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -53,8 +51,8 @@ export default function LoginPage() {
           {/* Logo Section */}
           <div className="text-center space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-sm border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
-                fwd
+              <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xs border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+                AGRI
               </div>
               <div className="text-left">
                  <div className="flex items-baseline gap-1">
@@ -69,6 +67,13 @@ export default function LoginPage() {
                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Truy cập cổng quản trị nông sản chuỗi khối</p>
             </div>
           </div>
+
+          {/* Web3 Error Display */}
+          {web3Error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-bold text-red-400 text-center">
+              {web3Error}
+            </div>
+          )}
 
           {/* Social Login Button */}
           <div className="space-y-4">
@@ -93,11 +98,11 @@ export default function LoginPage() {
 
              <div className="grid grid-cols-1 gap-4">
                 <button 
-                  onClick={connectWallet}
-                  disabled={web3Loading}
+                  onClick={connect}
+                  disabled={isConnecting}
                   className="py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
                 >
-                   {web3Loading ? (
+                   {isConnecting ? (
                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                    ) : (
                      <Globe size={18} />

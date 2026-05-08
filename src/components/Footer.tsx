@@ -16,8 +16,8 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-5 space-y-8">
             <Link href="/" className="flex items-center gap-4 group">
-              <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-sm transition-transform group-hover:scale-110">
-                 fwd
+              <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
+                 AGRI
               </div>
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-2">

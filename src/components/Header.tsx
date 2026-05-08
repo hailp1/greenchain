@@ -14,7 +14,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { account, balance, loading: web3Loading, connectWallet } = useWeb3();
+  const { address, balance, isConnecting, connect } = useWeb3();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -78,8 +78,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
-            fwd
+          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-[10px] transition-transform group-hover:scale-110">
+            AGRI
           </div>
           <div className="flex flex-col">
             <div className="flex items-baseline gap-1">
@@ -115,16 +115,17 @@ const Header = () => {
           <div className="flex items-center gap-4">
             {/* Wallet & Balance Cluster */}
             <div className="hidden sm:flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex flex-col items-end hidden md:flex">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Network fwd</span>
-                <span className="text-[11px] font-bold text-emerald-700 leading-none">{fwdBalance}</span>
-              </div>
+                <div className="flex flex-col items-end">
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AGRI Balance</span>
+                   <span className="text-sm font-black text-emerald-600">{address ? balance : fwdBalance} AGRI</span>
+                </div>
               <button 
-                onClick={connectWallet}
+                onClick={connect}
+                disabled={isConnecting}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
               >
                 <Wallet size={12} className="text-emerald-500" />
-                {account ? `${account.slice(0, 4)}...${account.slice(-4)}` : 'CONNECT'}
+                {address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? 'CONNECTING...' : 'CONNECT')}
               </button>
             </div>
 

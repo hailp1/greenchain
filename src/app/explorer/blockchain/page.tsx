@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/store/nosql-sim';
+
 import { 
   Globe, Search, Layers, Zap, Activity, TrendingUp, 
   BarChart3, ShieldCheck, Database, Clock
@@ -10,15 +10,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function BlockchainPage() {
-  const [stats, setStats] = useState<any>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const s = await db.getCollection('network_stats');
-      setStats(s[0]);
-    };
-    fetchData();
-  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -85,19 +77,22 @@ export default function BlockchainPage() {
                  
                  {/* Simulated Chart Bars */}
                  <div className="h-64 flex items-end gap-3 px-4">
-                    {[40, 60, 45, 70, 85, 55, 90, 65, 80, 95, 75, 100, 85, 110].map((h, i) => (
-                      <motion.div 
-                        key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${h}%` }}
-                        transition={{ delay: i * 0.05, duration: 1 }}
-                        className="flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-lg group relative"
-                      >
-                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                            {h}k
-                         </div>
-                      </motion.div>
-                    ))}
+                    {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].map((i) => {
+                       const h = Math.min(110, Math.max(30, 40 + (i * 5) + ((i * 13) % 40) - 20));
+                       return (
+                         <motion.div 
+                           key={i}
+                           initial={{ height: 0 }}
+                           animate={{ height: `${(h / 110) * 100}%` }}
+                           transition={{ delay: i * 0.05, duration: 1 }}
+                           className="flex-1 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-lg group relative"
+                         >
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[8px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                               {h}k
+                            </div>
+                         </motion.div>
+                       );
+                    })}
                  </div>
                  <div className="flex justify-between mt-6 px-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
                     <span>14 Days Ago</span>
@@ -157,17 +152,17 @@ export default function BlockchainPage() {
                  <div className="space-y-6 relative z-10">
                     <div>
                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Circulating Supply</p>
-                       <p className="text-2xl font-black">125,000,000 AGRI</p>
+                       <p className="text-2xl font-black">125,000,000 fwd</p>
                     </div>
                     <div className="h-[1px] bg-white/10"></div>
                     <div>
                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Max Supply</p>
-                       <p className="text-2xl font-black">500,000,000 AGRI</p>
+                       <p className="text-2xl font-black">500,000,000 fwd</p>
                     </div>
                     <div className="h-[1px] bg-white/10"></div>
                     <div>
                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Burnt (Deflationary)</p>
-                       <p className="text-2xl font-black text-rose-400">1,402,112 AGRI</p>
+                       <p className="text-2xl font-black text-rose-400">1,402,112 fwd</p>
                     </div>
                  </div>
               </div>

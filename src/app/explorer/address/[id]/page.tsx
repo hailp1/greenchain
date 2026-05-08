@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { db } from '@/lib/store/nosql-sim';
+import { supabase } from '@/lib/supabase';
 import { 
   Globe, Search, Wallet, ArrowLeft, Clock, FileText, 
   ChevronRight, ShieldCheck, Copy, Database, Activity,
@@ -17,13 +17,55 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   const [transactions, setTransactions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [entityStats, setEntityStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
-      const t = await db.getCollection('latest_transactions');
-      setTransactions(t);
+      try {
+        setLoading(true);
+        // Fetch Entity data
+        const { data: entityData } = await supabase
+          .from('entities')
+          .select('*')
+          .eq('wallet_address', addressId)
+          .single();
+          
+        if (entityData) {
+          setEntityStats(entityData);
+          
+          // Fetch Transactions for this entity
+          const { data: txData } = await supabase
+            .from('token_transactions')
+            .select(`
+              *,
+              sender:sender_id(wallet_address),
+              receiver:receiver_id(wallet_address)
+            `)
+            .or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id}`)
+            .order('created_at', { ascending: false })
+            .limit(50);
+            
+          if (txData) {
+            const formatted = txData.map(tx => ({
+              hash: tx.id,
+              timestamp: new Date(tx.created_at).toLocaleString(),
+              from: tx.sender?.wallet_address || 'System',
+              to: tx.receiver?.wallet_address || 'System',
+              value: `${tx.amount} fwd`,
+              type: tx.type
+            }));
+            setTransactions(formatted);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching address data:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetchData();
-  }, []);
+    if (addressId) fetchData();
+  }, [addressId]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(addressId);
@@ -90,14 +132,14 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                 <PieChart size={80} />
-              </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Balance</p>
-              <h3 className="text-3xl font-black text-slate-900 mb-2">1,248.50 AGRI</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">≈ $3,102.42 USD</p>
-           </div>
+            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <PieChart size={80} />
+               </div>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Balance</p>
+               <h3 className="text-3xl font-black text-slate-900 mb-2">{entityStats ? Number(entityStats.fwd_balance || 0).toLocaleString() : '0'} fwd</h3>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Staked: {entityStats ? Number(entityStats.staked_balance || 0).toLocaleString() : '0'} fwd</p>
+            </div>
 
            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Transactions</p>
@@ -146,35 +188,47 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
                     </tr>
                  </thead>
                  <tbody>
-                    {transactions.map((tx, i) => (
-                      <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
-                         <td className="px-8 py-6">
-                            <Link href={`/explorer/${tx.hash}`} className="text-xs font-mono font-bold text-blue-600 hover:underline">{tx.hash}</Link>
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className="px-2 py-1 bg-slate-100 rounded-lg text-[9px] font-black uppercase text-slate-500 border border-slate-200">Transfer</span>
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className="text-xs font-bold text-blue-600 cursor-pointer hover:underline">19482412</span>
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className="text-xs text-slate-500 font-medium">{tx.timestamp}</span>
-                         </td>
-                         <td className="px-8 py-6">
-                            <div className="flex items-center gap-3">
-                               <span className="text-xs font-mono font-bold text-slate-400">{tx.from === addressId ? 'SELF' : tx.from}</span>
-                               <ChevronRight size={12} className="text-slate-300" />
-                               <span className="text-xs font-mono font-bold text-blue-600 hover:underline">{tx.to}</span>
-                            </div>
-                         </td>
-                         <td className="px-8 py-6">
-                            <span className={`text-xs font-black ${tx.from === addressId ? 'text-rose-500' : 'text-emerald-500'}`}>
-                               {tx.from === addressId ? '-' : '+'}{tx.value}
-                            </span>
-                         </td>
-                      </tr>
-                    ))}
-                 </tbody>
+                     {loading ? (
+                        <tr>
+                          <td colSpan={6} className="px-8 py-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            Scanning Ledger...
+                          </td>
+                        </tr>
+                     ) : transactions.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="px-8 py-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            No transactions found
+                          </td>
+                        </tr>
+                     ) : transactions.map((tx, i) => (
+                       <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors group">
+                          <td className="px-8 py-6">
+                             <span className="text-xs font-mono font-bold text-slate-600 truncate block max-w-[100px]" title={tx.hash}>{tx.hash.substring(0,8)}...</span>
+                          </td>
+                          <td className="px-8 py-6">
+                             <span className="px-2 py-1 bg-slate-100 rounded-lg text-[9px] font-black uppercase text-slate-500 border border-slate-200">{tx.type || 'Transfer'}</span>
+                          </td>
+                          <td className="px-8 py-6">
+                             <span className="text-xs font-bold text-blue-600 cursor-pointer hover:underline">Confirmed</span>
+                          </td>
+                          <td className="px-8 py-6">
+                             <span className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">{tx.timestamp}</span>
+                          </td>
+                          <td className="px-8 py-6">
+                             <div className="flex items-center gap-3">
+                                <span className="text-[10px] font-mono font-bold text-slate-400 truncate max-w-[80px]" title={tx.from}>{tx.from === addressId ? 'SELF' : tx.from}</span>
+                                <ChevronRight size={12} className="text-slate-300" />
+                                <span className="text-[10px] font-mono font-bold text-blue-600 hover:underline truncate max-w-[80px]" title={tx.to}>{tx.to}</span>
+                             </div>
+                          </td>
+                          <td className="px-8 py-6">
+                             <span className={`text-xs font-black ${tx.from === addressId ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                {tx.from === addressId ? '-' : '+'}{tx.value}
+                             </span>
+                          </td>
+                       </tr>
+                     ))}
+                  </tbody>
               </table>
            </div>
         </div>

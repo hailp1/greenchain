@@ -1,7 +1,32 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { db, Product, BlockchainNode } from '@/lib/store/nosql-sim';
+interface BlockchainNode {
+  id?: string;
+  title: string;
+  type: string;
+  location: string;
+  timestamp: string;
+  hash: string;
+  txHash?: string;
+  blockNumber?: number;
+  gasUsed?: string;
+  images: string[];
+  description?: string;
+  coordinates?: string;
+  telemetry?: any[];
+  documents?: any[];
+}
+
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  image: string;
+  attributes: any;
+  nodes: BlockchainNode[];
+  sustainability?: any;
+}
 import { 
   ArrowLeft, ShieldCheck, MapPin, FileText, ImageIcon, ExternalLink, 
   Hash, Clock, Globe, Fingerprint, Activity, Layers, Sparkles, 
@@ -427,7 +452,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                     {Object.entries(product.attributes).map(([key, value]) => (
                       <div key={key} className="flex justify-between items-center text-xs md:text-sm border-b border-slate-50 pb-2 md:pb-3 last:border-0 last:pb-0">
                         <span className="text-slate-400 font-medium capitalize">{key.replace('_', ' ')}</span>
-                        <span className="font-bold text-natural-900">{value}</span>
+                        <span className="font-bold text-natural-900">{String(value)}</span>
                       </div>
                     ))}
                   </div>
@@ -706,10 +731,10 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                                            <span className="text-xs font-bold text-slate-300 mb-1">{t.unit}</span>
                                         </div>
                                         <div className="flex items-end gap-1 h-8">
-                                           {t.data.map((d, i) => (
+                                           {t.data.map((d: any, i: number) => (
                                              <div 
                                                key={i} 
-                                               style={{ height: `${(d.value / Math.max(...t.data.map(v => v.value))) * 100}%` }}
+                                               style={{ height: `${(d.value / Math.max(...t.data.map((v: any) => v.value))) * 100}%` }}
                                                className="flex-1 bg-emerald-500/20 rounded-t-sm group-hover:bg-emerald-500/40 transition-colors"
                                              ></div>
                                            ))}
@@ -803,7 +828,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                       <div>
                         <h3 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-4 md:mb-6">Bảo chứng kỹ thuật số (Paperwork)</h3>
                         <div className="grid grid-cols-1 gap-2 md:gap-3">
-                          {selectedNode?.documents.map((doc, i) => (
+                          {selectedNode?.documents?.map((doc: any, i: number) => (
                             <motion.a 
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.99 }}

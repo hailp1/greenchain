@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { db } from '@/lib/store/nosql-sim';
+import { supabase } from '@/lib/supabase';
 import { 
   Globe, Search, Cpu, Activity, ShieldCheck, 
   MapPin, Zap, TrendingUp, Filter, Server
@@ -14,10 +14,34 @@ export default function NodesPage() {
   const [nodes, setNodes] = useState<any[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
-      const n = await db.getCollection('nodes');
-      setNodes(n);
+      try {
+        setLoading(true);
+        const { data } = await supabase
+          .from('entities')
+          .select('*')
+          .order('reputation_score', { ascending: false });
+          
+        if (data) {
+          const formatted = data.map((entity: any) => ({
+            id: entity.wallet_address || entity.id,
+            name: entity.name,
+            location: entity.role === 'FARM' ? 'Agri-Zone' : entity.role === 'COMPANY' ? 'Corporate Node' : 'System Authority',
+            status: 'ACTIVE',
+            uptime: `${(Math.min(99.99, entity.reputation_score + 10)).toFixed(2)}%`,
+            staked: Number(entity.staked_balance || entity.fwd_balance || 0).toLocaleString(),
+            apr: '+12.4%'
+          }));
+          setNodes(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching nodes:", err);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, []);
@@ -174,7 +198,19 @@ export default function NodesPage() {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                     {nodes.map((node, i) => (
+                     {loading ? (
+                        <tr>
+                           <td colSpan={6} className="px-10 py-12 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                             Discovering Network Nodes...
+                           </td>
+                        </tr>
+                     ) : nodes.length === 0 ? (
+                        <tr>
+                           <td colSpan={6} className="px-10 py-12 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                             No nodes found
+                           </td>
+                        </tr>
+                     ) : nodes.map((node, i) => (
                        <motion.tr 
                          key={i} 
                          initial={{ opacity: 0, y: 10 }}
@@ -192,7 +228,7 @@ export default function NodesPage() {
                                    <p className="text-base font-black text-slate-900 mb-1">{node.name}</p>
                                    <p className="text-[10px] font-mono text-slate-400 flex items-center gap-2">
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 
-                                      {node.id.toUpperCase()}
+                                      {node.id.substring(0, 16)}...
                                    </p>
                                 </div>
                              </div>
@@ -228,12 +264,12 @@ export default function NodesPage() {
                           </td>
                           <td className="px-10 py-8 text-right">
                              <p className="text-sm font-black text-slate-900">{node.staked}</p>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AGRI Tokens</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">fwd Tokens</p>
                           </td>
                           <td className="px-10 py-8">
                              <div className="flex flex-col items-end gap-2">
                                 <span className="text-xs font-black text-emerald-500 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100 flex items-center gap-2">
-                                   <TrendingUp size={12} /> +12.4%
+                                   <TrendingUp size={12} /> {node.apr}
                                 </span>
                                 <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Est. APR</span>
                              </div>

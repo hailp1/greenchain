@@ -2,22 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { db, Product } from '@/lib/store/nosql-sim';
+import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Download, QrCode, Share2, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+interface ProductItem {
+  id: string;
+  category: string;
+  name: string;
+}
+
 export default function QRGeneratorPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const data = await db.getCollection('products');
-      setProducts(data);
-      if (data.length > 0) {
-        setSelectedProductId(data[0].id);
+      try {
+        const { data } = await supabase.from('batches').select('*, entities(name)');
+        if (data) {
+          const formatted = data.map((b: any) => ({
+            id: b.id,
+            name: b.product_name,
+            category: b.entities?.name || 'Sản phẩm',
+          }));
+          setProducts(formatted);
+          if (formatted.length > 0) {
+            setSelectedProductId(formatted[0].id);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching batches for QR:", e);
       }
     };
     fetchProducts();
@@ -115,7 +132,7 @@ export default function QRGeneratorPage() {
             <div className="bg-emerald-900 p-8 rounded-[2rem] text-white shadow-xl shadow-emerald-900/20">
                <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-4">Ghi chú nghiên cứu</h3>
                <p className="text-sm font-light leading-relaxed opacity-80">
-                 Mã QR này chứa định danh duy nhất của sản phẩm trong hệ thống Blockchain mô phỏng. Khi quét, hệ thống sẽ tự động tìm kiếm chữ ký tương ứng và truy xuất toàn bộ lịch sử chuỗi cung ứng.
+                 Mã QR này chứa định danh duy nhất của sản phẩm trong hệ thống Supabase. Khi quét, hệ thống sẽ tự động tìm kiếm chữ ký tương ứng và truy xuất toàn bộ lịch sử chuỗi cung ứng trên trang xác thực.
                </p>
             </div>
           </div>
