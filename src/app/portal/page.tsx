@@ -46,7 +46,6 @@ export default function ProducerPortal() {
   const [currentEntity, setCurrentEntity] = useState<any>(null);
   const [stakeInput, setStakeInput] = useState("100");
 
-  // Form states for new harvest
   const [newHarvest, setNewHarvest] = useState({
     product_name: 'Trà Atisô (Lạc Dương)',
     quantity: 250,
@@ -66,10 +65,8 @@ export default function ProducerPortal() {
     };
     checkUser();
 
-    // MetaMask Detection via Web3 Provider
     if (web3.isConnected && web3.address) {
       setWalletAddress(web3.address);
-      // Trigger reward claim if user is logged in
       const claimReward = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -85,6 +82,7 @@ export default function ProducerPortal() {
       claimReward();
     }
   }, [web3.isConnected, web3.address]);
+
   const [balance, setBalance] = useState("0.00");
 
   const fetchBalance = async () => {
@@ -118,8 +116,6 @@ export default function ProducerPortal() {
   useEffect(() => {
     const fetchEntityData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      // 1. Try fetching by User ID first (for Google rewards)
       if (session?.user) {
         const { data } = await supabase
           .from('entities')
@@ -133,7 +129,6 @@ export default function ProducerPortal() {
         }
       }
 
-      // 2. Fallback to Wallet Address
       if (!walletAddress) return;
       const { data } = await supabase
         .from('entities')
@@ -185,12 +180,11 @@ export default function ProducerPortal() {
       const txHash = await web3.transferTokens(recipientWallet, transferAmount);
       
       if (txHash) {
-        // Log to Supabase for explorer visibility
         await supabase.from('token_transactions').insert([{
           entity_id: currentEntity?.id,
           amount: parseFloat(transferAmount),
           type: 'TRANSFER',
-          description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}... (Tx: ${txHash.slice(0, 10)}...)`
+          description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}...`
         }]);
 
         alert(`Giao dịch thành công! Mã giao dịch: ${txHash}`);
@@ -200,7 +194,7 @@ export default function ProducerPortal() {
       }
     } catch (err: any) {
       console.error('Transfer error:', err);
-      alert(err.message || 'Giao dịch thất bại. Vui lòng kiểm tra lại số dư hoặc địa chỉ ví.');
+      alert(err.message || 'Giao dịch thất bại.');
     } finally {
       setIsTransferring(false);
     }
@@ -216,16 +210,14 @@ export default function ProducerPortal() {
   const handleSign = async () => {
     setIsSigning(true);
     try {
-      // 0. Pre-flight check: Ensure enough balance for gas fee (1.2 AGRI)
       const currentBalanceRaw = web3.isConnected ? web3.fwdBalance : balance.replace(/,/g, '');
       const gasFee = 1.2;
       if (parseFloat(currentBalanceRaw) < gasFee) {
-        alert('Số dư AGRI Token không đủ để trả phí Gas (1.2 AGRI). Vui lòng nạp thêm để tiếp tục.');
+        alert('Số dư AGRI Token không đủ để trả phí Gas (1.2 AGRI).');
         setIsSigning(false);
         return;
       }
 
-      // 1. Create the batch in Supabase
       const { data: batch, error: bError } = await supabase
         .from('batches')
         .insert([{
@@ -240,10 +232,7 @@ export default function ProducerPortal() {
 
       if (bError) throw bError;
 
-      // 2. Anchoring to Blockchain & Deduct Gas Fee
       const mockTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      
-      // Update balance and record gas transaction
       const newBalance = parseFloat(currentBalanceRaw) - gasFee;
       
       await Promise.all([
@@ -267,7 +256,6 @@ export default function ProducerPortal() {
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (err) {
       console.error('Sign error:', err);
-      alert('Không thể ký dữ liệu. Vui lòng kiểm tra lại kết nối.');
     } finally {
       setIsSigning(false);
     }
@@ -278,9 +266,7 @@ export default function ProducerPortal() {
     try {
       setIsSigning(true);
       const txHash = await web3.stakeTokens(amount.toString());
-      
       if (txHash) {
-        // Sync with Supabase for history/indexing
         const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
         await Promise.all([
           supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
@@ -288,10 +274,9 @@ export default function ProducerPortal() {
             entity_id: currentEntity.id,
             amount: amount,
             type: 'STAKE',
-            description: `Staked AGRI for node validation (Tx: ${txHash.slice(0, 10)}...)`
+            description: `Staked AGRI for node validation`
           }])
         ]);
-        
         setIsSuccess(true);
         setStakeInput('');
         await refreshData();
@@ -308,17 +293,14 @@ export default function ProducerPortal() {
     try {
       setIsSigning(true);
       const txHash = await web3.claimRewards();
-      
       if (txHash) {
         const rewardAmount = parseFloat(web3.pendingRewards);
-        // We sync with Supabase for transaction history
         await supabase.from('token_transactions').insert([{
           entity_id: currentEntity?.id,
           amount: rewardAmount,
           type: 'REWARD',
-          description: `Claimed validation rewards from contract (Tx: ${txHash.slice(0, 10)}...)`
+          description: `Claimed validation rewards`
         }]);
-        
         setIsSuccess(true);
         await refreshData();
         setTimeout(() => {
@@ -335,7 +317,7 @@ export default function ProducerPortal() {
 
   const handleApprove = async (batchId: string) => {
     try {
-      const rewardAmount = 5.0; // Higher reward for auditing
+      const rewardAmount = 5.0;
       const currentBalance = parseFloat(balance.replace(/,/g, ''));
       const newBalance = currentBalance + rewardAmount;
       const newReputation = (currentEntity?.reputation_score || 0) + 1;
@@ -350,8 +332,7 @@ export default function ProducerPortal() {
           description: `Audit reward for batch ${batchId.slice(0,8)}`
         }])
       ]);
-      
-      alert(`Đã xác thực lô hàng thành công! Bạn nhận được ${rewardAmount} fwd thưởng và +1 điểm uy tín.`);
+      alert(`Xác thực thành công! +${rewardAmount} AGRI & +1 uy tín.`);
       await refreshData();
     } catch (err) {
       console.error('Approve error:', err);
@@ -372,13 +353,10 @@ export default function ProducerPortal() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans selection:bg-emerald-100">
-      {/* Sidebar Navigation */}
       <aside className="w-16 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen z-[60]">
         <div className="p-6 md:p-8 border-b border-white/5">
            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
-                fwd
-              </div>
+              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs">fwd</div>
               <div className="flex flex-col">
                  <div className="flex items-baseline gap-1">
                     <span className="font-serif text-sm font-light text-emerald-400 italic lowercase">fwd</span>
@@ -411,23 +389,18 @@ export default function ProducerPortal() {
         </nav>
 
         <div className="p-4 border-t border-white/5">
-           <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')} className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 transition-colors">
+           <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')} className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400">
               <LogOut size={20} />
               <span className="hidden md:block font-bold text-sm">Logout</span>
            </button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-grow flex flex-col">
-        {/* Top Header */}
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4">
               <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate max-w-[120px] md:max-w-none">
                 {currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} 
-                <span className="hidden sm:inline text-slate-300 text-[10px] font-bold not-italic ml-2 tracking-widest uppercase">
-                  ID: {currentEntity?.id?.slice(0, 8) || user?.id?.slice(0, 8)}
-                </span>
               </h2>
            </div>
            <div className="flex items-center gap-3 md:gap-6">
@@ -435,14 +408,6 @@ export default function ProducerPortal() {
                  <Zap size={12} className="animate-pulse" />
                  {balance}
               </div>
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                 Synced
-              </div>
-              <button className="relative p-2 text-slate-400 hover:text-natural-950 transition-colors">
-                 <Bell size={18} />
-                 <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border-2 border-white"></div>
-              </button>
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100 shrink-0">
                  <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
               </div>
@@ -452,47 +417,19 @@ export default function ProducerPortal() {
         <div className="p-4 md:p-12 space-y-8 md:space-y-12 overflow-y-auto max-h-[calc(100vh-4rem)]">
            {activeTab === 'dashboard' && (
              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
-                {/* Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                    {stats.map((s, i) => (
-                     <div key={i} className="bg-white p-5 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                        <div className="text-emerald-500 mb-4 md:mb-6 bg-emerald-50 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl flex items-center justify-center"><s.icon size={20} /></div>
+                     <div key={i} className="bg-white p-5 md:p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-emerald-500 mb-4 md:mb-6 bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center"><s.icon size={20} /></div>
                         <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
                         <p className="text-xl md:text-3xl font-black text-natural-950">{s.value}</p>
                      </div>
                    ))}
                 </div>
 
-                {/* IoT Real-time Feed */}
-                <section>
-                   <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Live Farm Telemetry</h3>
-                      <button className="text-[10px] font-black text-emerald-500 hover:underline">VIEW SENSOR MAP</button>
-                   </div>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                      {[
-                        { label: "Soil Moisture", value: "64.5%", icon: Droplets, color: "text-blue-500" },
-                        { label: "Ambient Temp", value: "18.2°C", icon: Thermometer, color: "text-orange-500" },
-                        { label: "UV Radiation", value: "1.2 Low", icon: Zap, color: "text-amber-500" }
-                      ].map((t, i) => (
-                        <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-lg flex items-center gap-6">
-                           <div className={`${t.color} bg-slate-50 w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-inner`}>
-                              <t.icon size={28} />
-                           </div>
-                           <div>
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{t.label}</p>
-                              <p className="text-2xl font-black text-natural-900">{t.value}</p>
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </section>
-
-                {/* Recent Batches */}
                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Active Supply Chain Batches</h3>
-                      <button className="px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all">MANAGE ALL</button>
                    </div>
                    <div className="divide-y divide-slate-50">
                       {loading ? (
@@ -502,7 +439,7 @@ export default function ProducerPortal() {
                       ) : batches.map((batch, i) => (
                         <div key={i} className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-slate-50/50 transition-colors">
                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white">
                                  <Activity size={18} />
                               </div>
                               <div>
@@ -546,12 +483,8 @@ export default function ProducerPortal() {
                     </div>
                  </div>
 
-                 {/* Staking & Rewards Console */}
                  <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="bg-natural-950 text-white rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                          <ShieldCheck size={120} />
-                       </div>
                        <div className="relative z-10 space-y-6">
                           <div className="space-y-1">
                              <h3 className="text-2xl font-black italic uppercase tracking-tighter">Stake <span className="text-emerald-500">to Verify</span></h3>
@@ -561,7 +494,6 @@ export default function ProducerPortal() {
                              <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-4">
                                 <div className="flex justify-between items-end">
                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount to Stake</p>
-                                   <p className="text-[10px] font-bold text-emerald-500 uppercase">Available: {web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance}</p>
                                 </div>
                                 <div className="flex gap-2">
                                    <input 
@@ -571,18 +503,11 @@ export default function ProducerPortal() {
                                       className="flex-grow bg-transparent border-none text-2xl font-black text-white focus:outline-none focus:ring-0 p-0"
                                       placeholder="0.00"
                                    />
-                                   <button 
-                                      onClick={() => setStakeInput(web3.isConnected ? web3.fwdBalance : balance.replace(/,/g, ''))}
-                                      className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/30 transition-all"
-                                   >
-                                      MAX
-                                   </button>
                                 </div>
                              </div>
                              <button 
                                 onClick={() => handleStake(Number(stakeInput))}
-                                disabled={!stakeInput || Number(stakeInput) <= 0}
-                                className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-emerald-600/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all"
                              >
                                 CONFIRM STAKING
                              </button>
@@ -609,29 +534,25 @@ export default function ProducerPortal() {
                              </p>
                           </div>
                        </div>
-                       <button onClick={handleClaim} className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6 active:scale-95">
+                       <button onClick={handleClaim} className="w-full py-5 border-2 border-slate-900 text-natural-900 hover:bg-natural-900 hover:text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all mt-6">
                           CLAIM REWARDS
                        </button>
                        <button 
-                         onClick={async () => {
-                           if (window.ethereum) {
-                             try {
-                               await window.ethereum.request({
-                                 method: 'wallet_watchAsset',
-                                 params: [{
-                                   type: 'ERC20',
-                                   options: {
-                                     address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
-                                     symbol: 'AGRI',
-                                     decimals: 18,
-                                     image: 'https://fwdlife.vn/favicon.ico',
-                                   },
-                                 }],
-                               });
-                             } catch (error: any) {
-                               console.error(error);
-                               alert("Lỗi: " + (error.message || "Không thể thêm logo"));
-                             }
+                         onClick={() => {
+                           const eth = (window as any).ethereum;
+                           if (eth) {
+                             eth.request({
+                               method: 'wallet_watchAsset',
+                               params: {
+                                 type: 'ERC20',
+                                 options: {
+                                   address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+                                   symbol: 'AGRI',
+                                   decimals: 18,
+                                   image: 'https://fwdlife.vn/favicon.ico'
+                                 }
+                               }
+                             }).catch((e: any) => alert("Thông báo: " + e.message));
                            } else {
                              alert("Vui lòng cài đặt MetaMask!");
                            }
@@ -644,38 +565,35 @@ export default function ProducerPortal() {
                     </div>
                  </section>
 
-                  {/* Inter-Wallet Transfer Section */}
                   <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden p-8 md:p-12">
                     <div className="max-w-3xl mx-auto space-y-8">
                        <div className="text-center space-y-2">
                           <h3 className="text-2xl font-black text-natural-900 uppercase tracking-tighter italic">Inter-Wallet <span className="text-emerald-500">Transfer</span></h3>
-                          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-2">Gửi Token AGRI an toàn trên mạng lưới Lifechain</p>
                        </div>
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                <User size={12} /> Địa chỉ ví người nhận (MetaMask)
+                                <User size={12} /> Địa chỉ ví người nhận
                              </label>
                              <input 
                                type="text" 
                                value={recipientWallet}
                                onChange={(e) => setRecipientWallet(e.target.value)}
                                placeholder="0x..." 
-                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-mono outline-none shadow-inner focus:ring-2 focus:ring-emerald-500 transition-all" 
+                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-[11px] font-mono outline-none" 
                              />
-                             <p className="text-[8px] text-slate-400 font-medium ml-2">Nhập đúng địa chỉ 0x để đảm bảo giao dịch chính xác.</p>
                           </div>
                           <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                <Zap size={12} /> Số lượng fwd muốn chuyển
+                                <Zap size={12} /> Số lượng AGRI
                              </label>
                              <input 
                                type="number" 
                                value={transferAmount}
                                onChange={(e) => setTransferAmount(e.target.value)}
                                placeholder="0.00" 
-                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-lg font-black outline-none shadow-inner focus:ring-2 focus:ring-emerald-500 transition-all" 
+                               className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-lg font-black outline-none" 
                              />
                           </div>
                        </div>
@@ -683,18 +601,9 @@ export default function ProducerPortal() {
                        <button 
                          onClick={handleTransfer}
                          disabled={isTransferring}
-                         className="w-full py-5 bg-natural-900 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all flex items-center justify-center gap-4 shadow-xl shadow-natural-900/10 active:scale-[0.98] disabled:opacity-50"
+                         className="w-full py-5 bg-natural-900 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] hover:bg-emerald-600 transition-all flex items-center justify-center gap-4"
                        >
-                         {isTransferring ? (
-                           <>
-                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                             ĐANG XỬ LÝ GIAO DỊCH...
-                           </>
-                         ) : (
-                           <>
-                             <Send size={18} /> THỰC THI CHUYỂN COIN (EXECUTE)
-                           </>
-                         )}
+                         {isTransferring ? 'ĐANG XỬ LÝ...' : 'THỰC THI CHUYỂN COIN'}
                        </button>
                     </div>
                   </section>
@@ -702,7 +611,6 @@ export default function ProducerPortal() {
                  <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
                     <div className="p-8 border-b border-slate-50 flex justify-between items-center">
                        <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Transaction Ledger</h3>
-                       <span className="text-[10px] font-bold text-slate-400">Total: {transactions.length}</span>
                     </div>
                     <div className="divide-y divide-slate-50">
                        {transactions.length === 0 ? (
@@ -722,7 +630,6 @@ export default function ProducerPortal() {
                                 <p className={`text-sm font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
                                    {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} fwd
                                 </p>
-                                <p className="text-[9px] text-slate-400 font-bold tracking-widest">{new Date(tx.created_at).toLocaleDateString()}</p>
                              </div>
                           </div>
                        ))}
@@ -731,61 +638,10 @@ export default function ProducerPortal() {
               </motion.div>
            )}
 
-           {activeTab === 'governance' && (
-             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="bg-natural-950 text-white rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
-                      <div className="relative z-10 space-y-8">
-                         <div>
-                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">My Influence</p>
-                            <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">Voting <br/><span className="text-white">Power</span></h3>
-                         </div>
-                         <div className="p-8 bg-white/5 border border-white/10 rounded-[2.5rem]">
-                            <p className="text-5xl font-black text-white">{(Number(currentEntity?.reputation_score || 0) + (Number(currentEntity?.staked_balance || 0) * 0.1)).toFixed(1)}</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">vPoints</p>
-                         </div>
-                         <p className="text-xs text-slate-400 font-medium leading-relaxed">
-                            Quyền biểu quyết của bạn được tính dựa trên điểm uy tín (Reputation) và 10% số dư Token đã đặt cọc (Stake). Càng đóng góp nhiều cho mạng lưới, tiếng nói của bạn càng quan trọng.
-                         </p>
-                      </div>
-                   </div>
-
-                   <div className="space-y-8">
-                      <section className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-xl">
-                         <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 italic">Active Proposals</h4>
-                         <div className="space-y-4">
-                            {[
-                              { title: "Nâng mức thưởng xác thực thêm 5%", votes: "82% Yes" },
-                              { title: "Mở rộng mạng lưới xác thực tại Lâm Đồng", votes: "95% Yes" }
-                            ].map((prop, i) => (
-                              <div key={i} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex justify-between items-center">
-                                 <p className="text-sm font-black text-natural-900">{prop.title}</p>
-                                 <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-widest">{prop.votes}</span>
-                              </div>
-                            ))}
-                         </div>
-                      </section>
-                      <div className="bg-emerald-600 text-white p-10 rounded-[3rem] shadow-xl relative overflow-hidden group cursor-pointer hover:bg-emerald-500 transition-all">
-                         <div className="relative z-10">
-                            <h4 className="text-sm font-black uppercase tracking-widest mb-2 italic">Sáng kiến mới</h4>
-                            <p className="text-2xl font-black tracking-tighter leading-none">Đề xuất cải tiến <br/>mạng lưới</p>
-                            <ArrowRight size={24} className="mt-6 group-hover:translate-x-2 transition-transform" />
-                         </div>
-                      </div>
-                   </div>
-                </div>
-             </motion.div>
-           )}
-
            {activeTab === 'harvest' && (
-             <motion.div 
-               initial={{ opacity: 0, scale: 0.95 }} 
-               animate={{ opacity: 1, scale: 1 }} 
-               className="max-w-4xl mx-auto space-y-12 pt-12"
-             >
+             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12 pt-12">
                 <div className="text-center space-y-4">
                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
-                   <p className="text-slate-400 text-lg font-light">Ghi nhận dữ liệu thu hoạch mới lên mạng lưới AgriChain thông qua chữ ký số xác thực.</p>
                 </div>
 
                 <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
@@ -809,64 +665,19 @@ export default function ProducerPortal() {
                            type="number" 
                            value={newHarvest.quantity}
                            onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
-                           placeholder="250.00" 
                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
                          />
                       </div>
                    </div>
 
-                   <div className="p-8 rounded-[2rem] bg-emerald-500/5 border border-dashed border-emerald-500/20 flex flex-col items-center justify-center text-center gap-4 group hover:border-emerald-500/50 transition-all cursor-pointer">
-                      <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/10"><CloudUpload size={32} /></div>
-                      <div>
-                         <p className="text-sm font-black text-natural-950">Tải lên chứng từ thu hoạch</p>
-                         <p className="text-[10px] font-bold text-slate-400">PDF, PNG, JPG (Max 10MB)</p>
-                      </div>
-                   </div>
-
-                   <div className="flex flex-col items-center gap-6 pt-6">
-                      <button 
-                        onClick={handleSign}
-                        disabled={isSigning || isSuccess}
-                        className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-4 ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black hover:-translate-y-1'}`}
-                      >
-                         {isSigning ? (
-                           <>
-                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                             SIGNING LEDGER...
-                           </>
-                         ) : isSuccess ? (
-                           <>
-                             <CheckCircle2 size={24} /> HARVEST VERIFIED & LOCKED
-                           </>
-                         ) : (
-                           <>
-                             <ShieldCheck size={24} /> SIGN DATA TO BLOCKCHAIN
-                           </>
-                         )}
-                      </button>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Digital Signature: 0x82f...a12c • Secured by Ethereum Node</p>
-                   </div>
+                   <button 
+                     onClick={handleSign}
+                     disabled={isSigning || isSuccess}
+                     className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black'}`}
+                   >
+                      {isSigning ? 'SIGNING LEDGER...' : isSuccess ? 'HARVEST VERIFIED' : 'SIGN DATA TO BLOCKCHAIN'}
+                   </button>
                 </div>
-
-                <AnimatePresence>
-                   {isSuccess && (
-                     <motion.div 
-                       initial={{ opacity: 0, y: 20 }}
-                       animate={{ opacity: 1, y: 0 }}
-                       exit={{ opacity: 0, y: -20 }}
-                       className="bg-emerald-500 p-6 rounded-2xl text-white flex items-center justify-between shadow-2xl"
-                     >
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"><Zap size={20} /></div>
-                           <div>
-                              <p className="text-sm font-black uppercase">Transaction Confirmed!</p>
-                              <p className="text-[10px] font-bold opacity-80">Block #19482416 • 12 Nodes Validated</p>
-                           </div>
-                        </div>
-                        <button className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30">View Transaction</button>
-                     </motion.div>
-                   )}
-                </AnimatePresence>
              </motion.div>
            )}
 
@@ -875,11 +686,10 @@ export default function ProducerPortal() {
                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
-                      <span className="text-[10px] font-bold text-slate-400">Pending: {batches.filter(b => b.status === 'PENDING').length}</span>
                    </div>
                    <div className="divide-y divide-slate-50">
                       {batches.filter(b => b.status === 'PENDING').length === 0 ? (
-                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches for audit</div>
+                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches</div>
                       ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
                            <div className="flex items-center gap-4">
@@ -888,12 +698,12 @@ export default function ProducerPortal() {
                               </div>
                               <div>
                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
-                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8) || 'Unknown'} • Yield: {batch.quantity} KG</p>
+                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8)}</p>
                               </div>
                            </div>
                            <button 
                              onClick={() => handleApprove(batch.id)}
-                             className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/20 active:scale-95"
+                             className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20"
                            >
                              Approve Data
                            </button>
