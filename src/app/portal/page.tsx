@@ -549,7 +549,7 @@ export default function ProducerPortal() {
                                    address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
                                    symbol: 'AGRI',
                                    decimals: 18,
-                                   image: 'https://fwdlife.vn/favicon.ico'
+                                   image: 'https://chain.fwdlife.vn/ico.png'
                                  }
                                }
                              }).catch((e: any) => alert("Thông báo: " + e.message));
