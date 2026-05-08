@@ -45,6 +45,7 @@ export default function ProducerPortal() {
   const [walletAddress, setWalletAddress] = useState<string>("");
   const [currentEntity, setCurrentEntity] = useState<any>(null);
   const [stakeInput, setStakeInput] = useState("100");
+  const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
   const [newHarvest, setNewHarvest] = useState({
     product_name: 'Trà Atisô (Lạc Dương)',
@@ -242,6 +243,7 @@ export default function ProducerPortal() {
       setIsSigning(true);
       const txHash = await web3.stakeTokens(amount.toString());
       if (txHash) {
+        setLastTxHash(txHash);
         const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
         await Promise.all([
           supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
@@ -255,7 +257,10 @@ export default function ProducerPortal() {
         setIsSuccess(true);
         setStakeInput('');
         await refreshData();
-        setTimeout(() => setIsSuccess(false), 3000);
+        setTimeout(() => {
+          setIsSuccess(false);
+          setLastTxHash(null);
+        }, 8000);
       }
     } catch (err) {
       console.error('Stake error:', err);
@@ -269,6 +274,7 @@ export default function ProducerPortal() {
       setIsSigning(true);
       const txHash = await web3.claimRewards();
       if (txHash) {
+        setLastTxHash(txHash);
         const rewardAmount = parseFloat(web3.pendingRewards);
         await supabase.from('token_transactions').insert([{
           entity_id: currentEntity?.id,
@@ -280,8 +286,9 @@ export default function ProducerPortal() {
         await refreshData();
         setTimeout(() => {
           setIsSuccess(false);
+          setLastTxHash(null);
           setActiveTab('dashboard');
-        }, 2000);
+        }, 5000);
       }
     } catch (err) {
       console.error('Claim error:', err);
@@ -389,6 +396,26 @@ export default function ProducerPortal() {
            </div>
         </header>
 
+        <AnimatePresence>
+            {isSuccess && lastTxHash && (
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -20 }}
+                className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4"
+              >
+                 <div className="bg-emerald-600 text-white p-6 rounded-3xl shadow-2xl flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                       <CheckCircle2 size={24} />
+                       <span className="font-black uppercase tracking-widest text-xs">Transaction Successful!</span>
+                    </div>
+                    <p className="text-[10px] text-emerald-100 font-mono break-all opacity-80">TX: {lastTxHash}</p>
+                    <Link href={`/explorer/${lastTxHash}`} className="text-[10px] font-black underline mt-2 uppercase tracking-widest">View in Explorer</Link>
+                 </div>
+              </motion.div>
+            )}
+         </AnimatePresence>
+
         <div className="p-4 md:p-12 space-y-8 md:space-y-12 overflow-y-auto max-h-[calc(100vh-4rem)]">
            {activeTab === 'dashboard' && (
              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
@@ -400,6 +427,29 @@ export default function ProducerPortal() {
                         <p className="text-xl md:text-3xl font-black text-natural-950">{s.value}</p>
                      </div>
                    ))}
+                </div>
+
+                {/* New Quick Action Card for Staking */}
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl shadow-emerald-900/20 relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700"></div>
+                   <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                      <div className="space-y-3">
+                         <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter">Start Staking <span className="text-emerald-200">& Earn Rewards</span></h3>
+                         <p className="text-emerald-100/70 text-sm font-medium max-w-md">Kích hoạt quyền xác thực của Node và bắt đầu nhận AGRI Token thưởng mỗi giây từ mạng lưới FWD Lifechain.</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          if (!web3.isConnected) {
+                            web3.connect();
+                          } else {
+                            setActiveTab('tokenomics');
+                          }
+                        }}
+                        className="px-10 py-5 bg-white text-emerald-700 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-black/10"
+                      >
+                         {web3.isConnected ? "GO TO STAKING CENTER" : "CONNECT WALLET TO START"}
+                      </button>
+                   </div>
                 </div>
 
                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
