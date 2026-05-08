@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { BrowserProvider, JsonRpcSigner, Contract, formatEther, parseEther } from 'ethers';
-import { FWD_TOKEN_ADDRESS, FWD_STAKING_ADDRESS } from '@/lib/contracts/config';
+import { FWD_TOKEN_ADDRESS, FWD_STAKING_ADDRESS, FWD_ANCHOR_ADDRESS } from '@/lib/contracts/config';
 
 // Import ABI from compiled artifacts
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';

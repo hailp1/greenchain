@@ -208,54 +208,29 @@ export default function ProducerPortal() {
   ];
 
   const handleSign = async () => {
-    setIsSigning(true);
     try {
-      const currentBalanceRaw = web3.isConnected ? web3.fwdBalance : balance.replace(/,/g, '');
-      const gasFee = 1.2;
-      if (parseFloat(currentBalanceRaw) < gasFee) {
-        alert('Số dư AGRI Token không đủ để trả phí Gas (1.2 AGRI).');
-        setIsSigning(false);
-        return;
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      const { data: batch, error: bError } = await supabase
-        .from('batches')
-        .insert([{
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_id: currentEntity?.id,
           product_name: newHarvest.product_name,
           quantity: newHarvest.quantity,
-          gps: newHarvest.gps,
-          status: 'PENDING',
-          producer_id: currentEntity?.id
-        }])
-        .select()
-        .single();
+          gps: newHarvest.gps
+        })
+      });
 
-      if (bError) throw bError;
-
-      const mockTxHash = '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      const newBalance = parseFloat(currentBalanceRaw) - gasFee;
-      
-      await Promise.all([
-        supabase.from('entities').update({ fwd_balance: newBalance }).eq('id', currentEntity.id),
-        supabase.from('token_transactions').insert([{
-          entity_id: currentEntity.id,
-          amount: gasFee,
-          type: 'GAS_FEE',
-          description: `Gas fee for signing batch ${batch.id.slice(0,8)}`
-        }]),
-        supabase.from('blockchain_ledger').insert([{
-          batch_id: batch.id,
-          tx_hash: mockTxHash,
-          block_height: 19400 + Math.floor(Math.random() * 1000),
-          merkle_root: '0x' + Array.from({length: 64}, () => Math.floor(Math.random() * 16).toString(16)).join('')
-        }])
-      ]);
+      if (!response.ok) throw new Error('Failed to submit batch');
 
       setIsSuccess(true);
       await refreshData();
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (err) {
       console.error('Sign error:', err);
+      alert('Lỗi khi gửi dữ liệu lên blockchain.');
     } finally {
       setIsSigning(false);
     }
@@ -549,7 +524,7 @@ export default function ProducerPortal() {
                                    address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
                                    symbol: 'AGRI',
                                    decimals: 18,
-                                   image: 'https://chain.fwdlife.vn/ico.png'
+                                   image: 'https://chain.fwdlife.vn/ico.png?v=2'
                                  }
                                }
                              }).catch((e: any) => alert("Thông báo: " + e.message));
