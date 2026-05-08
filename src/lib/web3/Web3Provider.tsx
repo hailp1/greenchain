@@ -162,7 +162,9 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // ─── Stake Tokens ───────────────────────────────────────────
   const stakeTokens = useCallback(async (amount: string): Promise<string | null> => {
     if (!signer || !contractsDeployed) {
-      setState(prev => ({ ...prev, error: 'Contracts not deployed yet.' }));
+      const msg = !signer ? "Wallet not connected." : "Contracts not deployed.";
+      console.error("[Web3] Cannot stake:", msg);
+      setState(prev => ({ ...prev, error: msg }));
       return null;
     }
 
@@ -173,13 +175,17 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
       const parsedAmount = parseEther(amount);
 
-      // Step 1: Approve the staking contract to spend tokens
+      console.log("[Web3] Step 1: Approving AGRI tokens for staking...");
       const approveTx = await tokenContract.approve(FWD_STAKING_ADDRESS, parsedAmount);
+      console.log("[Web3] Approval TX sent:", approveTx.hash);
       await approveTx.wait();
+      console.log("[Web3] Approval confirmed.");
 
-      // Step 2: Stake
+      console.log("[Web3] Step 2: Staking tokens...");
       const stakeTx = await stakingContract.stake(parsedAmount);
+      console.log("[Web3] Stake TX sent:", stakeTx.hash);
       const receipt = await stakeTx.wait();
+      console.log("[Web3] Stake confirmed at block:", receipt.blockNumber);
 
       await refreshBalances();
       return receipt.hash;
@@ -201,9 +207,12 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       const stakingContract = getStakingContract(signer);
       if (!stakingContract) return null;
 
+      console.log("[Web3] Unstaking tokens...");
       const parsedAmount = parseEther(amount);
       const tx = await stakingContract.withdraw(parsedAmount);
+      console.log("[Web3] Unstake TX sent:", tx.hash);
       const receipt = await tx.wait();
+      console.log("[Web3] Unstake confirmed.");
 
       await refreshBalances();
       return receipt.hash;
@@ -225,8 +234,11 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       const stakingContract = getStakingContract(signer);
       if (!stakingContract) return null;
 
+      console.log("[Web3] Claiming rewards...");
       const tx = await stakingContract.claimReward();
+      console.log("[Web3] Claim TX sent:", tx.hash);
       const receipt = await tx.wait();
+      console.log("[Web3] Reward claimed.");
 
       await refreshBalances();
       return receipt.hash;
