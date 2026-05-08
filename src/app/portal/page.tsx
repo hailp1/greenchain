@@ -624,13 +624,16 @@ export default function ProducerPortal() {
                                      address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
                                      symbol: 'AGRI',
                                      decimals: 18,
-                                     image: 'https://chain.fwdlife.vn/favicon.ico'
-                                   }
-                                 }]
+                                     image: 'https://fwdlife.vn/favicon.ico',
+                                   },
+                                 }],
                                });
-                             } catch (error) {
+                             } catch (error: any) {
                                console.error(error);
+                               alert("Lỗi: " + (error.message || "Không thể thêm logo"));
                              }
+                           } else {
+                             alert("Vui lòng cài đặt MetaMask!");
                            }
                          }}
                          className="w-full py-4 bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all mt-3 flex items-center justify-center gap-3"
