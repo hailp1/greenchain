@@ -618,15 +618,15 @@ export default function ProducerPortal() {
                              try {
                                await window.ethereum.request({
                                  method: 'wallet_watchAsset',
-                                  params: [{
+                                 params: [{
                                    type: 'ERC20',
                                    options: {
                                      address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
                                      symbol: 'AGRI',
                                      decimals: 18,
-                                     image: 'https://chain.fwdlife.vn/favicon.ico',
-                                   }],
-                                  
+                                     image: 'https://chain.fwdlife.vn/favicon.ico'
+                                   }
+                                 }]
                                });
                              } catch (error) {
                                console.error(error);
