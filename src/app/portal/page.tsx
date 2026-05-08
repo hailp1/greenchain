@@ -179,19 +179,22 @@ export default function ProducerPortal() {
     try {
       setIsTransferring(true);
       const txHash = await web3.transferTokens(recipientWallet, transferAmount);
-      
       if (txHash) {
+        setLastTxHash(txHash);
         await supabase.from('token_transactions').insert([{
           entity_id: currentEntity?.id,
           amount: parseFloat(transferAmount),
           type: 'TRANSFER',
           description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}...`
         }]);
-
-        alert(`Giao dịch thành công! Mã giao dịch: ${txHash}`);
-        setRecipientWallet('');
-        setTransferAmount('');
+        setIsSuccess(true);
+        setRecipientWallet("");
+        setTransferAmount("");
         await refreshData();
+        setTimeout(() => {
+          setIsSuccess(false);
+          setLastTxHash(null);
+        }, 5000);
       }
     } catch (err: any) {
       console.error('Transfer error:', err);
@@ -241,6 +244,21 @@ export default function ProducerPortal() {
     if (amount <= 0) return;
     try {
       setIsSigning(true);
+      
+      // Validation
+      if (!web3.isConnected) {
+        alert("Vui lòng kết nối ví MetaMask trước khi Staking.");
+        web3.connect();
+        setIsSigning(false);
+        return;
+      }
+
+      if (parseFloat(web3.fwdBalance) < amount) {
+        alert(`Số dư AGRI của bạn (${web3.fwdBalance}) không đủ để Stake ${amount} AGRI.`);
+        setIsSigning(false);
+        return;
+      }
+
       const txHash = await web3.stakeTokens(amount.toString());
       if (txHash) {
         setLastTxHash(txHash);
@@ -262,8 +280,9 @@ export default function ProducerPortal() {
           setLastTxHash(null);
         }, 8000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Stake error:', err);
+      alert("Lỗi Giao Dịch: " + (err.reason || err.message || "Không thể thực hiện Staking. Vui lòng thử lại."));
     } finally {
       setIsSigning(false);
     }
@@ -532,9 +551,17 @@ export default function ProducerPortal() {
                              </div>
                              <button 
                                 onClick={() => handleStake(Number(stakeInput))}
-                                className="w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all"
+                                disabled={isSigning || !web3.isConnected}
+                                className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${isSigning ? 'bg-slate-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'}`}
                              >
-                                CONFIRM STAKING
+                                {isSigning ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    WAITING FOR BLOCKCHAIN...
+                                  </>
+                                ) : (
+                                  "CONFIRM STAKING"
+                                )}
                              </button>
                           </div>
                        </div>

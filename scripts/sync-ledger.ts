@@ -38,8 +38,18 @@ async function syncBlocks() {
 
     if (error) console.error(`Error indexing block ${i}:`, error.message);
   }
-
-  console.log("Sync complete.");
 }
 
-syncBlocks().catch(console.error);
+async function startIndexer() {
+  console.log("Starting FWD Lifechain Indexer Service...");
+  while (true) {
+    try {
+      await syncBlocks();
+    } catch (err) {
+      console.error("Indexer error, retrying in 10s...", err);
+    }
+    await new Promise(resolve => setTimeout(resolve, 10000)); // Poll every 10s
+  }
+}
+
+startIndexer().catch(console.error);

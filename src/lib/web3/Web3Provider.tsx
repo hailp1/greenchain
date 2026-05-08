@@ -257,12 +257,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
 
     try {
+      console.log(`[Web3] Transferring ${amount} AGRI to ${to}...`);
       const tokenContract = getTokenContract(signer);
       if (!tokenContract) return null;
 
-      const parsedAmount = parseEther(amount);
-      const tx = await tokenContract.transfer(to, parsedAmount);
+      const tx = await tokenContract.transfer(to, parseEther(amount));
+      console.log("[Web3] Transfer TX sent:", tx.hash);
       const receipt = await tx.wait();
+      console.log("[Web3] Transfer confirmed.");
 
       await refreshBalances();
       return receipt.hash;

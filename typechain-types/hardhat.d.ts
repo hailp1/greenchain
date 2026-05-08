@@ -42,6 +42,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
+      name: "FWDAnchor",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.FWDAnchor__factory>;
+    getContractFactory(
       name: "FWDStaking",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.FWDStaking__factory>;
@@ -86,6 +90,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
+      name: "FWDAnchor",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.FWDAnchor>;
+    getContractAt(
       name: "FWDStaking",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -125,6 +134,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
     deployContract(
+      name: "FWDAnchor",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.FWDAnchor>;
+    deployContract(
       name: "FWDStaking",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.FWDStaking>;
@@ -168,6 +181,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC20>;
+    deployContract(
+      name: "FWDAnchor",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.FWDAnchor>;
     deployContract(
       name: "FWDStaking",
       args: any[],
