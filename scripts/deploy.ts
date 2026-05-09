@@ -23,6 +23,12 @@ async function main() {
   const stakingAddress = await staking.getAddress();
   console.log("FWDStaking deployed to:", stakingAddress);
 
+  // 2.1 Fund the Staking Contract with a Reward Pool (50M AGRI)
+  console.log("Funding Staking Contract with 50,000,000 AGRI for rewards...");
+  const fundTx = await token.transfer(stakingAddress, ethers.parseUnits("50000000", 18));
+  await fundTx.wait();
+  console.log("Staking Contract successfully funded!");
+
   // 3. Deploy FWD Anchor
   const FWDAnchor = await ethers.getContractFactory("FWDAnchor");
   const anchor = await FWDAnchor.deploy();

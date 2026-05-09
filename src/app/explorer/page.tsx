@@ -38,12 +38,12 @@ export default function ExplorerHome() {
           .select('*', { count: 'exact', head: true });
 
         setStats({
-          price: '$1.42',
-          price_change: '+2.4%',
+          price: 'Oracle Syncing',
+          price_change: '---',
           market_cap: 'Verified',
-          tps: '14.2',
-          gas_price: '1.2 fwd',
-          activeNodes: (entityCount || 0) + 12 // Real entities + seed validators
+          tps: 'Calculating...',
+          gas_price: 'Live Oracle',
+          activeNodes: entityCount || 0 // Only real entities
         });
         
         // Real blocks from ledger
@@ -52,7 +52,7 @@ export default function ExplorerHome() {
           timestamp: batch.blockchain_ledger.anchored_at,
           validator: "fwd-node-" + batch.id.slice(0, 4),
           transactionCount: 1,
-          reward: "0.50 fwd"
+          reward: "0.50 AGRI"
         })));
         
         setLatestTxns((batches || []).filter((batch: any) => batch.blockchain_ledger?.tx_hash).map((batch: any) => ({
@@ -60,7 +60,7 @@ export default function ExplorerHome() {
           timestamp: batch.blockchain_ledger.anchored_at || batch.timestamp,
           from: batch.id.slice(0, 8),
           to: "0xLedger",
-          value: "GAS: 1.2 fwd"
+          value: "GAS: 1.2 AGRI"
         })));
       } catch (err: any) {
         console.error('Explorer fetch error:', err);
@@ -118,10 +118,10 @@ export default function ExplorerHome() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                {[
-                 { label: "fwd Price", value: stats?.price || "$1.42", change: "+4.2%", icon: TrendingUp, color: "text-emerald-500" },
-                 { label: "Total TVL", value: "8.5M fwd", change: "Staked", icon: Lock, color: "text-blue-500" },
-                 { label: "Throughput", value: stats?.tps || "14.2", unit: "TPS", icon: Activity, color: "text-amber-500" },
-                 { label: "Avg. Gas", value: stats?.gas_price || "1.2 fwd", unit: "", icon: Zap, color: "text-purple-500" }
+                 { label: "AGRI Price", value: stats?.price, change: "Oracle Data", icon: TrendingUp, color: "text-emerald-500" },
+                 { label: "Total TVL", value: "Verified Ledger", change: "Staked", icon: Lock, color: "text-blue-500" },
+                 { label: "Throughput", value: stats?.tps, unit: "", icon: Activity, color: "text-amber-500" },
+                 { label: "Avg. Gas", value: stats?.gas_price, unit: "", icon: Zap, color: "text-purple-500" }
                ].map((stat, i) => (
                  <motion.div 
                    key={i}

@@ -94,12 +94,12 @@ export default function BlocksPage() {
                          <td className="px-6 py-5">
                             <div className="flex items-center gap-2">
                                <Cpu size={12} className="text-emerald-500" />
-                               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">fwd-node-{block.block_height % 100}</span>
+                               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Network Consensus</span>
                             </div>
                          </td>
                          <td className="px-6 py-5">
                             <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                               0.50 FWD
+                               Auto-Calculated
                             </span>
                          </td>
                       </tr>
