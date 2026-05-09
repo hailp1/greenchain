@@ -362,11 +362,11 @@ export default function ProducerPortal() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans selection:bg-emerald-100">
-      <aside className="w-16 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen z-[60]">
-        <div className="p-6 md:p-8 border-b border-white/5">
+      <aside className="w-20 md:w-64 bg-[#0a0f0a] text-white flex flex-col sticky top-0 h-screen z-[60] transition-all duration-300">
+        <div className="p-4 md:p-8 border-b border-white/5 flex justify-center md:justify-start">
            <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs">fwd</div>
-              <div className="flex flex-col">
+              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs shrink-0">fwd</div>
+              <div className="flex flex-col hidden md:block">
                  <div className="flex items-baseline gap-1">
                     <span className="font-serif text-sm font-light text-emerald-400 italic lowercase">fwd</span>
                     <span className="font-sans text-base font-black text-white uppercase ml-1">LIFE</span>
@@ -405,17 +405,17 @@ export default function ProducerPortal() {
         </div>
       </aside>
 
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col min-w-0">
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
-           <div className="flex items-center gap-4">
-              <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate max-w-[120px] md:max-w-none">
-                {currentEntity?.name || user?.user_metadata?.full_name || 'Đang tải...'} 
+           <div className="flex items-center gap-2 md:gap-4 min-w-0 shrink">
+              <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate">
+                {currentEntity?.name || user?.user_metadata?.full_name || 'User'} 
               </h2>
            </div>
-           <div className="flex items-center gap-3 md:gap-6">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+           <div className="flex items-center gap-2 md:gap-6 shrink-0">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest shrink-0">
                  <Zap size={12} className="animate-pulse text-emerald-500" />
-                 {mounted ? parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} AGRI
+                 {mounted ? parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} 
               </div>
 
               <button 
@@ -439,9 +439,10 @@ export default function ProducerPortal() {
                     }
                   }}
                   disabled={isSigning}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+                  className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 shrink-0"
                >
-                  {isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}
+                  <span className="hidden sm:inline">{isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}</span>
+                  <span className="sm:hidden">{isSigning ? "..." : "CLAIM"}</span>
                </button>
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100 shrink-0">
                  <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
