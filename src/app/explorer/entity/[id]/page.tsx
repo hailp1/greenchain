@@ -103,7 +103,7 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
                     </div>
                     <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 text-center">
                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Staked Balance</p>
-                       <p className="text-2xl font-black text-blue-400">{Number(entity?.staked_balance || 0).toFixed(0)} fwd</p>
+                       <p className="text-2xl font-black text-blue-400">{Number(entity?.staked_balance || 0).toFixed(0)} AGRI</p>
                     </div>
                     <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 text-center">
                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Role Type</p>
@@ -155,7 +155,7 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
                           <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Locked Balance</p>
                           <div className="flex items-baseline gap-2">
                              <span className="text-4xl font-black text-white">{Number(entity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                             <span className="text-xs font-bold text-emerald-500">fwd</span>
+                             <span className="text-xs font-bold text-emerald-500">AGRI</span>
                           </div>
                           <p className="text-[8px] text-slate-400 font-medium mt-2">Dữ liệu được xác thực bởi 12 Node bảo chứng trên mạng lưới.</p>
                        </div>
@@ -203,7 +203,7 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
                          </div>
                          <div className="text-left md:text-right">
                             <p className={`text-lg font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
-                               {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} fwd
+                               {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} AGRI
                             </p>
                             <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">{new Date(tx.created_at).toLocaleDateString()} • {new Date(tx.created_at).toLocaleTimeString()}</p>
                          </div>
