@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Globe, Search, Cpu, Activity, ShieldCheck, 
-  ArrowRight, Box, Zap, Layers, Menu, X, TrendingUp, BarChart3, Clock, Lock
+  ArrowRight, Box, Zap, Layers, Menu, X, TrendingUp, BarChart3, Clock, Lock, ChevronRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,7 @@ import Footer from '@/components/Footer';
 import { API_URL } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
 import { ethers } from 'ethers';
+import { FWD_TOKEN_ADDRESS, FWD_STAKING_ADDRESS, FWD_ANCHOR_ADDRESS } from '@/lib/contracts/config';
 
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>(null);
@@ -211,6 +212,40 @@ export default function ExplorerHome() {
                      <p className="text-2xl font-black text-natural-950">99.98%</p>
                   </div>
                </div>
+            </div>
+         </div>
+      </section>
+
+      {/* Official Smart Contracts Section */}
+      <section className="py-12 bg-slate-50">
+         <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className="flex items-center gap-3 mb-8">
+               <div className="h-px bg-slate-200 flex-grow"></div>
+               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] px-4 whitespace-nowrap">Official Verified Contracts</h3>
+               <div className="h-px bg-slate-200 flex-grow"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               {[
+                 { name: "FWD Token (AGRI)", address: FWD_TOKEN_ADDRESS, icon: Zap, color: "text-emerald-500", bg: "bg-emerald-50" },
+                 { name: "Staking Pool", address: FWD_STAKING_ADDRESS, icon: ShieldCheck, color: "text-blue-500", bg: "bg-blue-50" },
+                 { name: "Data Anchor (Oracle)", address: FWD_ANCHOR_ADDRESS, icon: Lock, color: "text-purple-500", bg: "bg-purple-50" }
+               ].map((contract, i) => (
+                 <Link 
+                   href={`/explorer/address/${contract.address}`} 
+                   key={i}
+                   className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 group"
+                 >
+                    <div className={`w-12 h-12 rounded-2xl ${contract.bg} ${contract.color} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                       <contract.icon size={22} />
+                    </div>
+                    <div className="min-w-0">
+                       <p className="text-sm font-black text-slate-900 mb-0.5">{contract.name}</p>
+                       <p className="text-[10px] font-mono text-slate-400 truncate">{contract.address}</p>
+                    </div>
+                    <ChevronRight size={14} className="ml-auto text-slate-300 group-hover:text-slate-900 transition-colors" />
+                 </Link>
+               ))}
             </div>
          </div>
       </section>

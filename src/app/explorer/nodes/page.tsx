@@ -9,17 +9,28 @@ import {
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { ethers } from 'ethers';
+import { FWD_STAKING_ADDRESS } from '@/lib/contracts/config';
+import FWDStakingArtifact from '@/artifacts/contracts/FWDStaking.sol/FWDStaking.json';
 
 export default function NodesPage() {
   const [nodes, setNodes] = useState<any[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
+  const [totalStakedReal, setTotalStakedReal] = useState("0");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        
+        // Fetch Real-time Staking Data
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const stakingContract = new ethers.Contract(FWD_STAKING_ADDRESS, FWDStakingArtifact.abi, provider);
+        const total = await stakingContract.totalStaked();
+        setTotalStakedReal(ethers.formatEther(total));
+
         // Define the 3 Core Geth Validators (Genesis Nodes)
         const genesisNodes = [
           {
@@ -155,10 +166,10 @@ export default function NodesPage() {
                   </p>
                   
                   <div className="grid grid-cols-2 gap-6">
-                     <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Staked</p>
-                        <p className="text-3xl font-black">100.0M <span className="text-emerald-500">AGRI</span></p>
-                     </div>
+                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
+                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Staked</p>
+                         <p className="text-3xl font-black">{Number(totalStakedReal).toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-emerald-500">AGRI</span></p>
+                      </div>
                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Avg Uptime</p>
                         <p className="text-3xl font-black text-blue-400">99.98%</p>
