@@ -583,7 +583,7 @@ export default function ProducerPortal() {
                              </div>
                              <button 
                                 onClick={() => handleStake(Number(stakeInput))}
-                                disabled={isSigning || !web3.isConnected}
+                                disabled={isSigning}
                                 className={`w-full py-5 rounded-2xl text-xs font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-3 ${isSigning ? 'bg-slate-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'}`}
                              >
                                 {isSigning ? (
@@ -630,7 +630,7 @@ export default function ProducerPortal() {
                                params: {
                                  type: 'ERC20',
                                  options: {
-                                   address: '0x0165878A594ca255338adfa4d48449f69242Eb8F',
+                                   address: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
                                    symbol: 'AGRI',
                                    decimals: 18,
                                    image: 'https://chain.fwdlife.vn/ico.png?v=2'
