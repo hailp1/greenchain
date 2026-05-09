@@ -12,6 +12,7 @@ export default function TransactionDetail() {
   const txHash = params.txHash as string;
   const [tx, setTx] = useState<any>(null);
   const [receipt, setReceipt] = useState<any>(null);
+  const [block, setBlock] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,8 +32,11 @@ export default function TransactionDetail() {
           return;
         }
 
+        const blockData = await provider.getBlock(txData.blockNumber);
+
         setTx(txData);
         setReceipt(receiptData);
+        setBlock(blockData);
       } catch (err) {
         console.error("Fetch error:", err);
         setError("Không thể kết nối tới node blockchain.");
@@ -53,10 +57,25 @@ export default function TransactionDetail() {
     <div className="min-h-screen bg-[#020617] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-blue-400 font-mono animate-pulse">ĐANG TRUY XUẤT DỮ LIỆU CHUỖI...</p>
+        <p className="text-blue-400 font-mono animate-pulse uppercase tracking-[0.2em] text-xs">Synchronizing Ledger...</p>
       </div>
     </div>
   );
+
+  // Helper functions for Etherscan-like display
+  const calculateTxFee = () => {
+    if (!tx || !receipt) return "0";
+    const feeWei = BigInt(receipt.gasUsed) * BigInt(tx.gasPrice);
+    return ethers.formatEther(feeWei);
+  };
+
+  const decodeInputData = (data: string) => {
+    if (!data || data === '0x') return 'Transfer (Native Coin)';
+    if (data.startsWith('0x40c10f19')) return 'Mint (address to, uint256 amount)';
+    if (data.startsWith('0xa9059cbb')) return 'Transfer (address to, uint256 amount)';
+    if (data.startsWith('0x095ea7b3')) return 'Approve (address spender, uint256 amount)';
+    return 'Contract Execution';
+  };
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-200 selection:bg-blue-500/30">
@@ -97,8 +116,8 @@ export default function TransactionDetail() {
               </div>
               
               <div className="flex gap-4">
-                <div className="p-4 bg-blue-500/10 rounded-2xl border border-blue-500/20 text-center min-w-[120px]">
-                  <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Block Height</p>
+                <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-center min-w-[120px]">
+                  <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">Block Height</p>
                   <p className="text-xl font-black text-white">#{tx?.blockNumber}</p>
                 </div>
               </div>
@@ -114,7 +133,7 @@ export default function TransactionDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                        <ArrowRight size={12} className="rotate-180 text-blue-400" /> From (Sender)
+                        <ArrowRight size={12} className="rotate-180 text-blue-400" /> From
                       </label>
                       <Link href={`/explorer/address/${tx?.from}`} className="block text-blue-400 font-mono hover:underline truncate">
                         {tx?.from}
@@ -122,7 +141,7 @@ export default function TransactionDetail() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-2">
-                        To (Receiver) <ArrowRight size={12} className="text-emerald-400" />
+                        Interacted With (To) <ArrowRight size={12} className="text-emerald-400" />
                       </label>
                       <Link href={`/explorer/address/${tx?.to}`} className="block text-emerald-400 font-mono hover:underline truncate">
                         {tx?.to || "Contract Creation"}
@@ -140,26 +159,33 @@ export default function TransactionDetail() {
                       </p>
                     </div>
                     <div className="space-y-1">
+                      <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Transaction Fee</label>
+                      <p className="text-sm font-bold text-emerald-400">{calculateTxFee()} <span className="text-[10px] uppercase">AGRI</span></p>
+                    </div>
+                    <div className="space-y-1">
                       <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Gas Price</label>
-                      <p className="font-mono text-sm">{ethers.formatUnits(tx?.gasPrice || 0, 'gwei')} <span className="text-[10px] text-slate-500 uppercase">Gwei</span></p>
+                      <p className="font-mono text-sm text-slate-300">{ethers.formatUnits(tx?.gasPrice || 0, 'gwei')} <span className="text-[10px] uppercase">Gwei</span></p>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Nonce</label>
-                      <p className="font-mono text-sm">{tx?.nonce}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Confirmations</label>
-                      <p className="text-emerald-400 font-black">{receipt?.confirmations || 0}</p>
+                      <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Timestamp</label>
+                      <p className="text-slate-300 text-sm font-bold flex items-center gap-1">
+                        <Clock size={12} /> {block ? new Date(block.timestamp * 1000).toLocaleString() : '...'}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Input Data Section */}
                 <div className="bg-white/5 border border-white/10 p-8 rounded-[2rem] space-y-4">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <Database size={14} /> Input Data (Raw Hex)
-                  </h3>
-                  <div className="bg-black/50 p-6 rounded-2xl border border-white/5 font-mono text-[11px] text-slate-400 break-all leading-relaxed max-h-[200px] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                      <Database size={14} /> Input Data
+                    </h3>
+                    <span className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      {decodeInputData(tx?.data)}
+                    </span>
+                  </div>
+                  <div className="bg-black/50 p-6 rounded-2xl border border-white/5 font-mono text-[11px] text-slate-400 break-all leading-relaxed max-h-[150px] overflow-y-auto">
                     {tx?.data || "0x"}
                   </div>
                 </div>
@@ -174,7 +200,7 @@ export default function TransactionDetail() {
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Network ID</span>
-                      <span className="font-mono font-bold text-white">31337</span>
+                      <span className="font-mono font-bold text-white">300489 (fwd LIFEchain)</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Gas Limit</span>

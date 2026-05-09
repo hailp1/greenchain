@@ -2,13 +2,13 @@
 
 import { useState, useEffect, use } from 'react';
 import { supabase } from '@/lib/supabase';
-import { 
-  Globe, Search, Wallet, ArrowLeft, Clock, FileText, 
+import { Globe, Search, Wallet, ArrowLeft, Clock, FileText, 
   ChevronRight, ShieldCheck, Copy, Database, Activity,
   QrCode, PieChart, TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ethers } from 'ethers';
 
 export default function AddressPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
@@ -16,6 +16,9 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   const [copied, setCopied] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const [nativeBalance, setNativeBalance] = useState<string>("0");
+  const [tokenBalance, setTokenBalance] = useState<string>("0");
 
   const [entityStats, setEntityStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,7 +27,25 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch Entity data
+        // Fetch REAL Balances from Blockchain
+        try {
+          const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+          const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8"; // FWD Token
+          const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
+          const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
+
+          const [nBal, tBal] = await Promise.all([
+            provider.getBalance(addressId),
+            tokenContract.balanceOf(addressId).catch(() => BigInt(0))
+          ]);
+
+          setNativeBalance(ethers.formatEther(nBal));
+          setTokenBalance(ethers.formatEther(tBal));
+        } catch (e) {
+          console.error("Error fetching blockchain balances:", e);
+        }
+
+        // Fetch Entity data (Optional metadata)
         const { data: entityData } = await supabase
           .from('entities')
           .select('*')
@@ -33,9 +54,10 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
           
         if (entityData) {
           setEntityStats(entityData);
+        }
           
-          // Fetch Transactions for this entity
-          const { data: txData } = await supabase
+        // Fetch Transactions for this entity
+        const { data: txData } = await supabase
             .from('token_transactions')
             .select(`
               *,
@@ -57,6 +79,10 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
             }));
             setTransactions(formatted);
           }
+        } else {
+          // If no entity found, it's just a normal blockchain address without profile
+          // We can still try to show some mock transaction history or leave it empty
+          setTransactions([]);
         }
       } catch (err) {
         console.error("Error fetching address data:", err);
@@ -136,20 +162,20 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                   <PieChart size={80} />
                </div>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Total Balance</p>
-               <h3 className="text-3xl font-black text-slate-900 mb-2">{entityStats ? Number(entityStats.fwd_balance || 0).toLocaleString() : '0'} fwd</h3>
-               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Staked: {entityStats ? Number(entityStats.staked_balance || 0).toLocaleString() : '0'} fwd</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">FWD Token Balance</p>
+               <h3 className="text-3xl font-black text-slate-900 mb-2">{Number(tokenBalance).toLocaleString(undefined, {maximumFractionDigits: 2})} <span className="text-sm text-slate-400">FWD</span></h3>
+               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Native Gas: <span className="text-emerald-500">{Number(nativeBalance).toLocaleString(undefined, {maximumFractionDigits: 4})} AGRI</span></p>
             </div>
 
            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Transactions</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">On-Chain Activity</p>
               <div className="flex items-end gap-3 mb-2">
-                 <h3 className="text-3xl font-black text-slate-900">142</h3>
+                 <h3 className="text-3xl font-black text-slate-900">{transactions.length > 0 ? transactions.length : '0'}</h3>
                  <span className="text-xs font-bold text-emerald-500 flex items-center gap-1 mb-1">
-                    <TrendingUp size={12} /> +12%
+                    <TrendingUp size={12} /> Live
                  </span>
               </div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Processed on Mainnet</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Indexed Transactions</p>
            </div>
 
            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group bg-gradient-to-br from-slate-900 to-black text-white">
