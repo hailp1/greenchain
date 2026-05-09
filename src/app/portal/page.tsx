@@ -57,45 +57,40 @@ export default function ProducerPortal() {
 
   const [user, setUser] = useState<any>(null);
 
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Check authentication once on mount
   useEffect(() => {
-    const checkUser = async () => {
+    const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
+        // Not logged in – redirect to sign‑in page
         window.location.href = '/signin';
       } else {
         setUser(session.user);
+        setAuthLoading(false);
       }
     };
-    checkUser();
-    setMounted(true);
+    checkAuth();
+  }, []);
 
+  // Delay rendering until auth status resolved
+  if (authLoading) return null;
+
+
+  // Set mounted after authentication resolved
+  useEffect(() => {
+    if (!authLoading) setMounted(true);
+  }, [authLoading]);
+
+  // Update wallet address when web3 is connected
+  useEffect(() => {
     if (web3.isConnected && web3.address) {
       setWalletAddress(web3.address);
-      const linkWallet = async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            // Update the entity with the real wallet address if it's currently a pending one
-            const { data: entity } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).single();
-            if (entity && entity.wallet_address.startsWith('pending_wallet_')) {
-              await supabase.from('entities').update({ wallet_address: web3.address }).eq('id', session.user.id);
-            }
-            
-            await supabase.rpc('claim_wallet_connection_reward', {
-              p_user_id: session.user.id,
-              p_wallet_address: web3.address!
-            });
-            fetchBalance();
-          }
-        } catch (_) { /* silent */ }
-      };
-      linkWallet();
+      fetchBalance();
     }
   }, [web3.isConnected, web3.address]);
 
-  const [balance, setBalance] = useState("0.00");
-
-  const fetchBalance = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       const { data } = await supabase

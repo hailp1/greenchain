@@ -72,7 +72,7 @@ export default function AboutPage() {
                     <BookOpen className="text-emerald-500" /> Academic Mission
                  </h2>
                  <p className="text-slate-600 leading-relaxed font-light">
-                    fwd LIFEchain is more than an application; it is a core component of a Ph.D. research project leveraging **Signaling Theory** and the **S-O-R model** to reshape consumer perception of clean, high-quality agricultural products.
+                    fwd LIFEchain transcends a mere application; it serves as the experimental backbone of a doctoral research initiative that integrates Signaling Theory and the Stimulus‑Organism‑Response (S‑O‑R) model. By delivering immutable provenance data and transparent quality certifications on the blockchain, the platform empowers consumers to recognize and preferentially select clean, premium agricultural products, thereby reshaping market perceptions and fostering sustainable value chains.
                  </p>
               </div>
            </motion.div>
