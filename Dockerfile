@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 # Chỉ cài các dependencies cần thiết cho Hardhat
+RUN apk add --no-cache netcat-openbsd
 RUN npm install
 
 COPY . .
