@@ -8,9 +8,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const RPC_URL = process.env.RPC_URL;
-const OPERATOR_PRIVATE_KEY = process.env.OPERATOR_PRIVATE_KEY;
-const ANCHOR_ADDRESS = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707";
+const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
+const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY;
+const ANCHOR_ADDRESS = process.env.FWD_ANCHOR_ADDRESS || "0x368fAc3D5745a4E6319D443017F72761f830e33C";
 
 export async function POST(request: Request) {
   try {

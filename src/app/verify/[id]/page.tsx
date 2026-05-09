@@ -990,7 +990,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                             Xuất Certificate
                           </button>
                           <Link 
-                            href={`/explorer/${selectedNode?.txHash || selectedNode?.hash || ''}`}
+                            href={`/explorer/tx/${selectedNode?.txHash || selectedNode?.hash || ''}`}
                             className="w-full py-5 bg-white/10 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] border border-white/10 hover:bg-white/20 transition-all flex items-center justify-center gap-2"
                           >
                             <Globe size={16} />
@@ -1319,7 +1319,7 @@ function TransactionExplorer({ node, onClose }: { node: BlockchainNode, onClose:
                     <ShieldCheck size={14} /> Giao dịch được xác thực
                  </div>
                  <Link 
-                   href={`/explorer/${node.txHash || node.hash}`} 
+                   href={`/explorer/tx/${node.txHash || node.hash}`} 
                    className="text-blue-500 text-xs font-bold hover:underline flex items-center gap-1"
                  >
                     Xem trên AgriChain Explorer <ExternalLink size={12} />
@@ -1336,7 +1336,7 @@ function TransactionExplorer({ node, onClose }: { node: BlockchainNode, onClose:
                       <div className="md:col-span-8 flex items-center justify-between gap-4">
                          <div className="min-w-0">
                              <Link 
-                               href={`/explorer/${item.value}`}
+                               href={`/explorer/${item.label.includes('From') ? 'address' : 'tx'}/${item.value}`}
                                className={`text-sm font-mono break-all font-medium ${item.color || 'text-natural-900'} ${item.isLink ? 'text-blue-600 hover:underline cursor-pointer' : ''}`}
                              >
                                {item.value}
