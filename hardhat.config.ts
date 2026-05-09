@@ -16,11 +16,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      chainId: 31337,
+      chainId: 300489,
     },
     localhost: {
       url: "http://127.0.0.1:8545",
-      chainId: 31337,
+      chainId: 300489,
     },
     // When ready for testnet, uncomment and configure:
     // sepolia: {

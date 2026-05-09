@@ -127,7 +127,7 @@ export default function DebugDashboard() {
                     await window.ethereum.request({
                       method: 'wallet_addEthereumChain',
                       params: [{
-                        chainId: '0x7a69',
+                        chainId: '0x495C9',
                         chainName: 'fwd LIFEchain (Official)',
                         rpcUrls: ['https://rpc.fwdlife.vn/?v=final'],
                         nativeCurrency: { name: 'AGRI', symbol: 'AGRI', decimals: 18 },

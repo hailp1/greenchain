@@ -164,7 +164,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // ─── Helper: Ensure correct network ─────────────────────────
   const ensureCorrectNetwork = useCallback(async () => {
     if (!window.ethereum) return false;
-    const targetChainId = "0x7a69"; // 31337 in hex
+    const targetChainId = "0x495C9"; // 300489 in hex
     
     try {
       await window.ethereum.request({
