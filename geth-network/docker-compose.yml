@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  node1: # Farm Node (Master/RPC)
+    image: ethereum/client-go:v1.13.15
+    container_name: fwd-node-1
+    ports:
+      - "8546:8545" # RPC port for your Web App
+      - "30303:30303" # P2P port
+    volumes:
+      - ./genesis.json:/genesis.json
+      - ./node1/data2:/root/.ethereum
+      - ./node1/keystore:/root/.ethereum/keystore
+      - ./password.txt:/password.txt
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+      geth --datadir /root/.ethereum account import --password /password.txt /root/.ethereum/keystore/private_key.txt &&
+      geth --datadir /root/.ethereum init /genesis.json && 
+      geth --networkid 300489 --http --http.addr '0.0.0.0' --http.port 8545 --http.corsdomain '*' --http.vhosts '*' --http.api 'eth,net,web3,personal,miner,admin' --nodiscover --syncmode full --mine --miner.etherbase 0x6e10c6c7647Db4533e0960AC5e6f8Acdf502685b --unlock 0x6e10c6c7647Db4533e0960AC5e6f8Acdf502685b --password /password.txt --allow-insecure-unlock
+      "
+
+  node2: # Auditor Node
+    image: ethereum/client-go:v1.13.15
+    container_name: fwd-node-2
+    ports:
+      - "30304:30303"
+    volumes:
+      - ./genesis.json:/genesis.json
+      - ./node2/data2:/root/.ethereum
+      - ./node2/keystore:/root/.ethereum/keystore
+      - ./password.txt:/password.txt
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+      geth --datadir /root/.ethereum account import --password /password.txt /root/.ethereum/keystore/private_key.txt &&
+      geth --datadir /root/.ethereum init /genesis.json && 
+      geth --networkid 300489 --nodiscover --syncmode full --mine --miner.etherbase 0x3C4662Fa2E7C02bD386dF6e418d1317110fC7358 --unlock 0x3C4662Fa2E7C02bD386dF6e418d1317110fC7358 --password /password.txt
+      "
+
+  node3: # Retail Node
+    image: ethereum/client-go:v1.13.15
+    container_name: fwd-node-3
+    ports:
+      - "30305:30303"
+    volumes:
+      - ./genesis.json:/genesis.json
+      - ./node3/data2:/root/.ethereum
+      - ./node3/keystore:/root/.ethereum/keystore
+      - ./password.txt:/password.txt
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+      geth --datadir /root/.ethereum account import --password /password.txt /root/.ethereum/keystore/private_key.txt &&
+      geth --datadir /root/.ethereum init /genesis.json && 
+      geth --networkid 300489 --nodiscover --syncmode full --mine --miner.etherbase 0xC0647Cc5FEf44d5696e559ae305a07B03710E060 --unlock 0xC0647Cc5FEf44d5696e559ae305a07B03710E060 --password /password.txt
+      "

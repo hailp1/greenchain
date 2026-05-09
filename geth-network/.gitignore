@@ -1,0 +1,14 @@
+# Ignore blockchain database files (LevelDB/Pebble) to keep repo clean
+node1/data2/
+node2/data2/
+node3/data2/
+
+# Ignore any legacy data folders
+node1/data/
+node2/data/
+node3/data/
+
+# Allow Keystores and Configs
+!node1/keystore/
+!node2/keystore/
+!node3/keystore/
