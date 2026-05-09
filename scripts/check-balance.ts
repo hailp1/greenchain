@@ -2,19 +2,17 @@ import pkg from 'hardhat';
 const { ethers } = pkg;
 
 async function main() {
-  const account = "0x9f51163eCAF618ca4d1977fF71C962AeaaF43ee5";
-  const tokenAddress = "0x0165878A594ca255338adfa4d48449f69242Eb8F";
+  const [deployer] = await ethers.getSigners();
+  const tokenAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
   
+  const ethBalance = await ethers.provider.getBalance(deployer.address);
   const token = await ethers.getContractAt("FWDToken", tokenAddress);
-  const balance = await token.balanceOf(account);
-  const name = await token.name();
-  const symbol = await token.symbol();
+  const tokenBalance = await token.balanceOf(deployer.address);
   
-  console.log(`--- KẾT QUẢ KIỂM TRA BLOCKCHAIN ---`);
-  console.log(`Tên Token: ${name}`);
-  console.log(`Ký hiệu: ${symbol}`);
-  console.log(`Địa chỉ ví: ${account}`);
-  console.log(`Số dư: ${ethers.formatUnits(balance, 18)} ${symbol}`);
+  console.log(`--- KẾT QUẢ KIỂM TRA TÀI KHOẢN TỔNG ---`);
+  console.log(`Địa chỉ: ${deployer.address}`);
+  console.log(`Số dư ETH: ${ethers.formatEther(ethBalance)} ETH`);
+  console.log(`Số dư AGRI: ${ethers.formatEther(tokenBalance)} AGRI`);
 }
 
 main().catch((error) => {
