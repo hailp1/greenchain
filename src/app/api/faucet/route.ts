@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
 
-const RPC_URL = "https://rpc.fwdlife.vn";
+const RPC_URL = process.env.RPC_URL || "https://rpc2.ammedtech.com";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
-const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const TOKEN_ADDRESS = process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
 
 export async function POST(request: Request) {
   try {

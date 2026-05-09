@@ -2,6 +2,8 @@ tunnel: ca07e4e4-c9a1-451d-ac0e-9484eb8fb78c
 credentials-file: C:\Users\OWNER\.cloudflared\ca07e4e4-c9a1-451d-ac0e-9484eb8fb78c.json
 
 ingress:
+  - hostname: rpc2.ammedtech.com
+    service: http://127.0.0.1:8546
   - hostname: rpc.fwdlife.vn
     service: http://127.0.0.1:8546
   - service: http_status:404
