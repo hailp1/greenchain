@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 
 import { useWeb3 } from '@/lib/web3';
 import { Wallet } from 'lucide-react';
+import { ethers } from 'ethers';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
