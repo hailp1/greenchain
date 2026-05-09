@@ -82,7 +82,7 @@ export default function ProducerPortal() {
               p_user_id: session.user.id,
               p_wallet_address: web3.address!
             });
-            fetchData();
+            fetchBalance();
           }
         } catch (_) { /* silent */ }
       };
