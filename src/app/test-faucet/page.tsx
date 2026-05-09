@@ -115,12 +115,33 @@ export default function DebugDashboard() {
             </div>
           </div>
 
-          {/* Faucet Card */}
-          <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-3xl space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2 text-emerald-400">
               ⚡ Faucet Tức thì
             </h2>
             <div className="space-y-4">
+              <button 
+                onClick={async () => {
+                  if (!window.ethereum) return;
+                  try {
+                    await window.ethereum.request({
+                      method: 'wallet_addEthereumChain',
+                      params: [{
+                        chainId: '0x7a69',
+                        chainName: 'fwd LIFEchain (Official)',
+                        rpcUrls: ['https://rpc.fwdlife.vn/?v=final'],
+                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                        blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
+                      }],
+                    });
+                    alert('Đã sửa xong mạng! Bây giờ bạn hãy thử Stake lại.');
+                  } catch (err) {
+                    alert('Lỗi khi sửa mạng: ' + (err as any).message);
+                  }
+                }}
+                className="w-full bg-orange-500 hover:bg-orange-400 py-2 rounded-xl font-bold transition-all text-sm mb-2"
+              >
+                🛠 SỬA LỖI KẾT NỐI VÍ (QUAN TRỌNG)
+              </button>
               <div className="space-y-1">
                 <label className="text-xs text-slate-500">ĐỊA CHỈ VÍ NHẬN AGRI</label>
                 <input 
