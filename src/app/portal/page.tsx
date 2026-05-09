@@ -30,6 +30,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { supabase } from '@/lib/supabase';
 import { useWeb3 } from '@/lib/web3/Web3Provider';
+import { ethers } from 'ethers';
 
 export default function ProducerPortal() {
   const web3 = useWeb3();
@@ -99,22 +100,28 @@ export default function ProducerPortal() {
     if (session?.user) {
       const { data } = await supabase
         .from('entities')
-        .select('fwd_balance')
+        .select('wallet_address')
         .eq('id', session.user.id)
         .maybeSingle();
-      if (data) {
-        setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
-        return;
+      
+      if (data?.wallet_address) {
+         try {
+            const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+            const bal = await provider.getBalance(data.wallet_address);
+            setBalance(ethers.formatEther(bal));
+            return;
+         } catch (e) {
+            console.error("Portal balance fetch error:", e);
+         }
       }
     }
     
     if (walletAddress) {
-      const { data } = await supabase
-        .from('entities')
-        .select('fwd_balance')
-        .ilike('wallet_address', walletAddress)
-        .maybeSingle();
-      if (data) setBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+      try {
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const bal = await provider.getBalance(walletAddress);
+        setBalance(ethers.formatEther(bal));
+      } catch (e) {}
     }
   };
 
@@ -214,7 +221,7 @@ export default function ProducerPortal() {
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance, icon: Zap },
+    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 }), icon: Zap },
     { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
@@ -261,8 +268,8 @@ export default function ProducerPortal() {
         return;
       }
 
-      if (parseFloat(web3.fwdBalance) < amount) {
-        alert(`Số dư AGRI của bạn (${web3.fwdBalance}) không đủ để Stake ${amount} AGRI.`);
+      if (parseFloat(web3.balance) < amount) {
+        alert(`Số dư AGRI của bạn (${web3.balance}) không đủ để Stake ${amount} AGRI.`);
         setIsSigning(false);
         return;
       }
@@ -412,40 +419,52 @@ export default function ProducerPortal() {
                 {currentEntity?.name || user?.user_metadata?.full_name || 'User'} 
               </h2>
            </div>
-           <div className="flex items-center gap-2 md:gap-6 shrink-0">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest shrink-0">
-                 <Zap size={12} className="animate-pulse text-emerald-500" />
-                 {mounted ? parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} 
+           <div className="flex items-center gap-2 md:gap-4 shrink-0">
+              <div className="flex flex-col items-end">
+                 <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest shrink-0">
+                    <Zap size={10} className="animate-pulse text-emerald-500" />
+                    {mounted ? Number(web3.balance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span className="opacity-50">AGRI</span>
+                 </div>
               </div>
 
-              <button 
-                  onClick={async () => {
-                    if (isSigning) return;
-                    setIsSigning(true);
-                    try {
-                      const txHash = await web3.claimTestTokens();
-                      if (txHash) {
-                        setLastTxHash(txHash);
-                        setIsSuccess(true);
-                        setTimeout(() => {
-                          setIsSuccess(false);
-                          setLastTxHash(null);
-                        }, 5000);
+              {!web3.isConnected ? (
+                <button 
+                  onClick={() => web3.connect()}
+                  className="px-3 md:px-6 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 shrink-0"
+                >
+                   CONNECT
+                </button>
+              ) : (
+                <button 
+                    onClick={async () => {
+                      if (isSigning) return;
+                      setIsSigning(true);
+                      try {
+                        const txHash = await web3.claimTestTokens();
+                        if (txHash) {
+                          setLastTxHash(txHash);
+                          setIsSuccess(true);
+                          setTimeout(() => {
+                            setIsSuccess(false);
+                            setLastTxHash(null);
+                          }, 5000);
+                        }
+                      } catch (e) {
+                        alert("Không thể nhận token. Vui lòng thử lại sau.");
+                      } finally {
+                        setIsSigning(false);
                       }
-                    } catch (e) {
-                      alert("Không thể nhận token. Vui lòng thử lại sau.");
-                    } finally {
-                      setIsSigning(false);
-                    }
-                  }}
-                  disabled={isSigning}
-                  className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 shrink-0"
-               >
-                  <span className="hidden sm:inline">{isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}</span>
-                  <span className="sm:hidden">{isSigning ? "..." : "CLAIM"}</span>
-               </button>
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100 shrink-0">
-                 <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
+                    }}
+                    disabled={isSigning}
+                    className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 shrink-0"
+                 >
+                    <span className="hidden sm:inline">{isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}</span>
+                    <span className="sm:hidden">{isSigning ? "..." : "CLAIM"}</span>
+                 </button>
+              )}
+
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-900 overflow-hidden border-2 border-white shadow-sm shrink-0">
+                 <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" className="w-full h-full object-cover" />
               </div>
            </div>
         </header>
@@ -464,7 +483,7 @@ export default function ProducerPortal() {
                        <span className="font-black uppercase tracking-widest text-xs">Transaction Successful!</span>
                     </div>
                     <p className="text-[10px] text-emerald-100 font-mono break-all opacity-80">TX: {lastTxHash}</p>
-                    <Link href={`/explorer/${lastTxHash}`} className="text-[10px] font-black underline mt-2 uppercase tracking-widest">View in Explorer</Link>
+                    <Link href={`/explorer/tx/${lastTxHash}`} className="text-[10px] font-black underline mt-2 uppercase tracking-widest">View in Explorer</Link>
                  </div>
               </motion.div>
             )}
@@ -527,7 +546,7 @@ export default function ProducerPortal() {
                               </div>
                            </div>
                            <div className="flex items-center gap-6">
-                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${batch.blockchain_ledger?.[0]?.tx_hash ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-amber-50 text-amber-500 border-amber-100'}`}>
+                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${batch.blockchain_ledger?.[0]?.tx_hash ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                                  {batch.blockchain_ledger?.[0]?.tx_hash ? 'VERIFIED' : 'PENDING'}
                               </span>
                               <ArrowRight size={16} className="text-slate-300" />
@@ -715,7 +734,7 @@ export default function ProducerPortal() {
                              </div>
                              <div className="text-right">
                                 <p className={`text-sm font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
-                                   {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} fwd
+                                   {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} AGRI
                                 </p>
                              </div>
                           </div>
@@ -769,36 +788,36 @@ export default function ProducerPortal() {
            )}
 
            {activeTab === 'audit' && (
-             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
-                   <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                      <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
-                   </div>
-                   <div className="divide-y divide-slate-50">
-                      {batches.filter(b => b.status === 'PENDING').length === 0 ? (
-                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches</div>
-                      ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
-                        <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
-                           <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                                 <ShieldCheck size={18} />
-                              </div>
-                              <div>
-                                 <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
-                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8)}</p>
-                              </div>
-                           </div>
-                           <button 
-                             onClick={() => handleApprove(batch.id)}
-                             className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20"
-                           >
-                             Approve Data
-                           </button>
-                        </div>
-                      ))}
-                   </div>
-                </section>
-             </motion.div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
+                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Batches Awaiting Audit</h3>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                       {batches.filter(b => b.status === 'PENDING').length === 0 ? (
+                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No pending batches</div>
+                       ) : batches.filter(b => b.status === 'PENDING').map((batch, i) => (
+                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50/50 transition-colors">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                                  <ShieldCheck size={18} />
+                               </div>
+                               <div>
+                                  <p className="text-lg font-black text-natural-950 uppercase">{batch.product_name}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">Producer: {batch.producer_id?.slice(0,8)}</p>
+                               </div>
+                            </div>
+                            <button 
+                              onClick={() => handleApprove(batch.id)}
+                              className="px-8 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-600/20"
+                            >
+                              Approve Data
+                            </button>
+                         </div>
+                       ))}
+                    </div>
+                 </section>
+              </motion.div>
            )}
         </div>
       </main>

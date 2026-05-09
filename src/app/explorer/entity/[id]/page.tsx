@@ -241,7 +241,7 @@ export default function EntityExplorer({ params }: { params: Promise<{ id: strin
                               <p className="text-[10px] font-mono text-blue-600 break-all">{batch.blockchain_ledger[0].tx_hash}</p>
                               <div className="flex justify-between items-center pt-2">
                                  <p className="text-[9px] font-bold text-slate-500">Block #{batch.blockchain_ledger[0].block_height}</p>
-                                 <Link href={`/explorer/${batch.blockchain_ledger[0].tx_hash}`} className="text-[9px] font-black text-emerald-600 hover:underline">VIEW RECEIPT</Link>
+                                 <Link href={`/explorer/tx/${batch.blockchain_ledger[0].tx_hash}`} className="text-[9px] font-black text-emerald-600 hover:underline">VIEW RECEIPT</Link>
                               </div>
                            </div>
                          )}

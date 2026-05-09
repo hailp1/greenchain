@@ -22,14 +22,14 @@ export default function AboutPage() {
             className="space-y-6"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-              <span>Phát triển bởi NCS Lê Phúc Hải</span>
+              <span>Developed by NCS Lê Phúc Hải</span>
             </div>
             <h1 className="text-4xl md:text-7xl font-black text-natural-950 tracking-tighter leading-[1.1] italic uppercase">
-              Triết lý <br />
+              The Philosophy <br />
               <span className="text-emerald-500">fwd LIFEchain</span>
             </h1>
             <p className="text-slate-500 text-lg md:text-2xl font-light leading-relaxed max-w-3xl border-l-4 border-emerald-500 pl-6 py-2">
-              "Khát vọng minh bạch hóa giá trị nông sản Việt thông qua sự giao thoa giữa công nghệ Blockchain và niềm tin số."
+              "Our ambition is to transparently unlock the value of Vietnamese agricultural products by bridging blockchain technology with digital trust."
             </p>
           </motion.div>
         </header>
@@ -60,19 +60,19 @@ export default function AboutPage() {
            >
               <div className="space-y-4">
                  <h2 className="text-3xl font-black text-natural-950 tracking-tight uppercase italic flex items-center gap-3">
-                    <MapPin className="text-emerald-500" /> Nguồn cội
+                    <MapPin className="text-emerald-500" /> Origins
                  </h2>
                  <p className="text-slate-600 leading-relaxed font-light italic">
-                    Sinh ra từ vùng đất phù sa Đồng bằng sông Cửu Long, NCS Lê Phúc Hải thấu hiểu sâu sắc những trăn trở của người nông dân về giá trị thực của nông sản trên thị trường quốc tế.
+                    Born in the fertile Mekong Delta, NCS Lê Phúc Hải deeply understands the challenges farmers face in realizing the true market value of their produce worldwide.
                  </p>
               </div>
 
               <div className="space-y-4">
                  <h2 className="text-3xl font-black text-natural-950 tracking-tight uppercase italic flex items-center gap-3">
-                    <BookOpen className="text-emerald-500" /> Sứ mệnh học thuật
+                    <BookOpen className="text-emerald-500" /> Academic Mission
                  </h2>
                  <p className="text-slate-600 leading-relaxed font-light">
-                    fwd LIFEchain không chỉ là một ứng dụng, mà là một thành tố quan trọng trong đề tài nghiên cứu Tiến sĩ, tập trung vào việc áp dụng **Thuyết Tín hiệu (Signaling Theory)** và **Mô hình S-O-R** để thay đổi nhận thức người tiêu dùng về chất lượng nông sản sạch.
+                    fwd LIFEchain is more than an application; it is a core component of a Ph.D. research project leveraging **Signaling Theory** and the **S-O-R model** to reshape consumer perception of clean, high-quality agricultural products.
                  </p>
               </div>
            </motion.div>
@@ -83,9 +83,9 @@ export default function AboutPage() {
            <div className="absolute top-0 right-0 p-12 opacity-10"><Microscope size={120} /></div>
            <div className="relative z-10 space-y-12">
               <div className="max-w-2xl">
-                 <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic mb-6">Nền tảng <span className="text-emerald-500">Khoa học</span></h2>
+                 <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic mb-6">Scientific <span className="text-emerald-500">Foundations</span></h2>
                  <p className="text-slate-400 font-light leading-relaxed">
-                    Hệ thống được thiết kế để giải quyết bài toán bất đối xứng thông tin giữa nhà cung cấp và người tiêu dùng.
+                    The system is engineered to resolve information asymmetry between producers and consumers.
                  </p>
               </div>
 
@@ -93,13 +93,13 @@ export default function AboutPage() {
                  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
                     <h3 className="text-xl font-black text-emerald-400 mb-4 uppercase tracking-tight">Signaling Theory</h3>
                     <p className="text-sm text-slate-300 font-light leading-relaxed italic">
-                       Blockchain đóng vai trò là "Tín hiệu" (Signal) mạnh mẽ, giúp doanh nghiệp chứng minh các cam kết về chất lượng và xuất xứ một cách minh bạch, không thể giả mạo.
+                       Blockchain acts as a powerful "Signal", enabling enterprises to transparently certify quality and provenance commitments that cannot be forged.
                     </p>
                  </div>
                  <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all">
-                    <h3 className="text-xl font-black text-emerald-400 mb-4 uppercase tracking-tight">Mô hình S-O-R</h3>
+                    <h3 className="text-xl font-black text-emerald-400 mb-4 uppercase tracking-tight">S-O-R Model</h3>
                     <p className="text-sm text-slate-300 font-light leading-relaxed italic">
-                       Kích thích (Stimulus) từ dữ liệu chuỗi khối tác động đến trạng thái tâm lý (Organism) tin tưởng, dẫn đến phản ứng (Response) lựa chọn sản phẩm xanh và bền vững.
+                       Stimuli from blockchain data influence the psychological state (Organism), fostering trust that drives the response (Choice) of selecting green, sustainable products.
                     </p>
                  </div>
               </div>
@@ -109,15 +109,15 @@ export default function AboutPage() {
         {/* Values */}
         <section className="text-center space-y-20">
            <div className="space-y-4">
-              <h2 className="text-4xl font-black text-natural-950 tracking-tighter uppercase italic">Giá trị cốt lõi</h2>
+              <h2 className="text-4xl font-black text-natural-950 tracking-tighter uppercase italic">Core Values</h2>
               <div className="w-24 h-1.5 bg-emerald-500 mx-auto rounded-full"></div>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               {[
-                { title: "Transparency", desc: "Minh bạch tuyệt đối từ nông trại đến bàn ăn.", icon: ShieldCheck },
-                { title: "Humanity", desc: "Đặt giá trị con người và tâm huyết nông dân làm trọng tâm.", icon: Heart },
-                { title: "Excellence", desc: "Hướng tới tiêu chuẩn chất lượng cao nhất.", icon: Award }
+                { title: "Transparency", desc: "Absolute transparency from farm to table.", icon: ShieldCheck },
+                { title: "Humanity", desc: "Putting people and farmers' dedication at the core.", icon: Heart },
+                { title: "Excellence", desc: "Pursuing the highest quality standards.", icon: Award }
               ].map((v, i) => (
                 <div key={i} className="space-y-6">
                    <div className="w-16 h-16 bg-white rounded-2xl shadow-xl shadow-slate-900/5 flex items-center justify-center text-emerald-500 mx-auto border border-slate-50">

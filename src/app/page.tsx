@@ -22,7 +22,7 @@ export default function Home() {
         const { data: batches } = await supabase.from('batches').select('*').order('timestamp', { ascending: false }).limit(3);
         setProducts(batches || []);
 
-        // 2. Fetch Network Stats
+        // The system is engineered to resolve information asymmetry between producers and consumers.
         const { count: batchCount } = await supabase
           .from('batches')
           .select('*', { count: 'exact', head: true });
@@ -69,16 +69,16 @@ export default function Home() {
               <span>fwd LIFEchain: Future of Trust</span>
             </div>
             <h1 className="text-4xl md:text-8xl font-black mb-6 md:mb-8 text-natural-950 tracking-tighter leading-[1.1]">
-              Farm Worth <span className="text-emerald-500 font-light italic">Driven</span>
+              Farm Worth <span className="text-emerald-500 font-italic">Driven</span>
             </h1>
             <p className="text-slate-500 text-sm md:text-xl max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12">
-              Hệ sinh thái **fwd LIFEchain**: Bảo chứng minh bạch và nâng tầm giá trị Nông nghiệp bền vững thông qua công nghệ Blockchain.
+              The **fwd LIFEchain** is more than an application; it forms a core component of a Ph.D. research project that leverages **Signaling Theory** and the **S‑O‑R model** to shift consumer perception toward high‑quality, clean agricultural products.
             </p>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
                <Link href="/verify" className="w-full sm:w-auto px-8 py-4 bg-natural-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-natural-900/20 hover:-translate-y-1 active:scale-95 transition-all">
                  <QrCode size={20} />
-                 Xác thực Camera
+                 Verify Origin
                </Link>
                <Link href="/explorer" className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-all">
                  <Search size={20} />
@@ -122,7 +122,7 @@ export default function Home() {
           <div className="text-center mb-16 md:mb-24">
              <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">Verified <span className="text-emerald-500">Assets</span></h2>
              <p className="text-slate-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
-                Các sản phẩm đạt tiêu chuẩn xác thực Blockchain khắt khe nhất trong hệ sinh thái fwd LIFEchain.
+                Our ambition is to transparently unlock the value of Vietnamese agricultural products by bridging blockchain technology with digital trust.
              </p>
           </div>
 
@@ -139,7 +139,7 @@ export default function Home() {
                 <div className="relative rounded-[3rem] overflow-hidden bg-white shadow-2xl shadow-slate-900/5 group-hover:shadow-emerald-500/10 transition-all border border-slate-100 h-full flex flex-col p-8">
                    <h3 className="text-xl md:text-2xl font-black text-natural-900 mb-4 tracking-tight group-hover:text-emerald-500 transition-colors">{p.product_name}</h3>
                    <p className="text-slate-500 text-xs md:text-sm mb-8 font-light leading-relaxed">
-                     Lô hàng được xác thực bảo chứng bởi {p.entity_id.slice(0, 8)}.
+                     This batch is authenticated and backed by entity {p.entity_id.slice(0, 8)}.
                    </p>
                    <Link href={`/verify?id=${p.id}`} className="mt-auto py-5 bg-natural-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-emerald-500 transition-all">
                       <Search size={16} />

@@ -45,10 +45,15 @@ export default function ExplorerHome() {
         const feeData = await provider.getFeeData();
         const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0';
 
+        const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
+        const erc20Abi = ["function totalSupply() view returns (uint256)"];
+        const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
+        const tSupply = await tokenContract.totalSupply().catch(() => BigInt("100000000000000000000000000"));
+
         setStats({
           price: '$0.00',
           price_change: 'Testnet Phase',
-          market_cap: '100,000,000 FWD',
+          market_cap: Number(ethers.formatEther(tSupply)).toLocaleString() + ' AGRI',
           latestBlock: blockNum.toLocaleString(),
           gas_price: gasPriceStr,
           activeNodes: entityCount || 0
@@ -105,7 +110,7 @@ export default function ExplorerHome() {
       <Header />
       
       {/* Search Header for Explorer */}
-      <div className="pt-24 bg-[#111b11] border-b border-white/5">
+      <div className="pt-32 bg-[#111b11] border-b border-white/5">
          <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between text-white">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-500">
                <Globe size={14} />
@@ -117,6 +122,13 @@ export default function ExplorerHome() {
                  type="text" 
                  placeholder="Search by Address / Txn Hash / Block..." 
                  className="w-full bg-white/5 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                 onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const val = (e.target as HTMLInputElement).value;
+                    if (val.length > 60) window.location.href = `/explorer/tx/${val}`;
+                    else if (val.startsWith('0x')) window.location.href = `/explorer/address/${val}`;
+                  }
+                }}
                />
             </div>
          </div>
@@ -137,10 +149,10 @@ export default function ExplorerHome() {
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Real-time Blockchain Intelligence & Global Audit</p>
                </div>
                <div className="flex gap-4">
-                  <div className="px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center gap-3">
-                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                     <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Mainnet Live: 1,015 Nodes</span>
-                  </div>
+                   <div className="px-4 py-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Network Status: Active</span>
+                   </div>
                </div>
             </div>
 
@@ -181,9 +193,9 @@ export default function ExplorerHome() {
                      <div className="flex-grow bg-slate-50 h-3 rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: '65%' }} className="h-full bg-orange-500" />
                      </div>
-                     <span className="text-sm font-black">65,420 fwd</span>
-                  </div>
-                  <p className="text-[9px] text-slate-400 font-bold mt-2">6.5% of total supply removed from circulation.</p>
+                     <span className="text-sm font-black">65,420 AGRI</span>
+                   </div>
+                   <p className="text-[9px] text-slate-400 font-bold mt-2">6.5% of total supply removed from circulation (Burned).</p>
                </div>
                <div>
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Node Network Growth</h4>
@@ -227,7 +239,7 @@ export default function ExplorerHome() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                {[
-                 { name: "FWD Token (AGRI)", address: FWD_TOKEN_ADDRESS, icon: Zap, color: "text-emerald-500", bg: "bg-emerald-50" },
+                 { name: "Agri Life Token (AGRI)", address: FWD_TOKEN_ADDRESS, icon: Zap, color: "text-emerald-500", bg: "bg-emerald-50" },
                  { name: "Staking Pool", address: FWD_STAKING_ADDRESS, icon: ShieldCheck, color: "text-blue-500", bg: "bg-blue-50" },
                  { name: "Data Anchor (Oracle)", address: FWD_ANCHOR_ADDRESS, icon: Lock, color: "text-purple-500", bg: "bg-purple-50" }
                ].map((contract, i) => (
@@ -289,7 +301,7 @@ export default function ExplorerHome() {
                </div>
             </div>
 
-            {/* Latest Transactions */}
+      {/* Latest Transactions */}
             <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-slate-900/5 border border-slate-100 overflow-hidden">
                <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                   <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
@@ -302,26 +314,30 @@ export default function ExplorerHome() {
                     <motion.div 
                       key={i} 
                       whileHover={{ x: 5 }}
-                      className="p-6 flex items-center justify-between group cursor-pointer"
+                      className="p-6 flex flex-col sm:flex-row sm:items-center justify-between group cursor-pointer gap-4"
                     >
                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                          <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-amber-500 group-hover:text-white transition-all shrink-0">
                              <Cpu size={18} />
                           </div>
-                           <div className="min-w-0">
-                              <Link href={`/explorer/${tx.hash}`} className="text-sm font-black text-blue-600 hover:underline truncate block max-w-[120px]">{tx.hash.substring(0, 16)}...</Link>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(tx.timestamp).toLocaleTimeString()}</p>
-                           </div>
+                            <div className="min-w-0">
+                               <Link href={`/explorer/tx/${tx.hash}`} className="text-sm font-black text-blue-600 hover:underline truncate block max-w-[150px]">{tx.hash.substring(0, 16)}...</Link>
+                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{new Date(tx.timestamp).toLocaleTimeString()}</p>
+                            </div>
                        </div>
-                       <div className="flex-1 px-8 hidden md:block">
-                          <div className="flex items-center gap-2 text-[11px] font-bold">
-                             <span className="text-slate-400">From</span>
-                             <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.from}</Link>
-                             <span className="text-slate-400">To</span>
-                             <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.to}</Link>
+                       <div className="flex-1 sm:px-8">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-[10px] sm:text-[11px] font-bold">
+                             <div className="flex items-center gap-1">
+                                <span className="text-slate-400">From</span>
+                                <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 hover:underline truncate max-w-[100px]">{tx.from}</Link>
+                             </div>
+                             <div className="flex items-center gap-1">
+                                <span className="text-slate-400">To</span>
+                                <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 hover:underline truncate max-w-[100px]">{tx.to}</Link>
+                             </div>
                           </div>
                        </div>
-                       <div className="px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-[10px] font-black text-emerald-600">
+                       <div className="px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-[10px] font-black text-emerald-600 self-start sm:self-center">
                           {tx.value === "0.0 AGRI" ? "Txn" : tx.value}
                        </div>
                     </motion.div>

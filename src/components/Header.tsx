@@ -30,28 +30,43 @@ const Header = () => {
   const [fwdBalance, setFwdBalance] = useState("0.00");
 
   useEffect(() => {
-    const fetchFwdBalance = async (userId: string) => {
-      const { data } = await supabase
-        .from('entities')
-        .select('fwd_balance')
-        .eq('id', userId)
-        .maybeSingle();
-      if (data) setFwdBalance(Number(data.fwd_balance).toLocaleString('en-US', { minimumFractionDigits: 2 }));
+    const fetchRealBalance = async (walletAddress: string) => {
+      try {
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const bal = await provider.getBalance(walletAddress);
+        setFwdBalance(ethers.formatEther(bal));
+      } catch (e) {
+        console.error("Error fetching header balance:", e);
+      }
     };
 
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchFwdBalance(session.user.id);
+        // First get wallet address from entities
+        const { data } = await supabase
+          .from('entities')
+          .select('wallet_address')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        
+        if (data?.wallet_address) {
+          fetchRealBalance(data.wallet_address);
+        }
       }
     };
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchFwdBalance(session.user.id);
+        const { data } = await supabase
+          .from('entities')
+          .select('wallet_address')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (data?.wallet_address) fetchRealBalance(data.wallet_address);
       } else {
         setFwdBalance("0.00");
       }
@@ -111,56 +126,50 @@ const Header = () => {
               </Link>
             ))}
           </div>
-
-          <div className="h-6 w-px bg-slate-200 mx-2"></div>
-
-          <div className="flex items-center gap-4">
-            {/* Wallet & Balance Cluster */}
-            <div className="hidden sm:flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex flex-col items-end">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AGRI Balance</span>
-                   <span className="text-sm font-black text-emerald-600">
-                     {mounted ? (address ? balance : fwdBalance) : '0.00'} AGRI
-                   </span>
-                </div>
-              <button 
-                onClick={connect}
-                disabled={isConnecting}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
-              >
-                <Wallet size={12} className="text-emerald-500" />
-                {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? 'CONNECTING...' : 'CONNECT')) : 'CONNECT'}
-              </button>
-            </div>
-
-            {/* Profile/Auth Area */}
-            {user ? (
-              <Link href="/portal" className="flex items-center gap-2 md:gap-3 pl-2 group/profile">
-                <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
-                   <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
-                </div>
-                <div className="hidden xs:flex flex-col">
-                  <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
-                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
-                </div>
-              </Link>
-            ) : (
-              <Link href="/signin" className="hidden sm:block text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-4 transition-colors">Sign In</Link>
-            )}
-
-            <Link 
-              href="/verify"
-              className="hidden xs:block px-4 md:px-6 py-2.5 md:py-3 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-[0.2em] hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
-            >
-              Verify
-            </Link>
-          </div>
         </nav>
 
-        {/* Mobile Toggle */}
-        <button className="lg:hidden text-slate-900" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Action Area (Wallet & Profile) - Visible on all screens */}
+        <div className="flex items-center gap-2 md:gap-4">
+          {/* Wallet & Balance - Condensed on Mobile */}
+          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm">
+            <div className="hidden sm:flex flex-col items-end">
+                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">AGRI Balance</span>
+                <span className="text-xs md:text-sm font-black text-emerald-600">
+                  {mounted ? (address ? balance : fwdBalance) : '0.00'} AGRI
+                </span>
+            </div>
+            <button 
+              onClick={connect}
+              disabled={isConnecting}
+              className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
+            >
+              <Wallet size={12} className="text-emerald-500" />
+              <span className="hidden xs:inline">
+                {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? '...' : 'CONNECT')) : '...'}
+              </span>
+            </button>
+          </div>
+
+          {/* Profile/Auth Area */}
+          {user ? (
+            <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
+              <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
+                 <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+              <div className="hidden lg:flex flex-col">
+                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/signin" className="hidden sm:block text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-2 transition-colors">Sign In</Link>
+          )}
+
+          {/* Mobile Toggle */}
+          <button className="lg:hidden p-2 text-slate-900 hover:bg-slate-50 rounded-lg transition-colors" onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
