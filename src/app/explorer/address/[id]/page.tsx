@@ -54,10 +54,9 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
           
         if (entityData) {
           setEntityStats(entityData);
-        }
           
-        // Fetch Transactions for this entity
-        const { data: txData } = await supabase
+          // Fetch Transactions for this entity
+          const { data: txData } = await supabase
             .from('token_transactions')
             .select(`
               *,
