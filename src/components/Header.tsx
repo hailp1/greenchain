@@ -16,7 +16,9 @@ const Header = () => {
   const pathname = usePathname();
   const { address, balance, isConnecting, connect } = useWeb3();
 
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -117,7 +119,9 @@ const Header = () => {
             <div className="hidden sm:flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-4 gap-3 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex flex-col items-end">
                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">AGRI Balance</span>
-                   <span className="text-sm font-black text-emerald-600">{address ? balance : fwdBalance} AGRI</span>
+                   <span className="text-sm font-black text-emerald-600">
+                     {mounted ? (address ? balance : fwdBalance) : '0.00'} AGRI
+                   </span>
                 </div>
               <button 
                 onClick={connect}
@@ -125,7 +129,7 @@ const Header = () => {
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-100 rounded-full text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
               >
                 <Wallet size={12} className="text-emerald-500" />
-                {address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? 'CONNECTING...' : 'CONNECT')}
+                {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? 'CONNECTING...' : 'CONNECT')) : 'CONNECT'}
               </button>
             </div>
 
