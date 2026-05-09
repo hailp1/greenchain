@@ -3,8 +3,8 @@ import { ethers } from 'ethers';
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
 
 const RPC_URL = process.env.RPC_URL || "http://localhost:8545";
-const OPERATOR_PRIVATE_KEY = process.env.OPERATOR_PRIVATE_KEY;
-const TOKEN_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
+const TOKEN_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
 
 export async function POST(request: Request) {
   try {
