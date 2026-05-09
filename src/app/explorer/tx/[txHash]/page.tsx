@@ -32,7 +32,10 @@ export default function TransactionDetail() {
           return;
         }
 
-        const blockData = await provider.getBlock(txData.blockNumber);
+        let blockData = null;
+        if (txData.blockNumber != null) {
+          blockData = await provider.getBlock(txData.blockNumber);
+        }
 
         setTx(txData);
         setReceipt(receiptData);
