@@ -129,7 +129,7 @@ export default function DebugDashboard() {
                       params: [{
                         chainId: '0x495C9',
                         chainName: 'fwd LIFEchain (Official)',
-                        rpcUrls: ['https://rpc.fwdlife.vn/?v=final'],
+                        rpcUrls: ['https://rpc.fwdlife.vn/?id=300489'],
                         nativeCurrency: { name: 'AGRI', symbol: 'AGRI', decimals: 18 },
                         blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
                       }],

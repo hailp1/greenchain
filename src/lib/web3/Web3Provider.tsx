@@ -182,7 +182,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
               {
                 chainId: targetChainId,
                 chainName: 'fwd LIFEchain',
-                rpcUrls: ['https://rpc.fwdlife.vn'],
+                rpcUrls: ['https://rpc.fwdlife.vn/?id=300489'],
                 nativeCurrency: {
                   name: 'fwd AGRI',
                   symbol: 'AGRI',
