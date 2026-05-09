@@ -68,19 +68,25 @@ export default function ProducerPortal() {
 
     if (web3.isConnected && web3.address) {
       setWalletAddress(web3.address);
-      const claimReward = async () => {
+      const linkWallet = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
+            // Update the entity with the real wallet address if it's currently a pending one
+            const { data: entity } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).single();
+            if (entity && entity.wallet_address.startsWith('pending_wallet_')) {
+              await supabase.from('entities').update({ wallet_address: web3.address }).eq('id', session.user.id);
+            }
+            
             await supabase.rpc('claim_wallet_connection_reward', {
               p_user_id: session.user.id,
               p_wallet_address: web3.address!
             });
-            fetchBalance();
+            fetchData();
           }
         } catch (_) { /* silent */ }
       };
-      claimReward();
+      linkWallet();
     }
   }, [web3.isConnected, web3.address]);
 
@@ -406,9 +412,35 @@ export default function ProducerPortal() {
            </div>
            <div className="flex items-center gap-3 md:gap-6">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest">
-                 <Zap size={12} className="animate-pulse" />
-                 {balance}
+                 <Zap size={12} className="animate-pulse text-emerald-500" />
+                 {parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} AGRI
               </div>
+
+              <button 
+                  onClick={async () => {
+                    if (isSigning) return;
+                    setIsSigning(true);
+                    try {
+                      const txHash = await web3.claimTestTokens();
+                      if (txHash) {
+                        setLastTxHash(txHash);
+                        setIsSuccess(true);
+                        setTimeout(() => {
+                          setIsSuccess(false);
+                          setLastTxHash(null);
+                        }, 5000);
+                      }
+                    } catch (e) {
+                      alert("Không thể nhận token. Vui lòng thử lại sau.");
+                    } finally {
+                      setIsSigning(false);
+                    }
+                  }}
+                  disabled={isSigning}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"
+               >
+                  {isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}
+               </button>
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-natural-900 overflow-hidden border-2 border-slate-100 shrink-0">
                  <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" />
               </div>

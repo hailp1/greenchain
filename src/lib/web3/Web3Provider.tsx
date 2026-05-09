@@ -275,6 +275,27 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   }, [signer, contractsDeployed, getTokenContract, refreshBalances]);
 
+  // ─── Claim Test Tokens (Faucet) ─────────────────────────────
+  const claimTestTokens = useCallback(async (): Promise<string | null> => {
+    if (!state.address) return null;
+    try {
+      const response = await fetch('http://localhost:3000/faucet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: state.address })
+      });
+      const data = await response.json();
+      if (data.success) {
+        await refreshBalances();
+        return data.txHash;
+      }
+      throw new Error(data.error);
+    } catch (err: any) {
+      console.error('Faucet claim error:', err);
+      return null;
+    }
+  }, [state.address, refreshBalances]);
+
   // ─── Auto-refresh balances when connected ───────────────────
   useEffect(() => {
     if (state.isConnected && state.address) {
@@ -316,6 +337,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       unstakeTokens,
       claimRewards,
       transferTokens,
+      claimTestTokens,
       refreshBalances,
     }}>
       {children}

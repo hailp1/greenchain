@@ -119,6 +119,27 @@ app.get('/reputation', async (req, res) => {
     }
 });
 
+// Faucet endpoint to mint test tokens
+app.post('/faucet', async (req, res) => {
+  const { address } = req.body;
+  if (!address) return res.status(400).json({ error: 'Address is required' });
+
+  try {
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
+    const wallet = new ethers.Wallet(OPERATOR_PRIVATE_KEY, provider);
+    const tokenContract = new ethers.Contract(TOKEN_ADDRESS, FWDTokenABI, wallet);
+
+    const amount = ethers.parseEther("1000");
+    const tx = await tokenContract.mint(address, amount);
+    await tx.wait();
+
+    res.json({ success: true, txHash: tx.hash, amount: "1000" });
+  } catch (err) {
+    console.error('Faucet error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`fwd LIFEchain API running on port ${PORT}`);
