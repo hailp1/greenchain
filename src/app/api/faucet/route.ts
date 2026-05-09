@@ -4,7 +4,7 @@ import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
 
 const RPC_URL = "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
-const TOKEN_ADDRESS = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
+const TOKEN_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 export async function POST(request: Request) {
   try {
