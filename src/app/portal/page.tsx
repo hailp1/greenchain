@@ -33,6 +33,7 @@ import { useWeb3 } from '@/lib/web3/Web3Provider';
 
 export default function ProducerPortal() {
   const web3 = useWeb3();
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -65,6 +66,7 @@ export default function ProducerPortal() {
       }
     };
     checkUser();
+    setMounted(true);
 
     if (web3.isConnected && web3.address) {
       setWalletAddress(web3.address);
@@ -212,7 +214,7 @@ export default function ProducerPortal() {
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "AGRI Balance", value: web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance, icon: Zap },
+    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : balance, icon: Zap },
     { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
@@ -413,7 +415,7 @@ export default function ProducerPortal() {
            <div className="flex items-center gap-3 md:gap-6">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest">
                  <Zap size={12} className="animate-pulse text-emerald-500" />
-                 {parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} AGRI
+                 {mounted ? parseFloat(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} AGRI
               </div>
 
               <button 
@@ -554,7 +556,7 @@ export default function ProducerPortal() {
                     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Live)</p>
                        <p className="text-3xl font-black text-blue-600">
-                         {web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} AGRI
+                         {mounted && web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} AGRI
                        </p>
                     </div>
                  </div>
@@ -613,7 +615,7 @@ export default function ProducerPortal() {
                           <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 text-center">
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Available to Claim</p>
                              <p className="text-4xl font-black text-natural-950">
-                               {web3.isConnected ? Number(web3.pendingRewards).toFixed(2) : '0.00'} 
+                               {mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(2) : '0.00'} 
                                <span className="text-xs text-slate-400 ml-1">AGRI</span>
                              </p>
                           </div>

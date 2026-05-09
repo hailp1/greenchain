@@ -13,7 +13,7 @@ async function main() {
   });
 
   // 2. Gửi thêm 10,000 AGRI
-  const tokenAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+  const tokenAddress = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
   const token = await ethers.getContractAt("FWDToken", tokenAddress);
   console.log("Gửi thêm 10,000 AGRI...");
   await token.mint(recipient, ethers.parseEther("10000"));
