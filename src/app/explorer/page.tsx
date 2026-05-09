@@ -11,6 +11,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { API_URL } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
+import { ethers } from 'ethers';
 
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>(null);
@@ -37,31 +38,57 @@ export default function ExplorerHome() {
           .from('entities')
           .select('*', { count: 'exact', head: true });
 
+        // 3. Web3 Real-time Data
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const blockNum = await provider.getBlockNumber();
+        const feeData = await provider.getFeeData();
+        const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0';
+
         setStats({
-          price: 'Oracle Syncing',
-          price_change: '---',
-          market_cap: 'Verified',
-          tps: 'Calculating...',
-          gas_price: 'Live Oracle',
-          activeNodes: entityCount || 0 // Only real entities
+          price: '$0.00',
+          price_change: 'Testnet Phase',
+          market_cap: '100,000,000 FWD',
+          latestBlock: blockNum.toLocaleString(),
+          gas_price: gasPriceStr,
+          activeNodes: entityCount || 0
         });
         
-        // Real blocks from ledger
-        setLatestBlocks((batches || []).filter(b => b.blockchain_ledger).map((batch: any, i: number) => ({
-          number: batch.blockchain_ledger.block_height,
-          timestamp: batch.blockchain_ledger.anchored_at,
-          validator: "fwd-node-" + batch.id.slice(0, 4),
-          transactionCount: 1,
-          reward: "0.50 AGRI"
+        // Fetch last 6 actual blockchain blocks with transactions
+        const blockPromises = [];
+        for (let i = 0; i < 6; i++) {
+          if (blockNum - i >= 0) {
+            blockPromises.push(provider.getBlock(blockNum - i, true));
+          }
+        }
+        
+        const fetchedBlocks = await Promise.all(blockPromises);
+        const validBlocks = fetchedBlocks.filter(b => b !== null);
+
+        setLatestBlocks(validBlocks.map((b: any) => ({
+          number: b.number,
+          timestamp: b.timestamp * 1000,
+          validator: b.miner,
+          transactionCount: b.prefetchedTransactions?.length || b.transactions?.length || 0,
+          reward: "Consensus"
         })));
         
-        setLatestTxns((batches || []).filter((batch: any) => batch.blockchain_ledger?.tx_hash).map((batch: any) => ({
-          hash: batch.blockchain_ledger.tx_hash,
-          timestamp: batch.blockchain_ledger.anchored_at || batch.timestamp,
-          from: batch.id.slice(0, 8),
-          to: "0xLedger",
-          value: "GAS: 1.2 AGRI"
-        })));
+        // Extract latest transactions from these blocks
+        let txns: any[] = [];
+        for (const b of validBlocks) {
+          const prefetchTxs = (b as any).prefetchedTransactions || [];
+          for (const tx of prefetchTxs) {
+            txns.push({
+              hash: tx.hash,
+              timestamp: b.timestamp * 1000,
+              from: tx.from,
+              to: tx.to || "Contract Creation",
+              value: ethers.formatEther(tx.value || 0) + " AGRI"
+            });
+            if (txns.length >= 6) break;
+          }
+          if (txns.length >= 6) break;
+        }
+        setLatestTxns(txns);
       } catch (err: any) {
         console.error('Explorer fetch error:', err);
         setError(err.message);
@@ -118,10 +145,10 @@ export default function ExplorerHome() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                {[
-                 { label: "AGRI Price", value: stats?.price, change: "Oracle Data", icon: TrendingUp, color: "text-emerald-500" },
-                 { label: "Total TVL", value: "Verified Ledger", change: "Staked", icon: Lock, color: "text-blue-500" },
-                 { label: "Throughput", value: stats?.tps, unit: "", icon: Activity, color: "text-amber-500" },
-                 { label: "Avg. Gas", value: stats?.gas_price, unit: "", icon: Zap, color: "text-purple-500" }
+                 { label: "AGRI Price", value: stats?.price, change: stats?.price_change, icon: TrendingUp, color: "text-emerald-500" },
+                 { label: "Total Supply", value: stats?.market_cap, icon: Layers, color: "text-blue-500" },
+                 { label: "Latest Block", value: stats?.latestBlock, unit: "", icon: Box, color: "text-amber-500" },
+                 { label: "Avg. Gas Price", value: stats?.gas_price, unit: "Gwei", icon: Zap, color: "text-purple-500" }
                ].map((stat, i) => (
                  <motion.div 
                    key={i}
@@ -133,7 +160,7 @@ export default function ExplorerHome() {
                     <div className={`${stat.color} mb-6`}><stat.icon size={20} /></div>
                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
                     <div className="flex items-end gap-2">
-                       <span className="text-2xl md:text-3xl font-black tracking-tighter">{stat.value}</span>
+                       <span className="text-2xl md:text-3xl font-black tracking-tighter">{stat.value || '...'}</span>
                        {stat.unit && <span className="text-[10px] font-bold text-slate-500 mb-1.5 uppercase">{stat.unit}</span>}
                        {stat.change && !stat.unit && <span className="text-[9px] font-bold text-emerald-400 mb-1.5">{stat.change}</span>}
                     </div>
@@ -216,8 +243,8 @@ export default function ExplorerHome() {
                           </div>
                        </div>
                        <div className="text-right">
-                          <p className="text-[11px] font-bold text-slate-900">Validated by <span className="text-blue-600 hover:underline">{block.validator}</span></p>
-                          <p className="text-[10px] font-mono text-slate-400">{block.transactionCount} txns in 12s</p>
+                          <p className="text-[11px] font-bold text-slate-900">Miner <Link href={`/explorer/address/${block.validator}`} className="text-blue-600 hover:underline">{block.validator.substring(0,8)}...</Link></p>
+                          <p className="text-[10px] font-mono text-slate-400">{block.transactionCount} txns</p>
                        </div>
                        <div className="hidden sm:block px-3 py-1 bg-slate-50 rounded-lg border border-slate-100 text-[10px] font-black text-slate-500">
                           {block.reward}
@@ -254,13 +281,13 @@ export default function ExplorerHome() {
                        <div className="flex-1 px-8 hidden md:block">
                           <div className="flex items-center gap-2 text-[11px] font-bold">
                              <span className="text-slate-400">From</span>
-                             <span className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.from}</span>
+                             <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.from}</Link>
                              <span className="text-slate-400">To</span>
-                             <span className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.to}</span>
+                             <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 hover:underline truncate max-w-[80px]">{tx.to}</Link>
                           </div>
                        </div>
                        <div className="px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-[10px] font-black text-emerald-600">
-                          {tx.value === "0 AGRI" ? "METHOD" : tx.value}
+                          {tx.value === "0.0 AGRI" ? "Txn" : tx.value}
                        </div>
                     </motion.div>
                   ))}
