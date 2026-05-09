@@ -1,5 +1,5 @@
-tunnel: 48f42519-7863-43f3-b609-621089390df1
-credentials-file: C:\Users\OWNER\.cloudflared\48f42519-7863-43f3-b609-621089390df1.json
+tunnel: ca07e4e4-c9a1-451d-ac0e-9484eb8fb78c
+credentials-file: C:\Users\OWNER\.cloudflared\ca07e4e4-c9a1-451d-ac0e-9484eb8fb78c.json
 
 ingress:
   - hostname: rpc.fwdlife.vn

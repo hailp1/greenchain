@@ -1,0 +1,7 @@
+tunnel: 48f42519-7863-43f3-b609-621089390df1
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: rpc.fwdlife.vn
+    service: http://node1:8545
+  - service: http_status:404

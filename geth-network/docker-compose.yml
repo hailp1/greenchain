@@ -55,3 +55,14 @@ services:
       geth --datadir /root/.ethereum init /genesis.json && 
       geth --networkid 300489 --nodiscover --syncmode full --mine --miner.etherbase 0xC0647Cc5FEf44d5696e559ae305a07B03710E060 --unlock 0xC0647Cc5FEf44d5696e559ae305a07B03710E060 --password /password.txt
       "
+
+  cloudflared: # Public RPC Tunnel
+    image: cloudflare/cloudflared:latest
+    container_name: fwd-rpc-tunnel
+    command: tunnel --config /config.yaml --protocol http2 run
+    volumes:
+      - C:\Users\OWNER\.cloudflared:/etc/cloudflared
+      - ../cloudflared-config.yaml:/config.yaml
+    depends_on:
+      - node1
+
