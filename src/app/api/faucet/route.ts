@@ -13,11 +13,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 });
     }
 
-    if (!OPERATOR_PRIVATE_KEY || !process.env.RPC_URL) {
+    if (!OPERATOR_PRIVATE_KEY || !RPC_URL) {
       return NextResponse.json({ error: 'Server configuration error: Private key or RPC URL missing' }, { status: 500 });
     }
 
-    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const provider = new ethers.JsonRpcProvider(RPC_URL);
     const wallet = new ethers.Wallet(OPERATOR_PRIVATE_KEY, provider);
     const tokenContract = new ethers.Contract(TOKEN_ADDRESS, FWDTokenArtifact.abi, wallet);
 
