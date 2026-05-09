@@ -102,21 +102,35 @@ USING (EXISTS (SELECT 1 FROM entities WHERE id = auth.uid() AND role = 'ADMIN'))
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.entities (id, name, role, wallet_address, reputation_score)
+  INSERT INTO public.entities (id, name, role, wallet_address, reputation_score, fwd_balance)
   VALUES (
     new.id,
-    COALESCE(new.raw_user_meta_data->>'full_name', new.email),
+    COALESCE(new.raw_user_meta_data->>'full_name', new.email, 'New User'),
     'FARM',
-    'pending_wallet_' || substr(new.id::text, 1, 8),
-    50
-  );
+    'pending_' || encode(sha256(new.id::text::bytea), 'hex'),
+    50,
+    0
+  )
+  ON CONFLICT (id) DO NOTHING;
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+-- 1b. Token Transactions Table
+CREATE TABLE IF NOT EXISTS public.token_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sender_id UUID REFERENCES public.entities(id),
+    receiver_id UUID REFERENCES public.entities(id),
+    amount NUMERIC NOT NULL,
+    type TEXT CHECK (type IN ('GAS_FEE', 'REWARD', 'PAYMENT', 'MINT', 'STAKE', 'UNSTAKE')),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- 9. Wallet connection reward RPC
 CREATE OR REPLACE FUNCTION public.claim_wallet_connection_reward(p_user_id UUID, p_wallet_address TEXT)
