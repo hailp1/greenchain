@@ -7,7 +7,7 @@ const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.
 const TOKEN_ADDRESS = process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
 
 const claimHistory = new Map<string, number>();
-const COOLDOWN_HOURS = 24;
+const COOLDOWN_HOURS = 1;
 
 export async function POST(request: Request) {
   try {
