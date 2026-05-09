@@ -56,41 +56,9 @@ export default function ProducerPortal() {
   });
 
   const [user, setUser] = useState<any>(null);
-
   const [authLoading, setAuthLoading] = useState(true);
-
-  // Check authentication once on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // Not logged in – redirect to sign‑in page
-        window.location.href = '/signin';
-      } else {
-        setUser(session.user);
-        setAuthLoading(false);
-      }
-    };
-    checkAuth();
-  }, []);
-
-  // Delay rendering until auth status resolved
-  if (authLoading) return null;
-
-
-  // Set mounted after authentication resolved
-  useEffect(() => {
-    if (!authLoading) setMounted(true);
-  }, [authLoading]);
-
-  // Update wallet address when web3 is connected
-  useEffect(() => {
-    if (web3.isConnected && web3.address) {
-      setWalletAddress(web3.address);
-      fetchBalance();
-    }
-  }, [web3.isConnected, web3.address]);
   const [balance, setBalance] = useState("0.00");
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const fetchBalance = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -123,8 +91,63 @@ export default function ProducerPortal() {
   };
 
   useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setUser(session.user);
+        setAuthLoading(false);
+      } else if (event === 'SIGNED_OUT') {
+        window.location.href = '/signin';
+      }
+    });
+
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+        setAuthLoading(false);
+      } else {
+        if (window.location.hash.includes('access_token')) {
+          let retries = 0;
+          const interval = setInterval(async () => {
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession) {
+              setUser(retrySession.user);
+              setAuthLoading(false);
+              clearInterval(interval);
+            }
+            if (retries++ > 10) {
+              clearInterval(interval);
+              window.location.href = '/signin';
+            }
+          }, 500);
+        } else {
+          window.location.href = '/signin';
+        }
+      }
+    };
+
+    initAuth();
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    console.log("[Portal] Auth State:", { authLoading, user: user?.id, isConnected: web3.isConnected });
+  }, [authLoading, user, web3.isConnected]);
+
+  useEffect(() => {
+    if (web3.isConnected && web3.address) {
+      setWalletAddress(web3.address);
+      fetchBalance();
+    }
+  }, [web3.isConnected, web3.address]);
+
+  useEffect(() => {
     fetchBalance();
   }, [walletAddress, user]);
+
+  useEffect(() => {
+    if (!authLoading) setMounted(true);
+  }, [authLoading]);
 
   useEffect(() => {
     const fetchEntityData = async () => {
@@ -363,6 +386,20 @@ export default function ProducerPortal() {
     const { data: tx } = await supabase.from('token_transactions').select('*').order('created_at', { ascending: false });
     setTransactions(tx || []);
   };
+
+  // Final check for auth loading before rendering the main UI
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto"></div>
+          <p className="text-emerald-500 font-black text-xs uppercase tracking-widest animate-pulse">
+            Verifying Research Identity...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans selection:bg-emerald-100">
