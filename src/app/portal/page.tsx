@@ -190,9 +190,9 @@ export default function ProducerPortal() {
       if (txHash) {
         setLastTxHash(txHash);
         await supabase.from('token_transactions').insert([{
-          entity_id: currentEntity?.id,
+          sender_id: currentEntity?.id,
           amount: parseFloat(transferAmount),
-          type: 'TRANSFER',
+          type: 'PAYMENT',
           description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}...`
         }]);
         setIsSuccess(true);
@@ -274,9 +274,9 @@ export default function ProducerPortal() {
         await Promise.all([
           supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
           supabase.from('token_transactions').insert([{
-            entity_id: currentEntity.id,
+            sender_id: currentEntity.id,
             amount: amount,
-            type: 'STAKE',
+            type: 'PAYMENT',
             description: `Staked AGRI for node validation`
           }])
         ]);
@@ -304,7 +304,7 @@ export default function ProducerPortal() {
         setLastTxHash(txHash);
         const rewardAmount = parseFloat(web3.pendingRewards);
         await supabase.from('token_transactions').insert([{
-          entity_id: currentEntity?.id,
+          receiver_id: currentEntity?.id,
           amount: rewardAmount,
           type: 'REWARD',
           description: `Claimed validation rewards`
@@ -335,7 +335,7 @@ export default function ProducerPortal() {
         supabase.from('batches').update({ status: 'VERIFIED' }).eq('id', batchId),
         supabase.from('entities').update({ fwd_balance: newBalance, reputation_score: newReputation }).eq('id', currentEntity.id),
         supabase.from('token_transactions').insert([{
-          entity_id: currentEntity.id,
+          receiver_id: currentEntity.id,
           amount: rewardAmount,
           type: 'REWARD',
           description: `Audit reward for batch ${batchId.slice(0,8)}`
