@@ -90,7 +90,9 @@ export default function ProducerPortal() {
       fetchBalance();
     }
   }, [web3.isConnected, web3.address]);
+  const [balance, setBalance] = useState("0.00");
 
+  const fetchBalance = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       const { data } = await supabase
