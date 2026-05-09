@@ -25,7 +25,7 @@ export default function NodesPage() {
           {
             id: '0x6e10c6c7647Db4533e0960AC5e6f8Acdf502685b',
             name: 'Core Farm Node (Master)',
-            location: 'Central RPC - Port 8546',
+            location: 'Ho Chi Minh City, VN',
             status: 'ACTIVE (SEALING)',
             uptime: '100.00%',
             staked: '1,000,000',
@@ -34,7 +34,7 @@ export default function NodesPage() {
           {
             id: '0x3C4662Fa2E7C02bD386dF6e418d1317110fC7358',
             name: 'Auditor Node',
-            location: 'P2P Mesh - Port 30304',
+            location: 'Singapore, SG',
             status: 'ACTIVE (SIGNING)',
             uptime: '100.00%',
             staked: '1,000,000',
@@ -43,7 +43,7 @@ export default function NodesPage() {
           {
             id: '0xC0647Cc5FEf44d5696e559ae305a07B03710E060',
             name: 'Retail Node',
-            location: 'P2P Mesh - Port 30305',
+            location: 'Tokyo, JP',
             status: 'ACTIVE (SIGNING)',
             uptime: '100.00%',
             staked: '1,000,000',
@@ -89,7 +89,7 @@ export default function NodesPage() {
             <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
                <Globe size={20} />
             </div>
-            <span className="font-black tracking-tighter text-2xl uppercase italic">AgriChain<span className="text-emerald-500 text-[10px] ml-1 uppercase not-italic tracking-[0.3em]">Network</span></span>
+            <span className="font-black tracking-tighter text-2xl uppercase italic">fwd <span className="text-emerald-500">LIFE</span>chain<span className="text-emerald-500 text-[10px] ml-1 uppercase not-italic tracking-[0.3em]">Network</span></span>
           </Link>
           
           <div className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
@@ -151,13 +151,13 @@ export default function NodesPage() {
                     Decentralized <br /><span className="text-emerald-500">Infrastructure</span>
                   </h1>
                   <p className="text-slate-400 text-lg font-light leading-relaxed mb-12 max-w-xl">
-                    Mạng lưới phi tập trung toàn cầu của AgriChain đảm bảo tính minh bạch và bất biến của dữ liệu nông sản ngay từ điểm thu hoạch đầu tiên.
+                    Mạng lưới phi tập trung toàn cầu của fwd LIFEchain đảm bảo tính minh bạch và bất biến của dữ liệu nông sản ngay từ điểm thu hoạch đầu tiên.
                   </p>
                   
                   <div className="grid grid-cols-2 gap-6">
                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Staked</p>
-                        <p className="text-3xl font-black">42.5M <span className="text-emerald-500">AGRI</span></p>
+                        <p className="text-3xl font-black">100.0M <span className="text-emerald-500">AGRI</span></p>
                      </div>
                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Avg Uptime</p>
@@ -298,7 +298,7 @@ export default function NodesPage() {
                           </td>
                           <td className="px-10 py-8 text-right">
                              <p className="text-sm font-black text-slate-900">{node.staked}</p>
-                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">fwd Tokens</p>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AGRI</p>
                           </td>
                           <td className="px-10 py-8">
                              <div className="flex flex-col items-end gap-2">
@@ -330,7 +330,7 @@ export default function NodesPage() {
                  Secure the <br /><span className="text-emerald-500">Future of Agriculture</span>
                </h2>
                <p className="text-slate-400 text-lg font-light leading-relaxed mb-12">
-                 Tham gia vào mạng lưới xác thực phi tập trung của AgriChain. Bắt đầu vận hành Node của riêng bạn để bảo vệ tính minh bạch của chuỗi cung ứng và nhận phần thưởng từ hệ sinh thái.
+                 Tham gia vào mạng lưới xác thực phi tập trung của fwd LIFEchain. Bắt đầu vận hành Node của riêng bạn để bảo vệ tính minh bạch của chuỗi cung ứng và nhận phần thưởng từ hệ sinh thái.
                </p>
                <div className="flex flex-wrap gap-6">
                   <Link href="/explorer/nodes/become-validator" className="px-10 py-5 bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-emerald-500/40 hover:-translate-y-1 transition-all active:scale-95 flex items-center gap-3">
