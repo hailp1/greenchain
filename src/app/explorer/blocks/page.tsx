@@ -3,27 +3,30 @@
 import { useState, useEffect } from 'react';
 import { 
   Globe, Search, Box, Clock, ChevronRight, 
-  ShieldCheck, ArrowLeft, Filter, Cpu
+  ShieldCheck, ArrowLeft, Filter, Cpu, Pickaxe, Activity
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/components/Header';
 import { supabase } from '@/lib/supabase';
+import { ethers } from 'ethers';
 
 export default function BlocksPage() {
   const [blocks, setBlocks] = useState<any[]>([]);
+  const [liveBlocks, setLiveBlocks] = useState<any[]>([]);
+  const [latestBlockNum, setLatestBlockNum] = useState<number>(0);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAnchoredData = async () => {
       try {
         setLoading(true);
         const { data, count, error } = await supabase
           .from('blockchain_ledger')
           .select('*', { count: 'exact' })
           .order('block_height', { ascending: false })
-          .limit(25);
+          .limit(10);
         
         if (error) throw error;
         
@@ -35,8 +38,42 @@ export default function BlocksPage() {
         setLoading(false);
       }
     };
-    fetchData();
+    fetchAnchoredData();
   }, []);
+
+  // Web3 Live Blocks Polling
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const fetchLiveBlocks = async () => {
+      try {
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const currentBlock = await provider.getBlockNumber();
+        
+        // Prevent unnecessary state updates if no new block
+        if (currentBlock === latestBlockNum) return;
+        
+        setLatestBlockNum(currentBlock);
+        
+        // Fetch last 6 actual blockchain blocks
+        const blockPromises = [];
+        for (let i = 0; i < 6; i++) {
+          if (currentBlock - i >= 0) {
+            blockPromises.push(provider.getBlock(currentBlock - i));
+          }
+        }
+        
+        const fetchedBlocks = await Promise.all(blockPromises);
+        setLiveBlocks(fetchedBlocks.filter(b => b !== null));
+      } catch (err) {
+        console.error("Live Web3 blocks error:", err);
+      }
+    };
+
+    fetchLiveBlocks();
+    // Poll every 3 seconds to catch Geth's PoA block generation
+    interval = setInterval(fetchLiveBlocks, 3000);
+    return () => clearInterval(interval);
+  }, [latestBlockNum]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -45,16 +82,71 @@ export default function BlocksPage() {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pt-24">
            <div>
-             <h1 className="text-3xl font-black tracking-tighter uppercase italic mb-2">Blockchain <span className="text-emerald-500">Blocks</span></h1>
+             <h1 className="text-3xl font-black tracking-tighter uppercase italic mb-2">Blockchain <span className="text-emerald-500">Live Mining</span></h1>
              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
-                <Box size={12} className="text-emerald-500" />
-                Network Height: {totalCount > 0 ? blocks[0]?.block_height.toLocaleString() : 'Loading...'}
+                <Activity size={12} className="text-emerald-500 animate-pulse" />
+                Network Height: {latestBlockNum > 0 ? latestBlockNum.toLocaleString() : 'Connecting to rpc.fwdlife.vn...'}
              </p>
            </div>
-           <div className="flex gap-4">
-              <button className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-slate-50 transition-all">
-                 <Filter size={12} /> FILTER
-              </button>
+        </div>
+
+        {/* Live Web3 Block Tracker */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+           {liveBlocks.length === 0 ? (
+              <div className="col-span-full p-12 text-center text-xs font-bold text-slate-400 uppercase tracking-widest bg-slate-100 rounded-3xl animate-pulse">
+                 Syncing with Validator Nodes...
+              </div>
+           ) : liveBlocks.map((blk, idx) => (
+             <motion.div 
+               key={blk.hash}
+               initial={{ opacity: 0, y: -20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ duration: 0.5 }}
+               className="bg-white p-6 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-900/5 relative overflow-hidden group"
+             >
+                {/* Glow effect for the newest block */}
+                {idx === 0 && (
+                   <div className="absolute inset-0 bg-emerald-500/5 pointer-events-none animate-pulse"></div>
+                )}
+                
+                <div className="flex items-center justify-between mb-4 relative z-10">
+                   <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${idx === 0 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-100 text-slate-400'}`}>
+                         <Pickaxe size={18} />
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Block Mined</p>
+                         <p className="text-lg font-black text-slate-900">#{blk.number}</p>
+                      </div>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Transactions</p>
+                      <p className="text-sm font-black text-emerald-600">{blk.transactions?.length || 0} Txn</p>
+                   </div>
+                </div>
+
+                <div className="space-y-3 relative z-10">
+                   <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-slate-400">Validator</span>
+                      <span className="font-mono font-bold text-blue-600">{blk.miner.substring(0, 10)}...</span>
+                   </div>
+                   <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-slate-400">Gas Used</span>
+                      <span className="font-black text-slate-700">{Number(blk.gasUsed).toLocaleString()}</span>
+                   </div>
+                   <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-slate-400">Timestamp</span>
+                      <span className="font-bold text-slate-700">{new Date(blk.timestamp * 1000).toLocaleTimeString('vi-VN')}</span>
+                   </div>
+                </div>
+             </motion.div>
+           ))}
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
+           <div>
+             <h2 className="text-xl font-black tracking-tight mb-1">Anchored Data Blocks</h2>
+             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Permanent ledger entries recorded on-chain</p>
            </div>
         </div>
 
