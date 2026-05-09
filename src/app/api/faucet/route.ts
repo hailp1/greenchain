@@ -23,12 +23,20 @@ export async function POST(request: Request) {
 
     const amount = ethers.parseUnits("1000", 18);
     
-    // Check balance of operator first
-    const operatorBalance = await tokenContract.balanceOf(wallet.address);
-    if (operatorBalance < amount) {
-        return NextResponse.json({ error: 'Faucet is empty' }, { status: 500 });
+    // 1. Send Native Gas (AGRI)
+    console.log(`[Faucet] Sending native gas to ${address}...`);
+    try {
+      const gasTx = await wallet.sendTransaction({
+        to: address,
+        value: ethers.parseEther("0.1") // 0.1 AGRI is enough for many transactions
+      });
+      await gasTx.wait();
+    } catch (gasErr) {
+      console.warn("[Faucet] Native gas transfer failed (might be gas-less node?):", gasErr);
     }
 
+    // 2. Mint ERC-20 Tokens
+    console.log(`[Faucet] Minting tokens for ${address}...`);
     const tx = await tokenContract.mint(address, amount);
     await tx.wait();
 

@@ -130,7 +130,7 @@ export default function DebugDashboard() {
                         chainId: '0x7a69',
                         chainName: 'fwd LIFEchain (Official)',
                         rpcUrls: ['https://rpc.fwdlife.vn/?v=final'],
-                        nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                        nativeCurrency: { name: 'AGRI', symbol: 'AGRI', decimals: 18 },
                         blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
                       }],
                     });

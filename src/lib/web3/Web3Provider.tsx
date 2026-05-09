@@ -184,8 +184,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
                 chainName: 'fwd LIFEchain',
                 rpcUrls: ['https://rpc.fwdlife.vn'],
                 nativeCurrency: {
-                  name: 'Ethereum',
-                  symbol: 'ETH',
+                  name: 'fwd AGRI',
+                  symbol: 'AGRI',
                   decimals: 18,
                 },
                 blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
