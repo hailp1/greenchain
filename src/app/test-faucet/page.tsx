@@ -114,7 +114,8 @@ export default function DebugDashboard() {
               </div>
             </div>
           </div>
-
+          {/* Faucet Card */}
+          <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-3xl space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2 text-emerald-400">
               ⚡ Faucet Tức thì
             </h2>
