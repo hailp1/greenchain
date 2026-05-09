@@ -182,7 +182,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
               {
                 chainId: targetChainId,
                 chainName: 'fwd LIFEchain',
-                rpcUrls: ['https://rpc2.ammedtech.com'],
+                rpcUrls: ['https://rpc.fwdlife.vn'],
                 nativeCurrency: {
                   name: 'fwd AGRI',
                   symbol: 'AGRI',

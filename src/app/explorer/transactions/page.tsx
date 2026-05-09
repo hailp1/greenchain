@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 
-const RPC_URL = 'https://rpc2.ammedtech.com';
+const RPC_URL = 'https://rpc.fwdlife.vn';
 
 // Known address labels
 const ADDRESS_LABELS: Record<string, string> = {

@@ -11,11 +11,12 @@ export default function DebugDashboard() {
   const [walletInfo, setWalletInfo] = useState<any>(null);
   const [faucetLogs, setFaucetLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [tokenImageUrl, setTokenImageUrl] = useState('https://cdn-icons-png.flaticon.com/512/188/188333.png');
 
   // 1. Kiểm tra kết nối RPC
   const checkRPC = async () => {
     try {
-      const provider = new ethers.JsonRpcProvider("https://rpc2.ammedtech.com");
+      const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
       const network = await provider.getNetwork();
       setRpcStatus('online');
       return network;
@@ -27,7 +28,7 @@ export default function DebugDashboard() {
 
   // 2. Kiểm tra các hợp đồng
   const checkContracts = async () => {
-    const provider = new ethers.JsonRpcProvider("https://rpc2.ammedtech.com");
+    const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
     const status: Record<string, boolean> = {};
     const contracts = [
       { name: 'Token', addr: FWD_TOKEN_ADDRESS },
@@ -66,6 +67,29 @@ export default function DebugDashboard() {
       setFaucetLogs(prev => [`[${timestamp}] ❌ Lỗi kết nối API`, ...prev]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 4. Thêm Token vào Ví
+  const addTokenToWallet = async () => {
+    if (!window.ethereum) return;
+    const timestamp = new Date().toLocaleTimeString();
+    try {
+      await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: FWD_TOKEN_ADDRESS,
+            symbol: 'AGRI',
+            decimals: 18,
+            image: tokenImageUrl,
+          },
+        },
+      });
+      setFaucetLogs(prev => [`[${timestamp}] ✅ Đã gửi yêu cầu thêm Token AGRI vào ví`, ...prev]);
+    } catch (err: any) {
+      setFaucetLogs(prev => [`[${timestamp}] ❌ Lỗi thêm token: ${err.message}`, ...prev]);
     }
   };
 
@@ -143,7 +167,7 @@ export default function DebugDashboard() {
                       params: [{
                         chainId: '0x495C9',
                         chainName: 'fwd LIFEchain (Official)',
-                        rpcUrls: ['https://rpc.fwdlife.vn/?id=300489'],
+                        rpcUrls: ['https://rpc.fwdlife.vn'],
                         nativeCurrency: { name: 'AGRI', symbol: 'AGRI', decimals: 18 },
                         blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
                       }],
@@ -172,6 +196,27 @@ export default function DebugDashboard() {
               >
                 {loading ? 'ĐANG XỬ LÝ GIAO DỊCH...' : 'MINT 1,000 AGRI NGAY'}
               </button>
+
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-slate-500">LOGO TOKEN (URL HÌNH ẢNH)</label>
+                  <div className="flex gap-2">
+                    <img src={tokenImageUrl} alt="Token Logo" className="w-10 h-10 rounded-full bg-white/10 p-1 object-cover" onError={(e) => (e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/188/188333.png')} />
+                    <input 
+                      className="flex-1 bg-black/40 border border-white/10 p-2 rounded-xl font-mono text-xs focus:border-blue-500 outline-none transition-all" 
+                      value={tokenImageUrl} 
+                      onChange={e => setTokenImageUrl(e.target.value)}
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={addTokenToWallet}
+                  className="w-full bg-white/10 hover:bg-white/20 py-2 rounded-xl font-bold transition-all text-sm border border-white/20 flex items-center justify-center gap-2"
+                >
+                  <span className="text-xl">🦊</span> ĐĂNG KÝ TOKEN VÀO VÍ
+                </button>
+              </div>
             </div>
           </div>
         </div>
