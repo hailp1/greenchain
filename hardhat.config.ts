@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
       chainId: 300489,
     },
     localhost: {
-      url: "http://127.0.0.1:8545",
+      url: "http://127.0.0.1:8546",
       chainId: 300489,
     },
     // When ready for testnet, uncomment and configure:

@@ -20,6 +20,37 @@ export default function NodesPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Define the 3 Core Geth Validators (Genesis Nodes)
+        const genesisNodes = [
+          {
+            id: '0x6e10c6c7647Db4533e0960AC5e6f8Acdf502685b',
+            name: 'Core Farm Node (Master)',
+            location: 'Central RPC - Port 8546',
+            status: 'ACTIVE (SEALING)',
+            uptime: '100.00%',
+            staked: '1,000,000',
+            apr: 'Genesis'
+          },
+          {
+            id: '0x3C4662Fa2E7C02bD386dF6e418d1317110fC7358',
+            name: 'Auditor Node',
+            location: 'P2P Mesh - Port 30304',
+            status: 'ACTIVE (SIGNING)',
+            uptime: '100.00%',
+            staked: '1,000,000',
+            apr: 'Genesis'
+          },
+          {
+            id: '0xC0647Cc5FEf44d5696e559ae305a07B03710E060',
+            name: 'Retail Node',
+            location: 'P2P Mesh - Port 30305',
+            status: 'ACTIVE (SIGNING)',
+            uptime: '100.00%',
+            staked: '1,000,000',
+            apr: 'Genesis'
+          }
+        ];
+
         const { data } = await supabase
           .from('entities')
           .select('*')
@@ -35,7 +66,10 @@ export default function NodesPage() {
             staked: Number(entity.staked_balance || entity.fwd_balance || 0).toLocaleString(),
             apr: '+12.4%'
           }));
-          setNodes(formatted);
+          // Merge Genesis Nodes with Supabase Entities
+          setNodes([...genesisNodes, ...formatted]);
+        } else {
+          setNodes(genesisNodes);
         }
       } catch (err) {
         console.error("Error fetching nodes:", err);

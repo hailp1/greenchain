@@ -92,17 +92,31 @@ export default function DebugDashboard() {
           <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-3xl space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Hạ tầng mạng
+              Hạ tầng mạng: Geth PoA (Clique)
             </h2>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
-                <span>Public RPC (rpc.fwdlife.vn)</span>
+              <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex flex-col">
+                  <span className="font-bold">Public RPC Tunnel</span>
+                  <span className="text-[10px] text-slate-400">rpc.fwdlife.vn ➔ Port 8546</span>
+                </div>
                 <span className={`px-2 py-1 rounded text-xs font-bold ${rpcStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                   {rpcStatus.toUpperCase()}
                 </span>
               </div>
+              
+              {/* Validator Nodes */}
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
+                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Active Genesis Validators</p>
+                <div className="text-xs font-mono text-slate-300 space-y-1">
+                  <div className="flex justify-between"><span>[Node 1] Farm (RPC):</span><span className="text-emerald-400">0x6e10...685b</span></div>
+                  <div className="flex justify-between"><span>[Node 2] Auditor:</span><span className="text-emerald-400">0x3C46...7358</span></div>
+                  <div className="flex justify-between"><span>[Node 3] Retail:</span><span className="text-emerald-400">0xC064...E060</span></div>
+                </div>
+              </div>
+
               <div className="space-y-2 pt-2">
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Trạng thái Hợp đồng</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Trạng thái Hợp đồng</p>
                 {Object.entries(contractStatus).map(([name, active]) => (
                   <div key={name} className="flex justify-between items-center p-2 border-b border-white/5">
                     <span className="text-slate-300 font-mono text-xs">{name}: {name === 'Token' ? FWD_TOKEN_ADDRESS : name === 'Staking' ? FWD_STAKING_ADDRESS : FWD_ANCHOR_ADDRESS}</span>
