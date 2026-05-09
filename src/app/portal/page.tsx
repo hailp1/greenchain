@@ -44,8 +44,8 @@ export default function ProducerPortal() {
   const [recipientWallet, setRecipientWallet] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>("");
   const [currentEntity, setCurrentEntity] = useState<any>(null);
+
   const [stakeInput, setStakeInput] = useState("100");
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
