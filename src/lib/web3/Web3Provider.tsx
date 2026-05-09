@@ -161,16 +161,59 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setState(initialState);
   }, []);
 
+  // ─── Helper: Ensure correct network ─────────────────────────
+  const ensureCorrectNetwork = useCallback(async () => {
+    if (!window.ethereum) return false;
+    const targetChainId = "0x7a69"; // 31337 in hex
+    
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: targetChainId }],
+      });
+      return true;
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask.
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: targetChainId,
+                chainName: 'fwd LIFEchain',
+                rpcUrls: ['https://rpc.fwdlife.vn'],
+                nativeCurrency: {
+                  name: 'Ethereum',
+                  symbol: 'ETH',
+                  decimals: 18,
+                },
+                blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
+              },
+            ],
+          });
+          return true;
+        } catch (addError) {
+          console.error('Failed to add network:', addError);
+          return false;
+        }
+      }
+      console.error('Failed to switch network:', switchError);
+      return false;
+    }
+  }, []);
+
   // ─── Stake Tokens ───────────────────────────────────────────
   const stakeTokens = useCallback(async (amount: string): Promise<string | null> => {
     if (!signer || !contractsDeployed) {
       const msg = !signer ? "Wallet not connected." : "Contracts not deployed.";
-      console.error("[Web3] Cannot stake:", msg);
       setState(prev => ({ ...prev, error: msg }));
       return null;
     }
 
     try {
+      await ensureCorrectNetwork();
+      
       const tokenContract = getTokenContract(signer);
       const stakingContract = getStakingContract(signer);
       if (!tokenContract || !stakingContract) return null;
@@ -206,6 +249,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
 
     try {
+      await ensureCorrectNetwork();
       const stakingContract = getStakingContract(signer);
       if (!stakingContract) return null;
 
@@ -233,6 +277,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
 
     try {
+      await ensureCorrectNetwork();
       const stakingContract = getStakingContract(signer);
       if (!stakingContract) return null;
 
@@ -259,6 +304,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
 
     try {
+      await ensureCorrectNetwork();
       console.log(`[Web3] Transferring ${amount} AGRI to ${to}...`);
       const tokenContract = getTokenContract(signer);
       if (!tokenContract) return null;
