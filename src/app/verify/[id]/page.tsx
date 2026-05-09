@@ -346,7 +346,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
             </div>
             <div className="flex items-center gap-1.5 text-[8px] font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100 shadow-sm shadow-emerald-500/5">
               <ShieldCheck size={10} />
-              SECURED BY ETHEREUM
+              SECURED BY fwd LIFEchain (AGRI)
             </div>
           </div>
 
@@ -771,7 +771,7 @@ export default function VerifyPage({ params }: { params: Promise<{ id: string }>
                                 onClick={() => setShowHashModal(true)}
                                 className="text-[10px] font-black text-natural-900 bg-emerald-400 px-4 py-2 rounded-xl hover:bg-emerald-300 transition-all shadow-[0_0_20px_rgba(52,211,153,0.4)] flex items-center gap-2 active:scale-95 w-full md:w-auto justify-center"
                               >
-                                <Hash size={14} /> KIỂM CHỨNG ETH
+                                <Hash size={14} /> KIỂM CHỨNG AGRI
                               </button>
                             </div>
                             <div className="bg-black/50 p-4 rounded-2xl border border-white/5 relative z-10 mb-4">
@@ -1200,7 +1200,7 @@ function HashSimulator({ node, onClose }: { node: BlockchainNode, onClose: () =>
                      <div className="flex justify-between"><span className="text-slate-500">Block Number:</span><span className="text-emerald-400">19,482,041</span></div>
                      <div className="flex justify-between"><span className="text-slate-500">Gas Used:</span><span className="text-emerald-400">42,109 Gwei</span></div>
                      <div className="flex justify-between"><span className="text-slate-500">Smart Contract:</span><span className="text-emerald-400">0x7a2d4E813F0C5...f9e1</span></div>
-                     <div className="flex justify-between"><span className="text-slate-500">Network:</span><span className="text-emerald-400">Ethereum Mainnet</span></div>
+                     <div className="flex justify-between"><span className="text-slate-500">Network:</span><span className="text-emerald-400">AGRI Mainnet</span></div>
                    </div>
                  </div>
                ) : (
@@ -1286,7 +1286,7 @@ function TransactionExplorer({ node, onClose }: { node: BlockchainNode, onClose:
     { label: "Timestamp", value: new Date(node.timestamp).toLocaleString('vi-VN'), icon: Clock },
     { label: "From (Node)", value: "0x7a2d4E813F0C5...f9e1", icon: Fingerprint, isLink: true },
     { label: "To (Contract)", value: "0xAgriChain_V3_Main", icon: FileText, isLink: true },
-    { label: "Value", value: "0 ETH", icon: Zap },
+    { label: "Value", value: "0 AGRI", icon: Zap },
     { label: "Gas Used", value: node.gasUsed || "21,000", icon: Activity },
   ];
 
@@ -1306,7 +1306,7 @@ function TransactionExplorer({ node, onClose }: { node: BlockchainNode, onClose:
              </div>
              <div>
                <h3 className="text-natural-900 font-black text-lg tracking-tight">Block Explorer</h3>
-               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Eth-Mainnet Simulated Node</p>
+               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Agri-Mainnet Simulated Node</p>
              </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"><X size={24} /></button>

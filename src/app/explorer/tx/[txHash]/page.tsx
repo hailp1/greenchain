@@ -136,7 +136,7 @@ export default function TransactionDetail() {
                     <div className="space-y-1">
                       <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Value</label>
                       <p className="text-lg font-black text-white flex items-center gap-1">
-                        {ethers.formatEther(tx?.value || 0)} <span className="text-[10px] text-slate-400">ETH</span>
+                        {ethers.formatEther(tx?.value || 0)} <span className="text-[10px] text-slate-400">AGRI</span>
                       </p>
                     </div>
                     <div className="space-y-1">

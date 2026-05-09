@@ -260,7 +260,7 @@ export default function ExplorerHome() {
                           </div>
                        </div>
                        <div className="px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 text-[10px] font-black text-emerald-600">
-                          {tx.value === "0 ETH" ? "METHOD" : tx.value}
+                          {tx.value === "0 AGRI" ? "METHOD" : tx.value}
                        </div>
                     </motion.div>
                   ))}
