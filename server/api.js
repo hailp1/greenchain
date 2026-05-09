@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const { ethers } = require('ethers');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,11 @@ app.use(express.json());
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
 const { handleNewBatch } = require('./bridge');
+
+const RPC_URL = process.env.RPC_URL || "http://localhost:8545";
+const OPERATOR_PRIVATE_KEY = process.env.OPERATOR_PRIVATE_KEY;
+const TOKEN_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+const FWDTokenABI = require('../src/artifacts/contracts/FWDToken.sol/FWDToken.json').abi;
 
 /**
  * POST /batch - Intake new shipment data

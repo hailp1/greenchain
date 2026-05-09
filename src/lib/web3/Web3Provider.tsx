@@ -281,7 +281,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const claimTestTokens = useCallback(async (): Promise<string | null> => {
     if (!state.address) return null;
     try {
-      const response = await fetch('http://localhost:3000/faucet', {
+      const response = await fetch('https://api.fwdlife.vn/faucet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address: state.address })

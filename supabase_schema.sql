@@ -5,6 +5,8 @@ CREATE TABLE entities (
     wallet_address TEXT UNIQUE NOT NULL,
     role TEXT CHECK (role IN ('FARM', 'COMPANY', 'ADMIN', 'AUDITOR')) NOT NULL,
     reputation_score INT DEFAULT 50 CHECK (reputation_score >= 0 AND reputation_score <= 100),
+    fwd_balance NUMERIC DEFAULT 0,
+    staked_balance NUMERIC DEFAULT 0,
     is_locked BOOLEAN DEFAULT FALSE,
     lock_until TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -115,3 +117,29 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 9. Wallet connection reward RPC
+CREATE OR REPLACE FUNCTION public.claim_wallet_connection_reward(p_user_id UUID, p_wallet_address TEXT)
+RETURNS void AS $$
+DECLARE
+    v_has_claimed BOOLEAN;
+BEGIN
+    -- Check if reward already claimed
+    SELECT EXISTS (
+        SELECT 1 FROM public.token_transactions 
+        WHERE receiver_id = p_user_id AND type = 'REWARD' AND description = 'Wallet connection reward'
+    ) INTO v_has_claimed;
+
+    IF NOT v_has_claimed THEN
+        -- Add 1000 AGRI reward and link wallet
+        UPDATE public.entities 
+        SET fwd_balance = fwd_balance + 1000,
+            wallet_address = p_wallet_address
+        WHERE id = p_user_id;
+
+        -- Log transaction
+        INSERT INTO public.token_transactions (receiver_id, amount, type, description)
+        VALUES (p_user_id, 1000, 'REWARD', 'Wallet connection reward');
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
