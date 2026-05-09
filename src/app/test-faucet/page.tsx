@@ -15,7 +15,7 @@ export default function DebugDashboard() {
   // 1. Kiểm tra kết nối RPC
   const checkRPC = async () => {
     try {
-      const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+      const provider = new ethers.JsonRpcProvider("https://rpc2.ammedtech.com");
       const network = await provider.getNetwork();
       setRpcStatus('online');
       return network;
@@ -27,7 +27,7 @@ export default function DebugDashboard() {
 
   // 2. Kiểm tra các hợp đồng
   const checkContracts = async () => {
-    const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+    const provider = new ethers.JsonRpcProvider("https://rpc2.ammedtech.com");
     const status: Record<string, boolean> = {};
     const contracts = [
       { name: 'Token', addr: FWD_TOKEN_ADDRESS },
