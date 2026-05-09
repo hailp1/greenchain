@@ -85,7 +85,7 @@ export default function DebugDashboard() {
             decimals: 18,
             image: tokenImageUrl,
           },
-        },
+        } as any,
       });
       setFaucetLogs(prev => [`[${timestamp}] ✅ Đã gửi yêu cầu thêm Token AGRI vào ví`, ...prev]);
     } catch (err: any) {
