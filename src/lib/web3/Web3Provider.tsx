@@ -28,6 +28,7 @@ interface Web3ContextType extends Web3State {
   unstakeTokens: (amount: string) => Promise<string | null>;
   claimRewards: () => Promise<string | null>;
   transferTokens: (to: string, amount: string) => Promise<string | null>;
+  claimTestTokens: () => Promise<string | null>;
   refreshBalances: () => Promise<void>;
 }
 
@@ -51,6 +52,7 @@ const Web3Context = createContext<Web3ContextType>({
   unstakeTokens: async () => null,
   claimRewards: async () => null,
   transferTokens: async () => null,
+  claimTestTokens: async () => null,
   refreshBalances: async () => {},
 });
 
