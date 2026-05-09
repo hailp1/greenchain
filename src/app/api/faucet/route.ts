@@ -6,11 +6,22 @@ const RPC_URL = "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
 const TOKEN_ADDRESS = process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
 
+const claimHistory = new Map<string, number>();
+const COOLDOWN_HOURS = 24;
+
 export async function POST(request: Request) {
   try {
     const { address } = await request.json();
     if (!address) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 });
+    }
+
+    // Rate Limiting Logic
+    const lastClaim = claimHistory.get(address.toLowerCase());
+    const now = Date.now();
+    if (lastClaim && now - lastClaim < COOLDOWN_HOURS * 60 * 60 * 1000) {
+      const remainingMinutes = Math.ceil((COOLDOWN_HOURS * 60 * 60 * 1000 - (now - lastClaim)) / (60 * 1000));
+      return NextResponse.json({ error: `You have already claimed tokens recently. Please wait ${remainingMinutes} minutes before requesting again.` }, { status: 429 });
     }
 
     if (!OPERATOR_PRIVATE_KEY || !RPC_URL) {
@@ -39,6 +50,9 @@ export async function POST(request: Request) {
     console.log(`[Faucet] Minting tokens for ${address}...`);
     const tx = await tokenContract.mint(address, amount);
     await tx.wait();
+
+    // Record the claim time on success
+    claimHistory.set(address.toLowerCase(), Date.now());
 
     return NextResponse.json({ success: true, txHash: tx.hash, amount: "1000" });
   } catch (err: any) {

@@ -26,7 +26,7 @@ export default function ExplorerPage({ params }: { params: Promise<{ txHash: str
           .from('blockchain_ledger')
           .select('*, batches(*, entities(name))')
           .eq('tx_hash', txHash)
-          .single();
+          .maybeSingle();
 
         if (lError || !ledger) {
           // Fallback mock for non-existent hashes
