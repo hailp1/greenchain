@@ -50,9 +50,9 @@ export default function ProducerPortal() {
   const [lastTxHash, setLastTxHash] = useState<string | null>(null);
 
   const [newHarvest, setNewHarvest] = useState({
-    product_name: 'Trà Atisô (Lạc Dương)',
-    quantity: 250,
-    gps: '12.0124, 108.3842'
+    product_name: '',
+    quantity: 0,
+    gps: ''
   });
 
   const [user, setUser] = useState<any>(null);
@@ -269,10 +269,10 @@ export default function ProducerPortal() {
   };
 
   const stats = [
-    { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 }), icon: Zap },
-    { label: "Network Trust", value: "A+", icon: ShieldCheck },
-    { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
+    { label: "Active Batches", value: loading ? "..." : batches.length.toString(), icon: Layers },
+    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : (authLoading ? "..." : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 })), icon: Zap },
+    { label: "Trust Score", value: currentEntity?.reputation_score ? `${currentEntity.reputation_score}%` : "---", icon: ShieldCheck },
+    { label: "Total Yield", value: batches.length > 0 ? batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG" : "0.0 KG", icon: BarChart3 }
   ];
 
   const handleSign = async () => {
@@ -487,7 +487,7 @@ export default function ProducerPortal() {
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-2 md:gap-4 min-w-0 shrink">
               <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate">
-                {currentEntity?.name || user?.user_metadata?.full_name || 'User'} 
+                {currentEntity?.name || user?.user_metadata?.full_name || (authLoading ? 'Verifying...' : 'Guest Node')} 
               </h2>
            </div>
            <div className="flex items-center gap-2 md:gap-4 shrink-0">
@@ -537,9 +537,13 @@ export default function ProducerPortal() {
                  </button>
               )}
 
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-900 overflow-hidden border-2 border-white shadow-sm shrink-0">
-                 <img src={user?.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" className="w-full h-full object-cover" />
-              </div>
+               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                  {user?.user_metadata?.avatar_url ? (
+                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={20} className="text-emerald-600" />
+                  )}
+               </div>
            </div>
         </header>
 
@@ -634,24 +638,40 @@ export default function ProducerPortal() {
 
            {activeTab === 'tokenomics' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Gas Spent</p>
-                       <p className="text-3xl font-black text-orange-500">
-                         {transactions.filter(t => t.type === 'GAS_FEE').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} AGRI
-                       </p>
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
+                       <div className={`absolute top-0 left-0 w-1 h-full ${mounted && Number(web3.stakedBalance) >= 500 ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Node Status</p>
+                       <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full animate-pulse ${mounted && Number(web3.stakedBalance) >= 500 ? 'bg-emerald-500' : 'bg-slate-400'}`}></div>
+                          <p className={`text-xl md:text-2xl font-black ${mounted && Number(web3.stakedBalance) >= 500 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                            {mounted && Number(web3.stakedBalance) >= 500 ? 'ACTIVE NODE' : 'INACTIVE'}
+                          </p>
+                       </div>
+                       <p className="text-[7px] font-bold text-slate-400 uppercase mt-2">{mounted && Number(web3.stakedBalance) >= 500 ? 'Syncing with fwd LIFEchain...' : 'Requires 500 AGRI minimum'}</p>
                     </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards Earned</p>
-                       <p className="text-3xl font-black text-emerald-500">
-                         {transactions.filter(t => t.type === 'REWARD').reduce((acc, curr) => acc + Number(curr.amount), 0).toFixed(2)} AGRI
+                    <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Voting Power</p>
+                       <p className="text-xl md:text-2xl font-black text-blue-600">
+                         {mounted && Number(web3.stakedBalance) > 0 ? (Number(web3.stakedBalance) / 100).toFixed(2) : '0.00'} <span className="text-xs opacity-50">VP</span>
                        </p>
+                       <div className="w-full bg-slate-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                          <div className="bg-blue-500 h-full transition-all duration-1000" style={{ width: `${Math.min((Number(web3.stakedBalance) / 5000) * 100, 100)}%` }}></div>
+                       </div>
                     </div>
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked (Live)</p>
-                       <p className="text-3xl font-black text-blue-600">
-                         {mounted && web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : Number(currentEntity?.staked_balance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })} AGRI
+                    <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards (APR 12%)</p>
+                       <p className="text-xl md:text-2xl font-black text-emerald-500">
+                         +{mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(4) : '0.0000'} <span className="text-xs opacity-50">AGRI</span>
                        </p>
+                       <p className="text-[7px] font-bold text-emerald-600 uppercase mt-2">Next payout in ~12 sec</p>
+                    </div>
+                    <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Staked Balance</p>
+                       <p className="text-xl md:text-2xl font-black text-natural-950">
+                         {mounted && web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
+                       </p>
+                       <button onClick={() => setStakeInput(web3.fwdBalance)} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mt-2 hover:underline">Stake Max Assets</button>
                     </div>
                  </div>
 

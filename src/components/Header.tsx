@@ -157,8 +157,12 @@ const Header = () => {
           {/* Profile/Auth Area */}
           {user ? (
             <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
-              <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
-                 <img src={user.user_metadata?.avatar_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&q=80"} alt="Avatar" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
+                 {user?.user_metadata?.avatar_url ? (
+                   <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                 ) : (
+                   <User size={16} className="text-emerald-600" />
+                 )}
               </div>
               <div className="hidden lg:flex flex-col">
                 <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
