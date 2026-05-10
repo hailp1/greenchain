@@ -76,12 +76,12 @@ export default function ExplorerHome() {
         for (const b of validBlocks) {
           const blockTxs = b.transactions || [];
           for (const tx of blockTxs) {
-            // Ethers v6 might return TransactionResponse or just hashes
-            const txObj = typeof tx === 'string' ? { hash: tx } : tx;
+            // Handle both full transactions and hashes (casting for TS)
+            const txObj = tx as any;
             txns.push({
-              hash: txObj.hash,
+              hash: txObj.hash || txObj,
               timestamp: b.timestamp * 1000,
-              from: txObj.from || 'Unknown',
+              from: txObj.from || '0x...',
               to: txObj.to || "Contract / Mint",
               value: txObj.value ? ethers.formatEther(txObj.value) : '0'
             });

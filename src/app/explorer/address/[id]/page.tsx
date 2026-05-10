@@ -10,6 +10,9 @@ import { ethers } from 'ethers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+// Use a persistent provider to avoid re-initializing
+const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
+
 export default function AddressPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const addressId = unwrappedParams.id;
@@ -29,30 +32,35 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
       
       try {
         setLoading(true);
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const addr = addressId.toLowerCase();
         
-        // Parallelize blockchain and entity fetching for maximum speed
-        const [nBal, tBal, code, entityRes] = await Promise.all([
-          provider.getBalance(addressId).catch(() => BigInt(0)),
+        // Parallel fetching with short timeouts for responsiveness
+        const results = await Promise.allSettled([
+          provider.getBalance(addr),
           (async () => {
              const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8"; 
              const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
              const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
-             return await tokenContract.balanceOf(addressId).catch(() => BigInt(0));
+             return await tokenContract.balanceOf(addr);
           })(),
-          provider.getCode(addressId).catch(() => '0x'),
-          supabase.from('entities').select('id, wallet_address').eq('wallet_address', addressId).maybeSingle()
+          addr === '0x0000000000000000000000000000000000000000' ? Promise.resolve('0x') : provider.getCode(addr),
+          supabase.from('entities').select('id, wallet_address').eq('wallet_address', addr).maybeSingle()
         ]);
+
+        // Process results safely
+        const nBal = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
+        const tBal = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
+        const code = results[2].status === 'fulfilled' ? results[2].value : '0x';
+        const entityRes = results[3].status === 'fulfilled' ? results[3].value : null;
 
         setNativeBalance(ethers.formatEther(nBal));
         setTokenBalance(ethers.formatEther(tBal));
         setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
 
-        const entityData = entityRes.data;
+        const entityData = entityRes?.data;
         
         if (entityData) {
-          // Fetch transactions from our platform indexer
-          const { data: txData, error: txError } = await supabase
+          const { data: txData } = await supabase
             .from('token_transactions')
             .select(`
               *,
