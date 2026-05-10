@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  ShieldCheck, Search, Package, QrCode, Star, Layers, Zap, Globe, Activity
+  ShieldCheck, Search, Package, QrCode, Star, Layers, Zap, Globe, Activity, ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -166,36 +166,93 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Verified Assets */}
+        {/* Latest Insights Section */}
         <section className="mb-24 md:mb-40">
-          <div className="text-center mb-16 md:mb-24">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-6 uppercase italic">Verified <span className="text-emerald-500">Assets</span></h2>
-            <p className="text-slate-500 text-sm md:text-base max-w-xl mx-auto font-light leading-relaxed">
-              Each batch is cryptographically anchored on the chain, guaranteeing provenance, quality, and compliance for downstream markets.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            {products.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+           <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16 px-4">
+              <div className="space-y-4">
+                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest">
+                    Campaign & Research
+                 </div>
+                 <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic">
+                    Latest <span className="text-emerald-500">Insights</span>
+                 </h2>
+              </div>
+              <Link href="/news" className="group flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-emerald-600 transition-colors">
+                 View all articles <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* Featured Post */}
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="group relative"
+                className="group cursor-pointer"
               >
-                <div className="relative rounded-[3rem] overflow-hidden bg-white shadow-2xl border border-slate-100 h-full flex flex-col p-8 transition-all">
-                  <h3 className="text-xl md:text-2xl font-black text-natural-900 mb-4 tracking-tight group-hover:text-emerald-500 transition-colors">{p.product_name}</h3>
-                  <p className="text-slate-500 text-xs md:text-sm mb-8 font-light leading-relaxed">
-                    Authenticated batch from entity {p.entity_id.slice(0, 8)}.
-                  </p>
-                  <Link href={`/verify?id=${p.id}`} className="mt-auto py-5 bg-natural-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-emerald-500 transition-all">
-                    <Search size={16} /> Verify Asset
-                  </Link>
-                </div>
+                 <Link href="/news/so-hoa-niem-tin-nong-san-viet">
+                    <div className="space-y-8">
+                       <div className="relative aspect-[16/9] overflow-hidden rounded-[3rem] shadow-2xl bg-slate-100">
+                          <img 
+                            src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1200" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                            alt="Campaign"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/40 to-transparent"></div>
+                       </div>
+                       <div className="space-y-4 px-2">
+                          <div className="flex items-center gap-3 text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">
+                             <Zap size={12} fill="currentColor" /> Trending Now
+                          </div>
+                          <h3 className="text-3xl md:text-4xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">
+                             Số hóa niềm tin: Miễn phí 100% giải pháp Blockchain cho nông dân Việt Nam
+                          </h3>
+                          <p className="text-slate-500 font-light text-lg leading-relaxed line-clamp-2">
+                             Chiến dịch 'Nâng tầm nông sản Việt' chính thức khởi động, mang công nghệ ST-PoO đến với các HTX và hộ nông dân tiên phong...
+                          </p>
+                       </div>
+                    </div>
+                 </Link>
               </motion.div>
-            ))}
-          </div>
+
+              {/* Smaller Posts Column */}
+              <div className="space-y-12">
+                 <motion.div 
+                   initial={{ opacity: 0, x: 20 }}
+                   whileInView={{ opacity: 1, x: 0 }}
+                   viewport={{ once: true }}
+                   className="group flex gap-8 items-start cursor-pointer"
+                 >
+                    <div className="w-1/3 aspect-square rounded-[2rem] overflow-hidden bg-slate-100 shrink-0">
+                       <img src="https://images.unsplash.com/photo-1558444479-c8f01052877a?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Article" />
+                    </div>
+                    <div className="space-y-3 pt-2">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">May 08, 2026</span>
+                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">Giao thức ST-PoO: Bước đột phá trong xác thực nguồn gốc nông sản</h4>
+                       <p className="text-slate-500 text-sm font-light line-clamp-2">Nghiên cứu mới về sự kết hợp giữa IoT và Blockchain giúp giải quyết bài toán minh bạch.</p>
+                    </div>
+                 </motion.div>
+
+                 <div className="h-px bg-slate-100"></div>
+
+                 <motion.div 
+                   initial={{ opacity: 0, x: 20 }}
+                   whileInView={{ opacity: 1, x: 0 }}
+                   transition={{ delay: 0.1 }}
+                   viewport={{ once: true }}
+                   className="group flex gap-8 items-start cursor-pointer"
+                 >
+                    <div className="w-1/3 aspect-square rounded-[2rem] overflow-hidden bg-slate-100 shrink-0">
+                       <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&q=80&w=400" className="w-full h-full object-cover" alt="Article" />
+                    </div>
+                    <div className="space-y-3 pt-2">
+                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">April 24, 2026</span>
+                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">Blockchain vs Truy xuất truyền thống: Sự khác biệt nằm ở đâu?</h4>
+                       <p className="text-slate-500 text-sm font-light line-clamp-2">Phân tích chuyên sâu về tính bất biến và khả năng chống gian lận của hệ thống phi tập trung.</p>
+                    </div>
+                 </motion.div>
+              </div>
+           </div>
         </section>
       </main>
       <Footer />
