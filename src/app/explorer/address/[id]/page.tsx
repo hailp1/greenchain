@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ethers } from 'ethers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import useSWR from 'swr';
 
 // Use a persistent provider to avoid re-initializing
 const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
@@ -27,81 +28,79 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   const [txLoading, setTxLoading] = useState(true);
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
 
+  const fetcher = async () => {
+    if (!addressId) return null;
+    const addr = addressId.toLowerCase();
+    
+    // Step 1: Identity & Balance
+    const identResults = await Promise.allSettled([
+      provider.getBalance(addr).catch(() => BigInt(0)),
+      (async () => {
+         const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8"; 
+         const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
+         const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
+         return await tokenContract.balanceOf(addr);
+      })().catch(() => BigInt(0)),
+      addr === '0x0000000000000000000000000000000000000000' ? Promise.resolve('0x') : provider.getCode(addr).catch(() => '0x'),
+      supabase.from('entities').select('id, wallet_address').eq('wallet_address', addr).maybeSingle()
+    ]);
+
+    const nBal = identResults[0].status === 'fulfilled' ? identResults[0].value : BigInt(0);
+    const tBal = identResults[1].status === 'fulfilled' ? identResults[1].value : BigInt(0);
+    const code = identResults[2].status === 'fulfilled' ? (identResults[2].value as string) : '0x';
+    const entityRes = identResults[3].status === 'fulfilled' ? identResults[3].value : null;
+
+    // Step 2: Transactions
+    let txData = [];
+    try {
+      let txQuery = supabase
+        .from('token_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+      if (entityRes?.data?.id) {
+        txQuery = txQuery.or(`sender_id.eq.${entityRes.data.id},receiver_id.eq.${entityRes.data.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
+      } else {
+        txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
+      }
+      const { data } = await txQuery;
+      txData = data || [];
+    } catch (e) {}
+
+    return {
+      nativeBalance: ethers.formatEther(nBal),
+      tokenBalance: ethers.formatEther(tBal),
+      isContract: code !== '0x' && code !== '0x0' && code !== '0x ',
+      transactions: txData.map((tx: any) => ({
+        hash: tx.id.replace(/-/g, '').substring(0, 40),
+        timestamp: new Date(tx.created_at).toLocaleString(),
+        age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+        from: tx.sender_address || 'System',
+        to: tx.receiver_address || 'System',
+        value: `${tx.amount}`,
+        type: tx.type,
+      }))
+    };
+  };
+
+  const { data: swrData, isLoading: swrLoading } = useSWR(`address_data_${addressId}`, fetcher, {
+    refreshInterval: 10000,
+    revalidateOnFocus: true
+  });
+
   useEffect(() => {
-    const fetchIdentity = async () => {
-      if (!addressId) return;
-      const addr = addressId.toLowerCase();
-      
-      try {
-        setLoading(true);
-        // Step 1: Fetch Balance & Identity (FAST)
-        const results = await Promise.allSettled([
-          provider.getBalance(addr).catch(() => BigInt(0)),
-          (async () => {
-             const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8"; 
-             const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
-             const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
-             return await tokenContract.balanceOf(addr);
-          })().catch(() => BigInt(0)),
-          addr === '0x0000000000000000000000000000000000000000' ? Promise.resolve('0x') : provider.getCode(addr).catch(() => '0x'),
-          supabase.from('entities').select('id, wallet_address').eq('wallet_address', addr).maybeSingle()
-        ]);
+    if (swrData) {
+      setNativeBalance(swrData.nativeBalance);
+      setTokenBalance(swrData.tokenBalance);
+      setIsContract(swrData.isContract);
+      setTransactions(swrData.transactions);
+      setLoading(false);
+      setTxLoading(false);
+    }
+  }, [swrData]);
 
-        const nBal = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
-        const tBal = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
-        const code = results[2].status === 'fulfilled' ? (results[2].value as string) : '0x';
-        const entityRes = results[3].status === 'fulfilled' ? results[3].value : null;
-
-        setNativeBalance(ethers.formatEther(nBal));
-        setTokenBalance(ethers.formatEther(tBal));
-        setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
-        setLoading(false); // Stop main loading early
-
-        // Step 2: Fetch Transactions (BACKGROUND)
-        fetchTransactions(addr, entityRes?.data?.id);
-      } catch (err) {
-        console.error("[AddressPage] Identity fetch error:", err);
-        setLoading(false);
-      }
-    };
-
-    const fetchTransactions = async (addr: string, entityId?: string) => {
-      try {
-        setTxLoading(true);
-        let txQuery = supabase
-          .from('token_transactions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20);
-          
-        if (entityId) {
-          txQuery = txQuery.or(`sender_id.eq.${entityId},receiver_id.eq.${entityId},sender_address.eq.${addr},receiver_address.eq.${addr}`);
-        } else {
-          txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
-        }
-
-        const { data: txData, error: txError } = await txQuery;
-            
-        if (!txError && txData) {
-          setTransactions(txData.map((tx: any) => ({
-            hash: tx.id.replace(/-/g, '').substring(0, 40),
-            timestamp: new Date(tx.created_at).toLocaleString(),
-            age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-            from: tx.sender_address || 'System',
-            to: tx.receiver_address || 'System',
-            value: `${tx.amount}`,
-            type: tx.type,
-          })));
-        }
-      } catch (err) {
-        console.warn("[AddressPage] Tx fetch failed:", err);
-      } finally {
-        setTxLoading(false);
-      }
-    };
-
-    fetchIdentity();
-  }, [addressId]);
+  const handleCopy = () => {
 
   const handleCopy = () => {
     navigator.clipboard.writeText(addressId);
