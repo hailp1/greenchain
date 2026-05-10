@@ -194,8 +194,9 @@ export default function ProducerPortal() {
 
   // ─── Data Fetching Functions ──────────────────────────────────
   const fetchEntityData = useCallback(async () => {
-    // 1. Priority: Logged in user (Supabase Auth)
     const { data: { session } } = await supabase.auth.getSession();
+    
+    // 1. Priority: Logged in user (Supabase Auth)
     if (session?.user) {
       const { data: entity } = await supabase
         .from('entities')
@@ -204,9 +205,8 @@ export default function ProducerPortal() {
         .maybeSingle();
       
       if (entity) {
-        // AUTO-LINK Wallet: If logged in but wallet is 'pending', link current MetaMask address
+        // AUTO-LINK Wallet logic...
         if (entity.wallet_address?.startsWith('pending_') && web3.isConnected && web3.address) {
-           console.log("[Portal] Activating wallet for user:", web3.address);
            const { data: updated } = await supabase
              .from('entities')
              .update({ wallet_address: web3.address.toLowerCase() })
@@ -230,40 +230,44 @@ export default function ProducerPortal() {
       }
     }
 
-    // 2. Secondary: Connected Wallet (MetaMask/Guest)
-    if (!web3.isConnected || !web3.address) return;
-    const addr = web3.address.toLowerCase();
-    
-    const { data: existingEntity } = await supabase
-      .from('entities')
-      .select('*')
-      .ilike('wallet_address', addr)
-      .maybeSingle();
-    
-    if (existingEntity) {
-      setCurrentEntity(existingEntity);
-      setWalletAddress(addr);
-      fetchBalance();
-    } else {
-      // AUTO-CREATE Entity for new wallet connections (Guest Mode)
-      const { data: newEntity } = await supabase
+    // 2. Secondary: Connected Wallet (Guest Mode)
+    // ONLY trigger guest mode if we are NOT loading auth and NO session exists
+    if (authLoading) return; 
+    if (session?.user) return; // redundant but safe
+
+    if (web3.isConnected && web3.address) {
+      const addr = web3.address.toLowerCase();
+      const { data: existingEntity } = await supabase
         .from('entities')
-        .insert([{
-          name: `Guest ${addr.substring(0, 6)}`,
-          wallet_address: addr,
-          role: 'FARM',
-          reputation_score: 50,
-          fwd_balance: 0
-        }])
-        .select()
+        .select('*')
+        .ilike('wallet_address', addr)
         .maybeSingle();
       
-      if (newEntity) {
-        setCurrentEntity(newEntity);
+      if (existingEntity) {
+        setCurrentEntity(existingEntity);
         setWalletAddress(addr);
+        fetchBalance();
+      } else {
+        // AUTO-CREATE Guest Entity...
+        const { data: newEntity } = await supabase
+          .from('entities')
+          .insert([{
+            name: `Guest ${addr.substring(0, 6)}`,
+            wallet_address: addr,
+            role: 'FARM',
+            reputation_score: 50,
+            fwd_balance: 0
+          }])
+          .select()
+          .maybeSingle();
+        
+        if (newEntity) {
+          setCurrentEntity(newEntity);
+          setWalletAddress(addr);
+        }
       }
     }
-  }, [web3.isConnected, web3.address, fetchBalance]);
+  }, [web3.isConnected, web3.address, fetchBalance, authLoading]);
 
   const fetchPortalData = useCallback(async () => {
     if (!currentEntity) return;
