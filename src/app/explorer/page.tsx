@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Search, Box, Zap, FileText, ArrowRight, Server, Globe
+  Search, Box, Zap, FileText, ArrowRight, Server, Globe, Database, Clock
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ethers } from 'ethers';
-import { FWD_TOKEN_ADDRESS } from '@/lib/contracts/config';
+import { supabase } from '@/lib/supabase';
 
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>(null);
@@ -24,24 +24,18 @@ export default function ExplorerHome() {
         setLoading(true);
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
         
-        const blockNum = await provider.getBlockNumber();
-        const feeData = await provider.getFeeData();
-        const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.308';
-
-        setStats({
-          price: 'Pending',
-          priceChange: '',
-          market_cap: 'N/A',
-          latestBlock: blockNum,
-          lastSafeBlock: blockNum - 12,
-          gas_price: gasPriceStr,
-          tps: '12.3',
-          totalTx: '3,457.59 M'
-        });
+        // 1. Fetch Basic Network Stats
+        const [blockNum, feeData, { count: supabaseTxCount }] = await Promise.all([
+          provider.getBlockNumber(),
+          provider.getFeeData(),
+          supabase.from('token_transactions').select('*', { count: 'exact', head: true })
+        ]);
         
-        // Fetch more blocks to find transactions if necessary
+        const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
+
+        // 2. Scan blocks for real-time activity
+        const SEARCH_RANGE = 40; 
         const blockPromises = [];
-        const SEARCH_RANGE = 50; 
         for (let i = 0; i < SEARCH_RANGE; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true));
@@ -51,32 +45,52 @@ export default function ExplorerHome() {
         const fetchedBlocks = await Promise.all(blockPromises);
         const validBlocks = fetchedBlocks.filter(b => b !== null);
 
-        // Update latest blocks (just the top 6)
+        // 3. Calculate Real-time TPS
+        let totalTxInScan = 0;
+        validBlocks.forEach(b => {
+           totalTxInScan += b.transactions?.length || 0;
+        });
+        const timeSpan = validBlocks.length > 1 ? (validBlocks[0].timestamp - validBlocks[validBlocks.length - 1].timestamp) : 1;
+        const realTps = (totalTxInScan / Math.max(1, timeSpan)).toFixed(2);
+
+        setStats({
+          price: 'Pending',
+          market_cap: 'N/A',
+          latestBlock: blockNum,
+          gas_price: gasPriceStr,
+          tps: realTps,
+          totalTx: (supabaseTxCount || 0).toLocaleString()
+        });
+
+        // 4. Format Latest Blocks
         setLatestBlocks(validBlocks.slice(0, 6).map((b: any) => ({
           number: b.number,
           timestamp: b.timestamp * 1000,
           validator: b.miner,
-          transactionCount: b.prefetchedTransactions?.length || b.transactions?.length || 0,
+          transactionCount: b.transactions?.length || 0,
           reward: "0.01402 AGRI"
         })));
         
-        // Collect transactions from the larger search range
+        // 5. Collect Latest Transactions from blocks
         let txns: any[] = [];
         for (const b of validBlocks) {
-          const prefetchTxs = (b as any).prefetchedTransactions || [];
-          for (const tx of prefetchTxs) {
+          const blockTxs = b.transactions || [];
+          for (const tx of blockTxs) {
+            // Ethers v6 might return TransactionResponse or just hashes
+            const txObj = typeof tx === 'string' ? { hash: tx } : tx;
             txns.push({
-              hash: tx.hash,
+              hash: txObj.hash,
               timestamp: b.timestamp * 1000,
-              from: tx.from,
-              to: tx.to || "Contract Creation",
-              value: ethers.formatEther(tx.value || 0)
+              from: txObj.from || 'Unknown',
+              to: txObj.to || "Contract / Mint",
+              value: txObj.value ? ethers.formatEther(txObj.value) : '0'
             });
             if (txns.length >= 6) break;
           }
           if (txns.length >= 6) break;
         }
         setLatestTxns(txns);
+
       } catch (err: any) {
         console.error('Explorer fetch error:', err);
         setError(err.message);
@@ -96,183 +110,145 @@ export default function ExplorerHome() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
       <Header />
       
-      {/* Search & Hero Section (Etherscan-like dark/blue header) */}
+      {/* Search & Hero Section (Standard Etherscan Style) */}
       <section className="pt-24 pb-12 bg-[#111827] text-white">
-         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <h1 className="text-xl font-medium mb-4">The fwd LIFEchain Explorer</h1>
-            
-            <div className="relative max-w-3xl">
-               <div className="flex bg-white rounded-md overflow-hidden">
-                  <div className="hidden sm:flex items-center px-4 bg-gray-100 border-r border-gray-200 text-gray-600 text-sm">
-                     All Filters
-                  </div>
+         <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className="flex flex-col gap-6">
+               <h1 className="text-xl font-bold">The fwd LIFEchain Explorer</h1>
+               <div className="flex w-full max-w-2xl bg-white rounded-lg overflow-hidden border border-slate-700 shadow-xl">
                   <input 
                     type="text" 
+                    placeholder="Search by Address / Txn Hash / Block / Token..." 
+                    className="flex-grow px-4 py-3 text-slate-900 text-sm focus:outline-none"
                     value={searchVal}
                     onChange={(e) => setSearchVal(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    placeholder="Search by Address / Txn Hash / Block / Token..." 
-                    className="flex-grow bg-white text-gray-900 px-4 py-3 text-sm focus:outline-none"
                   />
-                  <button 
-                     onClick={handleSearch}
-                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 transition-colors flex items-center justify-center"
-                  >
+                  <button onClick={handleSearch} className="bg-blue-600 px-6 flex items-center justify-center hover:bg-blue-700 transition-colors">
                      <Search size={18} />
                   </button>
                </div>
             </div>
-            <p className="text-sm text-gray-400 mt-4">Featured: Access data from 50+ chain IDs with a single API key</p>
          </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 relative z-10 space-y-6 pb-12">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 -mt-6 space-y-6 pb-24">
          
-         {/* Top Level Stats */}
-         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden flex flex-col md:flex-row">
-            <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-200">
-               <div className="flex items-start gap-4">
-                  <Globe className="text-slate-500 mt-1" size={20} />
-                  <div>
-                     <p className="text-xs text-slate-500 uppercase font-medium">AGRI PRICE</p>
-                     <p className="text-sm font-medium">{stats?.price} <span className="text-emerald-500 ml-1">{stats?.priceChange}</span></p>
-                  </div>
+         {/* Stats Grid */}
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+               <div className="flex items-center gap-3 mb-3">
+                  <Globe size={16} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AGRI Price</span>
                </div>
-               <div className="mt-4 flex items-start gap-4">
-                  <Globe className="text-slate-500 mt-1" size={20} />
-                  <div>
-                     <p className="text-xs text-slate-500 uppercase font-medium">MARKET CAP</p>
-                     <p className="text-sm font-medium">{stats?.market_cap}</p>
-                  </div>
-               </div>
+               <p className="text-lg font-bold">{stats?.price || '...'}</p>
             </div>
-
-            <div className="flex-1 p-5 border-b md:border-b-0 md:border-r border-slate-200">
-               <div className="flex items-start gap-4">
-                  <Zap className="text-slate-500 mt-1" size={20} />
-                  <div>
-                     <p className="text-xs text-slate-500 uppercase font-medium">TRANSACTIONS</p>
-                     <p className="text-sm font-medium">{stats?.totalTx} <span className="text-slate-500 text-xs ml-1">({stats?.tps} TPS)</span></p>
-                  </div>
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+               <div className="flex items-center gap-3 mb-3">
+                  <Zap size={16} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Transactions</span>
                </div>
-               <div className="mt-4 flex items-start gap-4">
-                  <Server className="text-slate-500 mt-1" size={20} />
-                  <div>
-                     <p className="text-xs text-slate-500 uppercase font-medium">LATEST BLOCK</p>
-                     <p className="text-sm font-medium">{stats?.latestBlock?.toLocaleString()}</p>
-                  </div>
-               </div>
+               <p className="text-lg font-bold">{stats?.totalTx || '0'} <span className="text-xs text-slate-400 font-medium">({stats?.tps || '0.00'} TPS)</span></p>
             </div>
-
-            <div className="flex-1 p-5 hidden lg:block">
-               <p className="text-xs text-slate-500 uppercase font-medium">TRANSACTION HISTORY IN 14 DAYS</p>
-               <div className="h-16 mt-2 w-full flex items-end">
-                  <svg viewBox="0 0 100 30" className="w-full h-full stroke-slate-300" fill="none" preserveAspectRatio="none">
-                     <path d="M0,20 Q10,10 20,25 T40,15 T60,20 T80,5 T100,20" strokeWidth="1" />
-                  </svg>
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+               <div className="flex items-center gap-3 mb-3">
+                  <Box size={16} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Latest Block</span>
                </div>
+               <p className="text-lg font-bold">#{stats?.latestBlock?.toLocaleString() || '...'}</p>
+            </div>
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+               <div className="flex items-center gap-3 mb-3">
+                  <Server size={16} className="text-slate-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gas Price</span>
+               </div>
+               <p className="text-lg font-bold">{stats?.gas_price || '0'} Gwei</p>
             </div>
          </div>
 
-         {/* Latest Data Feed */}
+         {/* Tables Grid */}
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Latest Blocks */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col">
-               <div className="p-4 border-b border-slate-200">
-                  <h3 className="text-sm font-bold text-slate-800">Latest Blocks</h3>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <h2 className="text-sm font-bold">Latest Blocks</h2>
+                  <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
-               <div className="flex-grow divide-y divide-slate-100">
-                  {latestBlocks.map((block, i) => (
-                    <div key={i} className="p-4 flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-50 rounded text-slate-400 flex items-center justify-center border border-slate-100">
-                             <Box size={18} />
-                          </div>
-                          <div>
-                             <Link href={`/explorer/blocks/${block.number}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                                {block.number}
-                             </Link>
-                             <p className="text-xs text-slate-500">{( (Date.now() - block.timestamp) / 1000 ).toFixed(0)} secs ago</p>
-                          </div>
-                       </div>
-                       <div className="text-right sm:text-left flex-grow sm:px-8">
-                          <div className="text-sm">
-                             <span className="text-slate-500">Miner </span>
-                             <Link href={`/explorer/address/${block.validator}`} className="text-blue-600 hover:text-blue-800 truncate inline-block max-w-[100px] align-bottom">
-                                {block.validator.substring(0, 10)}...
-                             </Link>
-                          </div>
-                          <Link href={`/explorer/blocks/${block.number}`} className="text-xs text-blue-600 hover:text-blue-800">
-                             {block.transactionCount} txns
-                          </Link>
-                          <span className="text-xs text-slate-500 ml-1">in 12 secs</span>
-                       </div>
-                       <div className="hidden sm:block">
-                          <span className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700">
-                             {block.reward}
-                          </span>
-                       </div>
-                    </div>
+               <div className="divide-y divide-slate-100">
+                  {loading ? (
+                     <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Syncing Ledger...</div>
+                  ) : latestBlocks.map((b, i) => (
+                     <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
+                              <Box size={18} />
+                           </div>
+                           <div>
+                              <Link href={`/explorer/blocks/${b.number}`} className="text-sm font-bold text-blue-600 hover:underline">{b.number}</Link>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - b.timestamp) / 1000)} secs ago</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-xs font-medium">Miner <Link href={`/explorer/address/${b.validator}`} className="text-blue-600 font-mono">{b.validator.substring(0, 10)}...</Link></p>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase"><span className="text-blue-600">{b.transactionCount} txns</span> in 3.2s</p>
+                        </div>
+                     </div>
                   ))}
                </div>
-               <Link href="/explorer/blocks" className="p-3 bg-slate-50 hover:bg-slate-100 text-center text-xs text-slate-600 border-t border-slate-200 transition-colors uppercase font-medium mt-auto">
-                  View all blocks <ArrowRight size={12} className="inline ml-1" />
-               </Link>
             </div>
 
             {/* Latest Transactions */}
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col">
-               <div className="p-4 border-b border-slate-200">
-                  <h3 className="text-sm font-bold text-slate-800">Latest Transactions</h3>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <h2 className="text-sm font-bold">Latest Transactions</h2>
+                  <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
-               <div className="flex-grow divide-y divide-slate-100">
-                  {latestTxns.map((tx, i) => (
-                    <div key={i} className="p-4 flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-50 rounded text-slate-400 flex items-center justify-center border border-slate-100">
-                             <FileText size={18} />
-                          </div>
-                          <div>
-                             <Link href={`/explorer/tx/${tx.hash}`} className="text-sm text-blue-600 hover:text-blue-800 font-medium truncate max-w-[120px] block">
-                                {tx.hash}
-                             </Link>
-                             <p className="text-xs text-slate-500">{( (Date.now() - tx.timestamp) / 1000 ).toFixed(0)} secs ago</p>
-                          </div>
-                       </div>
-                       <div className="flex-grow sm:px-8 text-sm">
-                          <div>
-                             <span className="text-slate-500">From </span>
-                             <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 hover:text-blue-800 truncate inline-block max-w-[100px] align-bottom">
-                                {tx.from.substring(0, 10)}...
-                             </Link>
-                          </div>
-                          <div>
-                             <span className="text-slate-500">To </span>
-                             <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 hover:text-blue-800 truncate inline-block max-w-[100px] align-bottom">
-                                {tx.to.substring(0, 10)}...
-                             </Link>
-                          </div>
-                       </div>
-                       <div className="hidden sm:block">
-                          <span className="px-2 py-1 bg-slate-50 border border-slate-200 rounded text-xs text-slate-700">
-                             {Number(tx.value).toFixed(5)} AGRI
-                          </span>
-                       </div>
-                    </div>
+               <div className="divide-y divide-slate-100 min-h-[400px]">
+                  {loading ? (
+                     <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Scanning Network Activity...</div>
+                  ) : latestTxns.length === 0 ? (
+                     <div className="p-20 text-center flex flex-col items-center gap-4 opacity-30">
+                        <Database size={32} />
+                        <p className="text-[10px] font-black uppercase tracking-widest">No recent transactions found in last 40 blocks</p>
+                     </div>
+                  ) : latestTxns.map((tx, i) => (
+                     <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                              <FileText size={18} />
+                           </div>
+                           <div className="min-w-0">
+                              <Link href={`/explorer/tx/${tx.hash}`} className="text-sm font-bold text-blue-600 hover:underline truncate block w-32 font-mono">{tx.hash}</Link>
+                              <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - tx.timestamp) / 1000)} secs ago</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-xs font-medium">From <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 font-mono">{tx.from.substring(0, 8)}...</Link></p>
+                           <p className="text-xs font-medium">To <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 font-mono">{tx.to.substring(0, 8)}...</Link></p>
+                        </div>
+                        <div className="text-right pl-4">
+                           <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-[9px] font-black text-slate-700 uppercase">
+                              {Number(tx.value).toFixed(2)} AGRI
+                           </span>
+                        </div>
+                     </div>
                   ))}
                </div>
-               <Link href="/explorer/transactions" className="p-3 bg-slate-50 hover:bg-slate-100 text-center text-xs text-slate-600 border-t border-slate-200 transition-colors uppercase font-medium mt-auto">
-                  View all transactions <ArrowRight size={12} className="inline ml-1" />
-               </Link>
             </div>
 
          </div>
+
+         {/* Footer Note */}
+         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">
+            <Database size={12} />
+            Data provided by fwd LIFEchain RPC (Geth/PoA) & Supabase Indexer
+         </div>
+
       </main>
-      
       <Footer />
     </div>
   );
