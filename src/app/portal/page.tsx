@@ -38,14 +38,14 @@ export default function ProducerPortal() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [blockHeight, setBlockHeight] = useState(19450281);
-  const [tps, setTps] = useState(14.2);
+  const [blockHeight, setBlockHeight] = useState(19450300);
+  const [tps, setTps] = useState(12.3);
 
   // Network Simulation
   useEffect(() => {
     const timer = setInterval(() => {
       setBlockHeight(prev => prev + 1);
-      setTps(12 + Math.random() * 5);
+      setTps(11.5 + Math.random() * 4);
     }, 3000);
     return () => clearInterval(timer);
   }, []);

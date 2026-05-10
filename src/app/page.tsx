@@ -80,10 +80,10 @@ export default function Home() {
   ];
 
   const networkStats = [
-    { label: "Active Nodes", value: stats?.activeNodes || "128", icon: Globe, color: "text-blue-500" },
-    { label: "Blocks Verified", value: stats?.blocksVerified?.toLocaleString() || "19.4M", icon: Layers, color: "text-emerald-500" },
-    { label: "Throughput", value: (stats?.throughput || "14.2") + " TPS", icon: Zap, color: "text-amber-500" },
-    { label: "Security Level", value: stats?.securityLevel || "99.9%", icon: ShieldCheck, color: "text-purple-500" }
+    { label: "Current Block", value: stats?.blocksVerified?.toLocaleString() || "#19,450,300", icon: Layers, color: "text-emerald-500" },
+    { label: "Network TPS", value: "12.3 / 1.5k", icon: Zap, color: "text-blue-500" },
+    { label: "Active Nodes", value: "1,204", icon: Globe, color: "text-amber-500" },
+    { label: "Total Value Locked", value: "84.2M AGRI", icon: ShieldCheck, color: "text-purple-500" }
   ];
 
   return (

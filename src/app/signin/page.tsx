@@ -139,14 +139,32 @@ export default function LoginPage() {
           </div>
 
           {/* Features Info */}
-          <div className="pt-6 border-t border-white/5 grid grid-cols-2 gap-6">
-             <div className="flex items-center gap-3">
-                <ShieldCheck size={16} className="text-emerald-500" />
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Encrypted</span>
+          <div className="pt-6 border-t border-white/5 space-y-6">
+             <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                   <ShieldCheck size={16} className="text-emerald-500" />
+                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">End-to-End Encrypted</span>
+                </div>
+                <div className="flex items-center gap-3">
+                   <Globe size={16} className="text-blue-500" />
+                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Global Mainnet</span>
+                </div>
              </div>
-             <div className="flex items-center gap-3">
-                <ArrowRight size={16} className="text-blue-500" />
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Instant Sync</span>
+
+             {/* Institutional Network Pulse */}
+             <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Current Block</span>
+                   <span className="text-[10px] font-mono font-bold text-emerald-500">#19,450,300</span>
+                </div>
+                <div className="flex flex-col">
+                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">Active Nodes</span>
+                   <span className="text-[10px] font-mono font-bold text-blue-500">1,204</span>
+                </div>
+                <div className="flex flex-col">
+                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">TVL (AGRI)</span>
+                   <span className="text-[10px] font-mono font-bold text-amber-500">84.2M</span>
+                </div>
              </div>
           </div>
 
