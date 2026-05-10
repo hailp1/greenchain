@@ -667,32 +667,6 @@ export default function ProducerPortal() {
                    CONNECT
                 </button>
               ) : (
-                <button 
-                    onClick={async () => {
-                      if (isSigning) return;
-                      setIsSigning(true);
-                      try {
-                        const txHash = await web3.claimTestTokens();
-                        if (txHash) {
-                          setLastTxHash(txHash);
-                          setIsSuccess(true);
-                          setTimeout(() => {
-                            setIsSuccess(false);
-                            setLastTxHash(null);
-                          }, 5000);
-                        }
-                      } catch (e) {
-                        alert("Không thể nhận token. Vui lòng thử lại sau.");
-                      } finally {
-                        setIsSigning(false);
-                      }
-                    }}
-                    disabled={isSigning}
-                    className="px-3 md:px-4 py-2 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50 shrink-0"
-                 >
-                    <span className="hidden sm:inline">{isSigning ? "WAITING..." : "CLAIM 1,000 AGRI"}</span>
-                    <span className="sm:hidden">{isSigning ? "..." : "CLAIM"}</span>
-                 </button>
               )}
 
                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
