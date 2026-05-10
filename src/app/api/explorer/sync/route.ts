@@ -13,44 +13,51 @@ export async function GET(request: Request) {
     const provider = new ethers.JsonRpcProvider(RPC_URL);
     const currentBlock = await provider.getBlockNumber();
     
-    // 1. Find the last synced block from DB
-    const { data: lastTx } = await supabase
-      .from('token_transactions')
-      .select('description')
-      .ilike('description', 'Blockchain transaction at block %')
-      .order('created_at', { ascending: false })
-      .limit(1)
+    // 1. Get last synced block from sync_state table
+    const { data: syncState } = await supabase
+      .from('sync_state')
+      .select('value')
+      .eq('key', 'last_synced_block')
       .maybeSingle();
 
-    let lastBlock = currentBlock - 5; // Default to last 5 blocks if not found
-    if (lastTx) {
-      const match = lastTx.description.match(/block (\d+)/);
-      if (match) lastBlock = parseInt(match[1]);
+    let lastBlock = currentBlock - 10; // Default to last 10 blocks
+    if (syncState && syncState.value) {
+      lastBlock = parseInt(syncState.value);
     }
 
-    const blocksToSync = Math.min(currentBlock - lastBlock, 20); // Limit to 20 blocks per call
+    const blocksToSync = Math.min(currentBlock - lastBlock, 50); // Increased to 50 for catch-up
+    if (blocksToSync <= 0) {
+      return NextResponse.json({ success: true, message: 'Already up to date' });
+    }
+
     console.log(`[Sync API] Syncing from ${lastBlock + 1} to ${lastBlock + blocksToSync}`);
 
     let totalSynced = 0;
     for (let i = 1; i <= blocksToSync; i++) {
       const targetBlock = lastBlock + i;
       const block = await provider.getBlock(targetBlock, true);
-      if (!block || !block.transactions) continue;
+      if (!block) continue;
 
-      const txs = (block.transactions as any[]).map((tx: any) => ({
-        id: tx.hash.toLowerCase(),
-        sender_address: tx.from.toLowerCase(),
-        receiver_address: tx.to ? tx.to.toLowerCase() : null,
-        amount: parseFloat(ethers.formatEther(tx.value)),
-        type: 'ON-CHAIN',
-        description: `Blockchain transaction at block ${targetBlock}`,
-        created_at: new Date(block.timestamp * 1000).toISOString()
-      }));
-
-      if (txs.length > 0) {
+      if (block.transactions && block.transactions.length > 0) {
+        const txs = (block.transactions as any[]).map((tx: any) => ({
+          id: tx.hash.toLowerCase(),
+          sender_address: tx.from.toLowerCase(),
+          receiver_address: tx.to ? tx.to.toLowerCase() : null,
+          amount: parseFloat(ethers.formatEther(tx.value)),
+          type: 'ON-CHAIN',
+          description: `Blockchain transaction at block ${targetBlock}`,
+          created_at: new Date(block.timestamp * 1000).toISOString()
+        }));
         await supabase.from('token_transactions').upsert(txs, { onConflict: 'id' });
         totalSynced += txs.length;
       }
+      
+      // Always update the sync state, even if block is empty
+      await supabase.from('sync_state').upsert({ 
+        key: 'last_synced_block', 
+        value: targetBlock.toString(),
+        updated_at: new Date().toISOString()
+      });
     }
 
     return NextResponse.json({ 
