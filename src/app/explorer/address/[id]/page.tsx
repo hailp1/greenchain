@@ -78,17 +78,16 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
 
         const { data: txData } = await txQuery;
             
-          if (txData) {
-            setTransactions(txData.map(tx => ({
-              hash: tx.id.replace(/-/g, '').substring(0, 40),
-              timestamp: new Date(tx.created_at).toLocaleString(),
-              age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-              from: tx.sender?.wallet_address || tx.sender_address || 'System',
-              to: tx.receiver?.wallet_address || tx.receiver_address || 'System',
-              value: `${tx.amount}`,
-              type: tx.type,
-            })));
-          }
+        if (txData) {
+          setTransactions(txData.map(tx => ({
+            hash: tx.id.replace(/-/g, '').substring(0, 40),
+            timestamp: new Date(tx.created_at).toLocaleString(),
+            age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+            from: tx.sender?.wallet_address || tx.sender_address || 'System',
+            to: tx.receiver?.wallet_address || tx.receiver_address || 'System',
+            value: `${tx.amount}`,
+            type: tx.type,
+          })));
         } else {
           setTransactions([]);
         }

@@ -8,16 +8,10 @@ const dbUrl = envFile.match(/DATABASE_URL=(.+)/)?.[1]?.trim();
 
 
 const sql = `
--- 1. Ensure token_transactions table exists
-CREATE TABLE IF NOT EXISTS public.token_transactions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sender_id UUID REFERENCES public.entities(id),
-    receiver_id UUID REFERENCES public.entities(id),
-    amount NUMERIC NOT NULL,
-    type TEXT CHECK (type IN ('GAS_FEE', 'REWARD', 'PAYMENT', 'MINT', 'STAKE', 'UNSTAKE')),
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- 1. Ensure token_transactions table has address columns
+ALTER TABLE public.token_transactions 
+ADD COLUMN IF NOT EXISTS sender_address TEXT,
+ADD COLUMN IF NOT EXISTS receiver_address TEXT;
 
 -- 2. Update handle_new_user function (Robust & Conflict-free)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
