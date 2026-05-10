@@ -324,12 +324,20 @@ export default function ProducerPortal() {
       const txHash = await web3.transferTokens(recipientWallet, transferAmount);
       if (txHash) {
         setLastTxHash(txHash);
-        await supabase.from('token_transactions').insert([{
-          sender_id: currentEntity?.id,
-          amount: parseFloat(transferAmount),
-          type: 'PAYMENT',
-          description: `Transferred AGRI to ${recipientWallet.slice(0, 8)}...`
-        }]);
+        
+        // Use Server-side API for transaction logging
+        await fetch('/api/portal/transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sender_id: user ? user.id : currentEntity?.id,
+            sender_address: web3.address,
+            receiver_address: recipientWallet,
+            amount: transferAmount,
+            tx_hash: txHash
+          })
+        });
+
         setIsSuccess(true);
         setRecipientWallet("");
         setTransferAmount("");
