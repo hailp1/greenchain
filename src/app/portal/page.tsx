@@ -270,7 +270,7 @@ export default function ProducerPortal() {
 
   const stats = [
     { label: "Active Batches", value: batches.length.toString(), icon: Layers },
-    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.balance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 }), icon: Zap },
+    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 }), icon: Zap },
     { label: "Network Trust", value: "A+", icon: ShieldCheck },
     { label: "Total Yield", value: batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG", icon: BarChart3 }
   ];
@@ -317,8 +317,16 @@ export default function ProducerPortal() {
         return;
       }
 
-      if (parseFloat(web3.balance) < amount) {
-        alert(`Số dư AGRI của bạn (${web3.balance}) không đủ để Stake ${amount} AGRI.`);
+      // Validation: Check Token Balance (fwdBalance) instead of Native Balance (gas)
+      if (parseFloat(web3.fwdBalance) < amount) {
+        alert(`Số dư AGRI Token của bạn (${web3.fwdBalance}) không đủ để Stake ${amount} AGRI. Bạn có thể dùng nút CLAIM để nhận thêm.`);
+        setIsSigning(false);
+        return;
+      }
+
+      // Ensure user has at least some native balance for gas
+      if (parseFloat(web3.balance) < 0.001) {
+        alert("Số dư phí gas (Native AGRI) quá thấp. Vui lòng nhận thêm từ Faucet.");
         setIsSigning(false);
         return;
       }
@@ -486,8 +494,11 @@ export default function ProducerPortal() {
               <div className="flex flex-col items-end">
                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest shrink-0">
                     <Zap size={10} className="animate-pulse text-emerald-500" />
-                    {mounted ? Number(web3.balance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span className="opacity-50">AGRI</span>
+                    {mounted ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span className="opacity-50">AGRI</span>
                  </div>
+                 {mounted && web3.isConnected && (
+                    <span className="text-[8px] text-slate-400 font-bold uppercase mt-1">Gas: {Number(web3.balance).toFixed(4)} AGRI</span>
+                 )}
               </div>
 
               {!web3.isConnected ? (
