@@ -29,9 +29,9 @@ export default function ExplorerHome() {
         const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.308';
 
         setStats({
-          price: '$2,326.88',
-          priceChange: '+0.62%',
-          market_cap: '$280,823,612,767.00',
+          price: 'Pending',
+          priceChange: '',
+          market_cap: 'N/A',
           latestBlock: blockNum,
           lastSafeBlock: blockNum - 12,
           gas_price: gasPriceStr,
