@@ -278,11 +278,6 @@ export default function ProducerPortal() {
         } finally {
           isCreatingGuest.current = false;
         }
-        
-        if (newEntity) {
-          setCurrentEntity(newEntity);
-          setWalletAddress(addr);
-        }
       }
     }
   }, [web3.isConnected, web3.address, fetchBalance, authLoading]);
