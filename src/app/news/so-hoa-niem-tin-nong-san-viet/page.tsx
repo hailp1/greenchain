@@ -10,23 +10,26 @@ import Link from 'next/link';
 export default function NewsDetailPage() {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
-      {/* SEO Metadata (Mental representation, Next.js handles this in layout/head) */}
-      {/* Title: Số hóa niềm tin: Miễn phí Blockchain cho nông dân Việt Nam | fwd LIFEchain */}
-      {/* Desc: fwd LIFEchain khởi động chiến dịch miễn phí 100% giải pháp Blockchain nông nghiệp cho nông dân Việt Nam. Nâng tầm giá trị nông sản qua công nghệ ST-PoO. */}
-      
       <Header />
       
       <main className="pt-32 pb-24 max-w-4xl mx-auto px-6">
-        {/* Article Header */}
+        {/* Breadcrumb - SEO & UX */}
+        <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">
+           <Link href="/" className="hover:text-emerald-600">Home</Link>
+           <span>/</span>
+           <Link href="/news" className="hover:text-emerald-600">News</Link>
+           <span>/</span>
+           <span className="text-slate-900">Chiến dịch nông dân</span>
+        </div>
+
         <div className="space-y-8 mb-12">
            <div className="flex items-center gap-3">
               <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest">
-                 Chiến dịch cộng đồng
+                 Public Campaign - No Login Required
               </span>
-              <div className="h-px flex-grow bg-slate-100"></div>
            </div>
            
-           <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight">
+           <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight">
               Số hóa niềm tin: Miễn phí 100% giải pháp Blockchain cho nông dân Việt Nam
            </h1>
 
@@ -38,85 +41,74 @@ export default function NewsDetailPage() {
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Founder of fwd LIFEchain</span>
                  </div>
               </div>
-              <div className="flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="flex items-center gap-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-slate-400">
                  <span className="flex items-center gap-1.5"><Calendar size={14} /> 10 Tháng 5, 2026</span>
-                 <div className="flex items-center gap-2">
-                    <Share2 size={14} />
-                    <Facebook size={14} className="cursor-pointer hover:text-blue-600" />
-                    <Twitter size={14} className="cursor-pointer hover:text-blue-400" />
-                    <Linkedin size={14} className="cursor-pointer hover:text-blue-700" />
-                 </div>
               </div>
            </div>
         </div>
 
-        {/* Featured Image */}
-        <div className="relative aspect-[16/9] rounded-[3rem] overflow-hidden mb-16 shadow-2xl">
+        <div className="relative aspect-[16/9] rounded-[3rem] overflow-hidden mb-16 shadow-2xl bg-slate-100">
            <img 
              src="https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=1200" 
-             alt="Blockchain trong nông nghiệp Việt Nam" 
+             alt="Blockchain Agriculture Vietnam" 
              className="w-full h-full object-cover"
            />
         </div>
 
-        {/* Content Section - SEO Optimized */}
         <article className="prose prose-slate prose-lg max-w-none">
-           <p className="text-xl font-light leading-relaxed text-slate-600 mb-8 italic border-l-4 border-emerald-500 pl-6">
-              "Sự minh bạch không chỉ là một tính năng kỹ thuật, đó là nền tảng của niềm tin. Với fwd LIFEchain, chúng tôi muốn trao quyền cho mỗi người nông dân Việt Nam khả năng chứng minh giá trị sản phẩm của mình trước toàn thế giới."
+           <div className="text-xl font-medium leading-relaxed text-slate-700 mb-10 pl-6 border-l-4 border-emerald-500 italic">
+              Chiến dịch "SỐ HÓA NIỀM TIN" nhằm mục tiêu hỗ trợ nông dân Việt Nam tiếp cận công nghệ Blockchain để minh bạch hóa nguồn gốc nông sản, nâng tầm giá trị trên thị trường quốc tế.
+           </div>
+
+           <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6 tracking-tight">1. Tại sao lại là Blockchain cho Nông dân?</h2>
+           <p>
+              Vấn đề lớn nhất của nông sản Việt không phải là chất lượng, mà là <strong>Niềm tin</strong>. Blockchain giúp tạo ra một cuốn sổ cái bất biến, ghi lại mọi quy trình từ hạt giống đến bàn ăn.
            </p>
 
-           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mt-12 mb-6">
-              Bối cảnh: Bẫy "giải cứu" và nỗi lo nguồn gốc
-           </h2>
+           <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6 tracking-tight">2. Chương trình hỗ trợ 100%</h2>
            <p>
-              Nông nghiệp Việt Nam đang đứng trước một nghịch lý: Sản phẩm của chúng ta cực kỳ chất lượng, nhưng giá trị thương hiệu lại chưa cao. Người tiêu dùng trong và ngoài nước luôn đặt câu hỏi về tính minh bạch của nguồn gốc thực phẩm. Những chiến dịch "giải cứu" nông sản liên tục diễn ra là hệ quả của việc thiếu sự kết nối niềm tin trực tiếp giữa người sản xuất và người tiêu dùng.
+              Chúng tôi cam kết miễn phí toàn bộ chi phí cài đặt, vận hành và đào tạo cho các HTX nông nghiệp. Hệ thống bao gồm:
            </p>
-
-           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mt-12 mb-6">
-              Giải pháp: fwd LIFEchain và Giao thức ST-PoO
-           </h2>
-           <p>
-              Nhằm giải quyết triệt để vấn đề này, fwd LIFEchain chính thức khởi động chiến dịch hỗ trợ <strong>miễn phí 100%</strong> cài đặt hệ thống Blockchain cho các HTX và hộ nông dân trên toàn quốc. Trái tim của giải pháp là giao thức <strong>ST-PoO (Spatial-Temporal Proof of Origin)</strong>.
-           </p>
-           <ul>
-              <li><strong>Minh bạch tuyệt đối:</strong> Mọi thông tin thu hoạch được xác thực qua GPS và IoT.</li>
-              <li><strong>Bất biến:</strong> Dữ liệu khi đã lên Blockchain không thể bị sửa đổi bởi bất kỳ cá nhân nào.</li>
-              <li><strong>Nâng tầm giá trị:</strong> Sản phẩm có bằng chứng Blockchain dễ dàng đạt được niềm tin tại các thị trường khó tính như EU, Mỹ.</li>
+           <ul className="space-y-2">
+              <li>Mã QR định danh duy nhất cho từng lô hàng.</li>
+              <li>Xác thực vị trí vùng trồng bằng GPS thời gian thực.</li>
+              <li>Hỗ trợ xuất khẩu với dữ liệu minh bạch chuẩn EU/Mỹ.</li>
            </ul>
 
-           <div className="my-12 p-8 bg-emerald-900 rounded-[2.5rem] text-white space-y-6 shadow-xl relative overflow-hidden">
-              <ShieldCheck size={120} className="absolute -top-10 -right-10 text-emerald-800 opacity-50" />
-              <h3 className="text-2xl font-black uppercase tracking-tight relative z-10">Đăng ký tham gia ngay hôm nay</h3>
-              <p className="text-emerald-100 font-light relative z-10 leading-relaxed">
-                 Chúng tôi cam kết hỗ trợ toàn bộ chi phí triển khai ban đầu cho 50 hộ nông dân và HTX đăng ký sớm nhất trong tháng 5/2026. Hãy trở thành những người tiên phong trong cuộc cách mạng nông nghiệp số.
+           <div className="my-16 p-10 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden shadow-2xl">
+              <Zap size={100} className="absolute -top-10 -right-10 text-emerald-500 opacity-20" />
+              <h3 className="text-2xl font-black uppercase mb-4 relative z-10">Liên hệ ngay</h3>
+              <p className="text-slate-400 mb-8 relative z-10 leading-relaxed">
+                 Đội ngũ fwd LIFEchain sẵn sàng khảo sát và hỗ trợ trực tiếp tại vườn nhà bạn.
               </p>
-              <button className="px-8 py-4 bg-white text-emerald-900 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-emerald-50 transition-all relative z-10 shadow-lg">
+              <button className="px-8 py-4 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20 relative z-10">
                  Đăng ký tư vấn miễn phí
               </button>
            </div>
 
-           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mt-12 mb-6">
-              Kết luận: Tương lai của nông sản Việt là sự minh bạch
-           </h2>
+           <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6 tracking-tight">3. Tầm nhìn 2030</h2>
            <p>
-              Blockchain không còn là một khái niệm xa vời. Với fwd LIFEchain, chúng tôi đang hiện thực hóa nó trên những cánh đồng Việt Nam. Hãy cùng chúng tôi nâng tầm nông nghiệp Việt vươn ra biển lớn bằng chính sức mạnh của sự thật và công nghệ.
+              Chúng tôi muốn xây dựng một mạng lưới nông sản Việt minh bạch, nơi mà "Sự thật" là giá trị cạnh tranh cốt lõi.
            </p>
         </article>
 
-        {/* Tags Section */}
         <div className="mt-16 pt-8 border-t border-slate-100 flex flex-wrap gap-2">
-           {['Blockchain nông nghiệp', 'Truy xuất nguồn gốc', 'fwd LIFEchain', 'Nông nghiệp số', 'ST-PoO'].map(tag => (
-              <span key={tag} className="px-4 py-2 bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full border border-slate-100">
+           {['Blockchain', 'Agriculture', 'fwdLIFEchain', 'Minh Bach'].map(tag => (
+              <span key={tag} className="px-3 py-1 bg-slate-50 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-slate-100">
                  #{tag}
               </span>
            ))}
         </div>
 
-        {/* Back Link */}
-        <div className="mt-12">
+        <div className="mt-12 flex items-center justify-between">
            <Link href="/news" className="inline-flex items-center gap-2 text-xs font-black text-emerald-600 uppercase tracking-widest hover:gap-4 transition-all">
-              <ArrowRight className="rotate-180" /> Quay lại danh sách tin tức
+              <ArrowRight className="rotate-180" /> Xem các bài viết khác
            </Link>
+           <div className="flex items-center gap-4 text-slate-300">
+              <Share2 size={16} />
+              <Facebook size={16} className="cursor-pointer hover:text-blue-600" />
+              <Twitter size={16} className="cursor-pointer hover:text-blue-400" />
+           </div>
         </div>
       </main>
 
