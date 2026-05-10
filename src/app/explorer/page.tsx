@@ -10,11 +10,15 @@ import Footer from '@/components/Footer';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 
-// Persistent provider
-const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
-
 export default function ExplorerHome() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>({
+    price: 'Pending',
+    market_cap: 'N/A',
+    latestBlock: 0,
+    gas_price: '0.1',
+    tps: '0.00',
+    totalTx: '0'
+  });
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
   const [latestTxns, setLatestTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,115 +27,99 @@ export default function ExplorerHome() {
 
   useEffect(() => {
     const fetchData = async () => {
+      // 1. Initial Load from Supabase (Resilient & Fast)
       try {
-        setLoading(true);
+        const { data: sbTxData, count: supabaseTxCount } = await supabase
+          .from('token_transactions')
+          .select('*, sender:sender_id(wallet_address), receiver:receiver_id(wallet_address)')
+          .order('created_at', { ascending: false })
+          .limit(6);
         
-        // 1. Fetch Basic Network Stats & Supabase count in parallel
-        const results = await Promise.allSettled([
-          provider.getBlockNumber(),
-          provider.getFeeData(),
-          supabase.from('token_transactions').select('*', { count: 'exact', head: true })
+        if (sbTxData) {
+          setLatestTxns(sbTxData.map(tx => ({
+            hash: tx.id.replace(/-/g, '').substring(0, 40),
+            timestamp: new Date(tx.created_at).getTime(),
+            from: tx.sender?.wallet_address || tx.sender_address || '0x0000000000000000000000000000000000000000',
+            to: tx.receiver?.wallet_address || tx.receiver_address || '0x0000000000000000000000000000000000000000',
+            value: `${tx.amount}`
+          })));
+        }
+        
+        setStats(prev => ({ ...prev, totalTx: (supabaseTxCount || 0).toLocaleString() }));
+      } catch (e) {
+        console.warn("Supabase initial fetch error:", e);
+      }
+
+      // 2. Blockchain Fetch (With Hard Timeouts)
+      try {
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
+        
+        // Timeout helper
+        const withTimeout = (promise: Promise<any>, ms: number) => 
+          Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms))]);
+
+        const [blockNum, feeData] = await Promise.all([
+          withTimeout(provider.getBlockNumber(), 4000).catch(() => 0),
+          withTimeout(provider.getFeeData(), 4000).catch(() => null)
         ]);
-        
-        const blockNum = results[0].status === 'fulfilled' ? results[0].value : 0;
-        const feeData = results[1].status === 'fulfilled' ? results[1].value : null;
-        const supabaseRes = results[2].status === 'fulfilled' ? results[2].value : { count: 0 };
-        const supabaseTxCount = supabaseRes.count || 0;
 
-        if (blockNum === 0) throw new Error("Could not connect to fwd LIFEchain RPC");
+        if (blockNum > 0) {
+          const gasPriceStr = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
+          
+          // Fetch blocks
+          const SEARCH_RANGE = 10; 
+          const blockPromises = [];
+          for (let i = 0; i < SEARCH_RANGE; i++) {
+             blockPromises.push(withTimeout(provider.getBlock(blockNum - i, true), 3000).catch(() => null));
+          }
+          
+          const validBlocks = (await Promise.all(blockPromises)).filter(b => b !== null);
 
-        const gasPriceStr = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
+          // Update stats and blocks
+          setStats(prev => ({
+            ...prev,
+            latestBlock: blockNum,
+            gas_price: gasPriceStr,
+          }));
 
-        // 2. Scan a smaller range of blocks for real-time activity (faster)
-        const SEARCH_RANGE = 20; 
-        const blockPromises = [];
-        for (let i = 0; i < SEARCH_RANGE; i++) {
-          if (blockNum - i >= 0) {
-            blockPromises.push(provider.getBlock(blockNum - i, true));
+          setLatestBlocks(validBlocks.slice(0, 6).map((b: any) => ({
+            number: b.number,
+            timestamp: b.timestamp * 1000,
+            validator: b.miner,
+            transactionCount: b.transactions?.length || 0,
+            reward: "0.01402 AGRI"
+          })));
+
+          // If we found real chain txns, prepend or replace
+          const chainTxns = [];
+          for (const b of validBlocks) {
+            for (const tx of (b.transactions || [])) {
+              const txObj = tx as any;
+              chainTxns.push({
+                hash: txObj.hash || txObj,
+                timestamp: b.timestamp * 1000,
+                from: txObj.from || '0x...',
+                to: txObj.to || "Contract / Mint",
+                value: txObj.value ? ethers.formatEther(txObj.value) : '0'
+              });
+              if (chainTxns.length >= 6) break;
+            }
+            if (chainTxns.length >= 6) break;
+          }
+          
+          if (chainTxns.length > 0) {
+            setLatestTxns(chainTxns);
           }
         }
-        
-        const fetchedBlocksResults = await Promise.allSettled(blockPromises);
-        const validBlocks = fetchedBlocksResults
-          .filter(r => r.status === 'fulfilled')
-          .map((r: any) => r.value)
-          .filter(b => b !== null);
-
-        // 3. Calculate Real-time TPS
-        let totalTxInScan = 0;
-        validBlocks.forEach(b => {
-           totalTxInScan += b.transactions?.length || 0;
-        });
-        const timeSpan = validBlocks.length > 1 ? (validBlocks[0].timestamp - validBlocks[validBlocks.length - 1].timestamp) : 1;
-        const realTps = (totalTxInScan / Math.max(1, timeSpan)).toFixed(2);
-
-        setStats({
-          price: 'Pending',
-          market_cap: 'N/A',
-          latestBlock: blockNum,
-          gas_price: gasPriceStr,
-          tps: realTps,
-          totalTx: supabaseTxCount.toLocaleString()
-        });
-
-        // 4. Format Latest Blocks
-        setLatestBlocks(validBlocks.slice(0, 6).map((b: any) => ({
-          number: b.number,
-          timestamp: b.timestamp * 1000,
-          validator: b.miner,
-          transactionCount: b.transactions?.length || 0,
-          reward: "0.01402 AGRI"
-        })));
-        
-        // 5. Collect Latest Transactions from blocks
-        let txns: any[] = [];
-        for (const b of validBlocks) {
-          const blockTxs = b.transactions || [];
-          for (const tx of blockTxs) {
-            const txObj = tx as any;
-            txns.push({
-              hash: txObj.hash || txObj,
-              timestamp: b.timestamp * 1000,
-              from: txObj.from || '0x...',
-              to: txObj.to || "Contract / Mint",
-              value: txObj.value ? ethers.formatEther(txObj.value) : '0'
-            });
-            if (txns.length >= 6) break;
-          }
-          if (txns.length >= 6) break;
-        }
-
-        // 6. Fallback to Supabase for "Latest Platform Activity" if no recent chain txns
-        if (txns.length === 0) {
-           const { data: sbTxData } = await supabase
-             .from('token_transactions')
-             .select('*, sender:sender_id(wallet_address), receiver:receiver_id(wallet_address)')
-             .order('created_at', { ascending: false })
-             .limit(6);
-           
-           if (sbTxData) {
-             txns = sbTxData.map(tx => ({
-               hash: tx.id.replace(/-/g, '').substring(0, 40),
-               timestamp: new Date(tx.created_at).getTime(),
-               from: tx.sender?.wallet_address || tx.sender_address || '0x0000000000000000000000000000000000000000',
-               to: tx.receiver?.wallet_address || tx.receiver_address || '0x0000000000000000000000000000000000000000',
-               value: `${tx.amount}`
-             }));
-           }
-        }
-        setLatestTxns(txns);
-
       } catch (err: any) {
-        console.error('Explorer fetch error:', err);
-        setError(err.message);
+        console.error('Blockchain sync error:', err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
-    
-    // Auto-refresh every 15 seconds
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 20000);
     return () => clearInterval(interval);
   }, []);
 
@@ -172,34 +160,10 @@ export default function ExplorerHome() {
          
          {/* Stats Grid */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-               <div className="flex items-center gap-3 mb-3">
-                  <Globe size={16} className="text-slate-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">AGRI Price</span>
-               </div>
-               <p className="text-lg font-bold">{stats?.price || '...'}</p>
-            </div>
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-               <div className="flex items-center gap-3 mb-3">
-                  <Zap size={16} className="text-slate-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Transactions</span>
-               </div>
-               <p className="text-lg font-bold">{stats?.totalTx || '0'} <span className="text-xs text-slate-400 font-medium">({stats?.tps || '0.00'} TPS)</span></p>
-            </div>
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-               <div className="flex items-center gap-3 mb-3">
-                  <Box size={16} className="text-slate-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Latest Block</span>
-               </div>
-               <p className="text-lg font-bold">#{stats?.latestBlock?.toLocaleString() || '...'}</p>
-            </div>
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-               <div className="flex items-center gap-3 mb-3">
-                  <Server size={16} className="text-slate-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Gas Price</span>
-               </div>
-               <p className="text-lg font-bold">{stats?.gas_price || '0'} Gwei</p>
-            </div>
+            <StatsCard icon={<Globe size={16}/>} label="AGRI Price" value={stats.price} />
+            <StatsCard icon={<Zap size={16}/>} label="Total Transactions" value={stats.totalTx} sub={`(${stats.tps} TPS)`} />
+            <StatsCard icon={<Box size={16}/>} label="Latest Block" value={stats.latestBlock > 0 ? `#${stats.latestBlock.toLocaleString()}` : 'Loading...'} />
+            <StatsCard icon={<Server size={16}/>} label="Gas Price" value={`${stats.gas_price} Gwei`} />
          </div>
 
          {/* Tables Grid */}
@@ -211,9 +175,9 @@ export default function ExplorerHome() {
                   <h2 className="text-sm font-bold">Latest Blocks</h2>
                   <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
-               <div className="divide-y divide-slate-100">
-                  {loading && latestBlocks.length === 0 ? (
-                     <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Syncing Ledger...</div>
+               <div className="divide-y divide-slate-100 min-h-[300px]">
+                  {latestBlocks.length === 0 ? (
+                     <div className="p-20 text-center text-slate-400 text-xs animate-pulse">Syncing Ledger...</div>
                   ) : latestBlocks.map((b, i) => (
                      <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                         <div className="flex items-center gap-4">
@@ -226,8 +190,8 @@ export default function ExplorerHome() {
                            </div>
                         </div>
                         <div className="text-right">
-                           <p className="text-xs font-medium">Miner <Link href={`/explorer/address/${b.validator}`} className="text-blue-600 font-mono">{b.validator.substring(0, 10)}...</Link></p>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase"><span className="text-blue-600">{b.transactionCount} txns</span> in 3.2s</p>
+                           <p className="text-xs font-medium font-mono text-blue-600 truncate w-32">{b.validator}</p>
+                           <p className="text-[10px] text-slate-400 font-bold uppercase">{b.transactionCount} txns</p>
                         </div>
                      </div>
                   ))}
@@ -240,14 +204,9 @@ export default function ExplorerHome() {
                   <h2 className="text-sm font-bold">Latest Transactions</h2>
                   <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
-               <div className="divide-y divide-slate-100 min-h-[400px]">
-                  {loading && latestTxns.length === 0 ? (
-                     <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Scanning Network Activity...</div>
-                  ) : latestTxns.length === 0 ? (
-                     <div className="p-20 text-center flex flex-col items-center gap-4 opacity-30">
-                        <Database size={32} />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No recent transactions found in last 20 blocks</p>
-                     </div>
+               <div className="divide-y divide-slate-100 min-h-[300px]">
+                  {latestTxns.length === 0 ? (
+                     <div className="p-20 text-center text-slate-400 text-xs animate-pulse">Scanning Network Activity...</div>
                   ) : latestTxns.map((tx, i) => (
                      <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                         <div className="flex items-center gap-4">
@@ -259,9 +218,9 @@ export default function ExplorerHome() {
                               <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - tx.timestamp) / 1000)} secs ago</p>
                            </div>
                         </div>
-                        <div className="text-right">
-                           <p className="text-xs font-medium">From <Link href={`/explorer/address/${tx.from}`} className="text-blue-600 font-mono">{tx.from.substring(0, 8)}...</Link></p>
-                           <p className="text-xs font-medium">To <Link href={`/explorer/address/${tx.to}`} className="text-blue-600 font-mono">{tx.to.substring(0, 8)}...</Link></p>
+                        <div className="text-right hidden md:block">
+                           <p className="text-xs font-medium truncate w-32">From <span className="text-blue-600 font-mono">{tx.from.substring(0, 10)}...</span></p>
+                           <p className="text-xs font-medium truncate w-32">To <span className="text-blue-600 font-mono">{tx.to.substring(0, 10)}...</span></p>
                         </div>
                         <div className="text-right pl-4">
                            <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-[9px] font-black text-slate-700 uppercase">
@@ -275,13 +234,20 @@ export default function ExplorerHome() {
 
          </div>
 
-         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">
-            <Database size={12} />
-            Data provided by fwd LIFEchain RPC (Geth/PoA) & Supabase Indexer
-         </div>
-
       </main>
       <Footer />
+    </div>
+  );
+}
+
+function StatsCard({ icon, label, value, sub }: any) {
+  return (
+    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+       <div className="flex items-center gap-3 mb-3">
+          <span className="text-slate-400">{icon}</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+       </div>
+       <p className="text-lg font-bold">{value} {sub && <span className="text-xs text-slate-400 font-medium">{sub}</span>}</p>
     </div>
   );
 }
