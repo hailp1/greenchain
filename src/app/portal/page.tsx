@@ -58,35 +58,29 @@ export default function ProducerPortal() {
   const [balance, setBalance] = useState("0.00");
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-  const fetchBalance = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { data } = await supabase
-        .from('entities')
-        .select('wallet_address')
-        .eq('id', session.user.id)
-        .maybeSingle();
+  const fetchBalance = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      let targetAddr = walletAddress;
       
-      if (data?.wallet_address) {
-         try {
-            const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-            const bal = await provider.getBalance(data.wallet_address);
-            setBalance(ethers.formatEther(bal));
-            return;
-         } catch (e) {
-            console.error("Portal balance fetch error:", e);
-         }
+      if (session?.user) {
+        const { data } = await supabase
+          .from('entities')
+          .select('wallet_address')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (data?.wallet_address) targetAddr = data.wallet_address;
       }
-    }
-    
-    if (walletAddress) {
-      try {
+      
+      if (targetAddr && !targetAddr.startsWith('pending_')) {
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        const bal = await provider.getBalance(walletAddress);
+        const bal = await provider.getBalance(targetAddr);
         setBalance(ethers.formatEther(bal));
-      } catch (e) {}
+      }
+    } catch (e) {
+      console.error("Portal balance fetch error:", e);
     }
-  };
+  }, [walletAddress]);
 
   // ─── Authentication Logic ────────────────────────────────────
   useEffect(() => {
@@ -180,9 +174,8 @@ export default function ProducerPortal() {
   useEffect(() => {
     if (web3.isConnected && web3.address) {
       setWalletAddress(web3.address);
-      fetchBalance();
     }
-  }, [web3.isConnected, web3.address, fetchBalance]);
+  }, [web3.isConnected, web3.address]);
 
   useEffect(() => {
     fetchBalance();
@@ -328,7 +321,7 @@ export default function ProducerPortal() {
       }
     } catch (err: any) {
       console.error('Transfer error:', err);
-      alert(err.message || 'Giao dịch thất bại.');
+      alert(err.message || 'Transaction failed.');
     } finally {
       setIsTransferring(false);
     }
@@ -359,7 +352,7 @@ export default function ProducerPortal() {
       setTimeout(() => setIsSuccess(false), 5000);
     } catch (err) {
       console.error('Sign error:', err);
-      alert('Lỗi khi gửi dữ liệu lên blockchain.');
+      alert('Error submitting data to blockchain.');
     } finally {
       setIsSigning(false);
     }
@@ -372,7 +365,7 @@ export default function ProducerPortal() {
       
       // Validation
       if (!web3.isConnected) {
-        alert("Vui lòng kết nối ví MetaMask trước khi Staking.");
+        alert("Please connect MetaMask before Staking.");
         web3.connect();
         setIsSigning(false);
         return;
@@ -380,14 +373,14 @@ export default function ProducerPortal() {
 
       // Validation: Check Token Balance (fwdBalance) instead of Native Balance (gas)
       if (parseFloat(web3.fwdBalance) < amount) {
-        alert(`Số dư AGRI Token của bạn (${web3.fwdBalance}) không đủ để Stake ${amount} AGRI. Bạn có thể dùng nút CLAIM để nhận thêm.`);
+        alert(`Insufficient AGRI balance (${web3.fwdBalance}). Please use CLAIM to receive more.`);
         setIsSigning(false);
         return;
       }
 
       // Ensure user has at least some native balance for gas
       if (parseFloat(web3.balance) < 0.001) {
-        alert("Số dư phí gas (Native AGRI) quá thấp. Vui lòng nhận thêm từ Faucet.");
+        alert("Gas balance (Native AGRI) too low. Please receive more from Faucet.");
         setIsSigning(false);
         return;
       }
@@ -421,7 +414,7 @@ export default function ProducerPortal() {
       }
     } catch (err: any) {
       console.error('Stake error:', err);
-      alert("Lỗi Giao Dịch: " + (err.reason || err.message || "Không thể thực hiện Staking. Vui lòng thử lại."));
+      alert("Transaction Error: " + (err.reason || err.message || "Failed to perform Staking. Please try again."));
     } finally {
       setIsSigning(false);
     }
@@ -480,7 +473,7 @@ export default function ProducerPortal() {
           description: `Audit reward for batch ${batchId.slice(0,8)}`
         }])
       ]);
-      alert(`Xác thực thành công! +${rewardAmount} AGRI & +1 uy tín.`);
+      alert(`Verification successful! +${rewardAmount} AGRI & +1 reputation score.`);
       await refreshData();
     } catch (err) {
       console.error('Approve error:', err);
@@ -506,7 +499,7 @@ export default function ProducerPortal() {
     // 1. Check if user has stake
     const stakeAmount = Number(currentEntity.staked_balance || 0);
     if (stakeAmount <= 0) {
-      alert("Bạn cần Stake ít nhất 1 AGRI để nhận thưởng hàng ngày!");
+      alert("You need at least 1 AGRI staked to receive daily rewards!");
       return;
     }
 
@@ -514,17 +507,17 @@ export default function ProducerPortal() {
     const today = new Date().toISOString().split('T')[0];
     if (currentEntity.last_daily_claim) {
        const lastDate = new Date(currentEntity.last_daily_claim).toISOString().split('T')[0];
-       if (lastDate === today) {
-         alert("Bạn đã nhận thưởng ngày hôm nay rồi!");
-         return;
-       }
+        if (lastDate === today) {
+          alert("You have already claimed today's reward!");
+          return;
+        }
     }
 
     // 3. Calculate Reward Amount (Dynamic)
     // Formula: min(500, stake * 0.1%)
     const rewardAmount = Math.min(500, Math.floor(stakeAmount * 0.001));
     if (rewardAmount <= 0) {
-      alert("Số lượng Stake của bạn quá nhỏ để nhận thưởng. Hãy Stake thêm AGRI!");
+      alert("Stake amount too small for rewards. Please stake more AGRI!");
       setClaimLoading(false);
       return;
     }
@@ -553,12 +546,12 @@ export default function ProducerPortal() {
 
       if (txError) throw txError;
 
-      alert(`Chúc mừng! Bạn đã nhận được ${rewardAmount} AGRI thưởng hàng ngày.`);
+      alert(`Success! You have received ${rewardAmount} AGRI daily reward.`);
       fetchEntityData();
       fetchPortalData();
     } catch (err: any) {
       console.error("Claim error:", err);
-      alert("Lỗi khi nhận thưởng: " + err.message);
+      alert("Claim failed: " + err.message);
     } finally {
       setClaimLoading(false);
     }
@@ -795,7 +788,7 @@ export default function ProducerPortal() {
                        </div>
                        <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
                           <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-[7px] font-black uppercase tracking-widest">Active Proposal</span>
-                          <p className="text-xs font-black text-natural-900 leading-relaxed uppercase italic">#042: Cập nhật APR Staking lên 15.5% cho chu kỳ tiếp theo</p>
+                          <p className="text-xs font-black text-natural-900 leading-relaxed uppercase italic">#042: Update Staking APR to 15.5% for next cycle</p>
                           <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
                              <div className="bg-emerald-500 h-full w-[72%]"></div>
                           </div>

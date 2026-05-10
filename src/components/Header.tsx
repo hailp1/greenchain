@@ -76,10 +76,10 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: 'Triết lý fwd', href: '/about' },
+    { name: 'Philosophy', href: '/about' },
     { name: 'Blockchain Explorer', href: '/explorer' },
     { name: 'Network Validators', href: '/explorer/nodes' },
-    { name: 'Bảng xếp hạng', href: '/reputation' },
+    { name: 'Leaderboard', href: '/reputation' },
   ];
 
   return (

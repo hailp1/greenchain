@@ -38,12 +38,14 @@ interface TxInfo {
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<TxInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [rpcOnline, setRpcOnline] = useState(false);
 
   const fetchTransactions = useCallback(async () => {
     try {
       console.log("[TxPage] Starting fetch...");
-      setLoading(true);
+      if (transactions.length === 0) setLoading(true);
+      setBackgroundLoading(true);
       const provider = new ethers.JsonRpcProvider(RPC_URL);
       
       // 1. Fetch from Blockchain
@@ -92,12 +94,12 @@ export default function TransactionsPage() {
       let platformTxs: TxInfo[] = [];
       try {
         const fetchWithTimeout = async () => {
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 5000));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 15000));
           const fetchPromise = supabase
             .from('token_transactions')
-            .select('*')
+            .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
-            .limit(40);
+            .limit(50);
           
           return await Promise.race([fetchPromise, timeoutPromise]) as any;
         };
@@ -136,21 +138,38 @@ export default function TransactionsPage() {
         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
         .slice(0, 50);
       
-      console.log("[TxPage] Final merged count:", merged.length);
-      setTransactions(merged);
+      setTransactions(prev => {
+        if (merged.length > 0 || prev.length === 0) return merged;
+        console.log("[TxPage] Keep existing data due to empty fetch results");
+        return prev;
+      });
 
     } catch (err: any) {
       console.error("[TxPage] Fatal Fetch Error:", err.message);
       setRpcOnline(false);
     } finally {
       setLoading(false);
+      setBackgroundLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchTransactions();
-    const interval = setInterval(fetchTransactions, 15000);
-    return () => clearInterval(interval);
+    let isMounted = true;
+    let timer: NodeJS.Timeout;
+
+    const poll = async () => {
+      if (!isMounted) return;
+      await fetchTransactions();
+      if (isMounted) {
+        timer = setTimeout(poll, 15000);
+      }
+    };
+
+    poll();
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
   }, [fetchTransactions]);
 
   return (
@@ -185,7 +204,7 @@ export default function TransactionsPage() {
             <div className="p-8 md:p-12 border-b border-slate-100 flex justify-between items-center">
                <h3 className="text-xl font-black text-slate-900 uppercase italic">Recent <span className="text-blue-600">Transactions</span></h3>
                <button onClick={fetchTransactions} className="p-3 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
-                  <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                  <RefreshCw size={20} className={(loading || backgroundLoading) ? 'animate-spin' : ''} />
                </button>
             </div>
 
@@ -208,7 +227,7 @@ export default function TransactionsPage() {
                             <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Scanning network ledger...</span>
                          </td>
                        </tr>
-                     ) : (
+                     ) : transactions.length > 0 ? (
                         transactions.map((tx) => (
                           <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors group">
                              <td className="px-8 py-6">
@@ -244,6 +263,15 @@ export default function TransactionsPage() {
                              </td>
                           </tr>
                         ))
+                     ) : (
+                        <tr>
+                          <td colSpan={5} className="px-8 py-24 text-center">
+                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                                <Activity size={24} className="text-slate-300" />
+                             </div>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No recent transactions found on the ledger.</span>
+                          </td>
+                        </tr>
                      )}
                   </tbody>
                </table>

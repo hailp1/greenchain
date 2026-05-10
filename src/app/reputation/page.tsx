@@ -53,10 +53,10 @@ export default function Reputation() {
               <span>Network Integrity Scores</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-natural-950 tracking-tighter mb-6 italic uppercase">
-              Bảng xếp hạng <span className="text-emerald-500">Reputation</span>
+              Reputation <span className="text-emerald-500">Leaderboard</span>
             </h1>
             <p className="text-slate-500 text-sm md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-              Điểm tín nhiệm (R) được tính toán dựa trên lịch sử giao dịch chuỗi khối, chất lượng sản phẩm và các lần kiểm định thực tế.
+              Reputation Score (R) is calculated based on blockchain transaction history, product quality, and verified institutional audits.
             </p>
           </motion.div>
         </header>
@@ -86,13 +86,13 @@ export default function Reputation() {
           ) : error ? (
             <div className="col-span-full p-12 bg-red-50 border border-red-100 rounded-[2.5rem] text-center">
               <AlertCircle className="mx-auto text-red-500 mb-4" size={48} />
-              <h3 className="text-xl font-black text-red-900 mb-2">Lỗi kết nối dữ liệu</h3>
+              <h3 className="text-xl font-black text-red-900 mb-2">Data Connection Error</h3>
               <p className="text-red-600 mb-6">{error}</p>
               <button 
                 onClick={() => window.location.reload()}
                 className="px-8 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all"
               >
-                Thử lại
+                Retry
               </button>
             </div>
           ) : (

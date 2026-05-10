@@ -29,7 +29,7 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-slate-400 text-sm md:text-lg font-light leading-relaxed max-w-md">
-              Hệ sinh thái minh bạch hóa giá trị nông sản từ gốc rễ bằng Blockchain & AI. Đề án nghiên cứu của Nghiên cứu sinh Lê Phúc Hải.
+              An institutional ecosystem ensuring agricultural transparency through Blockchain & AI. Research framework by PhD Candidate Le Phuc Hai.
             </p>
             <div className="flex gap-4">
               {[Twitter, Github, Linkedin].map((Icon, i) => (
@@ -43,13 +43,13 @@ export default function Footer() {
           {/* Links Columns */}
           <div className="md:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-12">
             <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Hệ sinh thái</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Ecosystem</h4>
               <ul className="space-y-4">
                 {[
-                  { name: "Trang chủ", href: "/" },
-                  { name: "Triết lý FWD", href: "/about" },
+                  { name: "Home", href: "/" },
+                  { name: "Philosophy", href: "/about" },
                   { name: "Blockchain Explorer", href: "/explorer" },
-                  { name: "Cổng nhà sản xuất", href: "/portal" },
+                  { name: "Producer Portal", href: "/portal" },
                   { name: "Network Validators", href: "/explorer/nodes" }
                 ].map((link, i) => (
                   <li key={i}>
@@ -60,10 +60,10 @@ export default function Footer() {
             </div>
 
             <div className="space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Tài nguyên</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Resources</h4>
               <ul className="space-y-4">
                 {[
-                  { name: "Tài liệu kỹ thuật", href: "/explorer/resources" },
+                  { name: "Technical Docs", href: "/explorer/resources" },
                   { name: "Smart Contracts", href: "/explorer/smart-contracts" },
                   { name: "API Docs", href: "/explorer/apis" },
                   { name: "Governance", href: "/explorer/governance" }
@@ -76,7 +76,7 @@ export default function Footer() {
             </div>
 
             <div className="col-span-2 md:col-span-1 space-y-6">
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Trạng thái</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400">Status</h4>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
                 <div className="flex items-center gap-3">
                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
@@ -93,12 +93,12 @@ export default function Footer() {
 
         <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex flex-wrap justify-center gap-6 text-[10px] font-black uppercase tracking-widest text-slate-500">
-             <Link href="/legal/terms" className="hover:text-white">Điều khoản</Link>
-             <Link href="/legal/privacy" className="hover:text-white">Bảo mật</Link>
+             <Link href="/legal/terms" className="hover:text-white">Terms</Link>
+             <Link href="/legal/privacy" className="hover:text-white">Privacy</Link>
              <Link href="/legal/cookies" className="hover:text-white">Cookies</Link>
           </div>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
-            © 2026 FWD LIFECHAIN. BY NCS LÊ PHÚC HẢI. ALL RIGHTS RESERVED. 
+            © 2026 FWD LIFECHAIN. BY PHD CANDIDATE LE PHUC HAI. ALL RIGHTS RESERVED. 
             <span className="hidden md:inline ml-2">• SECURED BY FARM WORTH DRIVEN PROTOCOL</span>
           </p>
         </div>

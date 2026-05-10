@@ -24,73 +24,96 @@ export default function ExplorerHome() {
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
   const [latestTxns, setLatestTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [searchVal, setSearchVal] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        
-        // 1. Fetch Basic Stats
-        const [blockNum, feeData] = await Promise.all([
-          provider.getBlockNumber(),
-          provider.getFeeData()
-        ]);
+  const fetchData = useCallback(async () => {
+    try {
+      if (latestTxns.length === 0) setLoading(true);
+      setBackgroundLoading(true);
+      const provider = new ethers.JsonRpcProvider(RPC_URL);
+      
+      const [blockNum, feeData] = await Promise.all([
+        provider.getBlockNumber(),
+        provider.getFeeData()
+      ]);
 
-        // 2. Fetch Latest Blocks (Pattern from blocks/page.tsx)
-        const blockPromises = [];
-        for (let i = 0; i < 6; i++) {
-          if (blockNum - i >= 0) {
-            blockPromises.push(provider.getBlock(blockNum - i));
-          }
+      const blockPromises = [];
+      for (let i = 0; i < 6; i++) {
+        if (blockNum - i >= 0) {
+          blockPromises.push(provider.getBlock(blockNum - i));
         }
-        const blocks = await Promise.all(blockPromises);
-        const validBlocks = blocks.filter(b => b !== null);
+      }
+      const blocks = await Promise.all(blockPromises);
+      const validBlocks = blocks.filter(b => b !== null);
 
-        setLatestBlocks(validBlocks.map((b: any) => ({
-          number: b.number,
-          timestamp: b.timestamp * 1000,
-          validator: b.miner,
-          transactionCount: b.transactions?.length || 0,
-          reward: "0.01402 AGRI"
-        })));
+      setLatestBlocks(validBlocks.map((b: any) => ({
+        number: b.number,
+        timestamp: b.timestamp * 1000,
+        validator: b.miner,
+        transactionCount: b.transactions?.length || 0,
+        reward: "0.01402 AGRI"
+      })));
 
-        // 3. Fetch Transactions from Supabase (Always Reliable Ledger)
-        const { data: sbTxData, count: txCount } = await supabase
+      const fetchWithTimeout = async () => {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 10000));
+        const fetchPromise = supabase
           .from('token_transactions')
-          .select('*')
+          .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
           .limit(6);
-        
-        if (sbTxData) {
-          setLatestTxns(sbTxData.map(tx => ({
-            hash: tx.id.replace(/-/g, '').substring(0, 40),
-            timestamp: new Date(tx.created_at).getTime(),
-            from: tx.sender_address || '0x000...000',
-            to: tx.receiver_address || '0x000...000',
-            value: `${tx.amount}`
-          })));
-          setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
-        }
+        return await Promise.race([fetchPromise, timeoutPromise]) as any;
+      };
 
-        setStats((prev: any) => ({
-          ...prev,
-          latestBlock: blockNum,
-          gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+      const { data: sbTxData, count: txCount, error: sbError } = await fetchWithTimeout();
+      
+      if (!sbError && sbTxData) {
+        const txs = sbTxData.map((tx: any) => ({
+          hash: tx.id.replace(/-/g, '').substring(0, 40),
+          timestamp: new Date(tx.created_at).getTime(),
+          from: tx.sender_address || '0x000...000',
+          to: tx.receiver_address || '0x000...000',
+          value: `${tx.amount}`
         }));
+        setLatestTxns(prev => {
+          if (txs.length > 0 || prev.length === 0) return txs;
+          return prev;
+        });
+        setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
+      }
 
-      } catch (err) {
-        console.error("Explorer Home Fetch Error:", err);
-      } finally {
-        setLoading(false);
+      setStats((prev: any) => ({
+        ...prev,
+        latestBlock: blockNum,
+        gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+      }));
+
+    } catch (err) {
+      console.error("Explorer Home Fetch Error:", err);
+    } finally {
+      setLoading(false);
+      setBackgroundLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let timer: NodeJS.Timeout;
+
+    const poll = async () => {
+      if (!isMounted) return;
+      await fetchData();
+      if (isMounted) {
+        timer = setTimeout(poll, 15000);
       }
     };
 
-    fetchData();
-    const interval = setInterval(fetchData, 10000); // Sync every 10s
-    return () => clearInterval(interval);
-  }, []);
+    poll();
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [fetchData]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100">
@@ -181,7 +204,8 @@ export default function ExplorerHome() {
                <div className="divide-y divide-slate-100">
                   {loading && latestTxns.length === 0 ? (
                     <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Scanning Ledger...</div>
-                  ) : latestTxns.map((tx) => (
+                  ) : latestTxns.length > 0 ? (
+                    latestTxns.map((tx) => (
                     <div key={tx.hash} className="p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group">
                        <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xs group-hover:scale-110 transition-transform">TX</div>
@@ -195,7 +219,13 @@ export default function ExplorerHome() {
                           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">From: {tx.from.slice(0, 8)}...</p>
                        </div>
                     </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="p-12 text-center">
+                       <Activity size={24} className="text-slate-200 mx-auto mb-2" />
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No Recent Activity</p>
+                    </div>
+                  )}
                </div>
             </div>
 
