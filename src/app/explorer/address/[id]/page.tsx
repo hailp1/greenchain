@@ -163,7 +163,6 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
            </div>
         </div>
 
-        {/* Data Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
@@ -188,17 +187,22 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
               </div>
            </div>
            
-           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Network Info</p>
-              <div className="space-y-3">
-                 <div className="flex justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Market Value:</span>
-                    <span className="font-bold text-slate-400 italic">Unlisted</span>
+           <div className="bg-slate-900 p-6 rounded-2xl shadow-xl flex flex-col justify-between group">
+              <div>
+                 <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Independent Verification</p>
+                    <ShieldCheck size={16} className="text-blue-500 animate-pulse" />
                  </div>
-                 <div className="flex justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Last Txn:</span>
-                    <span className="font-bold text-slate-900">{transactions.length > 0 ? transactions[0].age : 'N/A'}</span>
+                 <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
+                    Don't trust, verify. Run this command on your machine to query the node directly.
+                 </p>
+                 <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 font-mono text-[9px] text-emerald-500 break-all select-all">
+                    curl -X POST --data '&#123;"jsonrpc":"2.0","method":"eth_getBalance","params":["{addressId}", "latest"],"id":1&#125;' https://rpc.fwdlife.vn
                  </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+                 <Globe size={12} className="text-slate-500" />
+                 <span className="text-[9px] font-bold text-slate-500 uppercase">Verified on rpc.fwdlife.vn</span>
               </div>
            </div>
         </div>

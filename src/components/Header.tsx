@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sprout, Menu, X, Globe, ArrowRight, User } from 'lucide-react';
+import { Sprout, Menu, X, Globe, ArrowRight, User, ShieldCheck, Terminal, HardDrive, Info } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -184,6 +184,16 @@ const Header = () => {
             </Link>
           )}
 
+          {/* Network Status Indicator */}
+          <button 
+            onClick={() => setShowNetworkModal(true)}
+            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full group hover:bg-emerald-100 transition-colors"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-black text-emerald-700 uppercase tracking-widest">Mainnet Live</span>
+            <ShieldCheck size={12} className="text-emerald-400 group-hover:text-emerald-600 transition-colors" />
+          </button>
+
           {/* Mobile Toggle */}
           <button className="lg:hidden p-2 text-slate-900 hover:bg-slate-50 rounded-lg transition-colors" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X size={20} /> : <Menu size={20} />}
@@ -229,6 +239,94 @@ const Header = () => {
               </div>
             </div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Network Verification Modal */}
+      <AnimatePresence>
+        {showNetworkModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNetworkModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 space-y-6">
+                <div className="flex justify-between items-start">
+                   <div className="space-y-1">
+                      <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight">Trust & Verification</h2>
+                      <p className="text-xs text-slate-500 font-medium">Verify blockchain data independently from this website.</p>
+                   </div>
+                   <button onClick={() => setShowNetworkModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                      <X size={20} className="text-slate-400" />
+                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                   <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                      <div className="flex items-center gap-2 text-emerald-600">
+                         <Globe size={16} />
+                         <span className="text-[10px] font-black uppercase tracking-widest">Network RPC Settings</span>
+                      </div>
+                      <div className="space-y-2">
+                         <div className="flex justify-between items-center text-[11px]">
+                            <span className="text-slate-400 font-bold uppercase">Network Name:</span>
+                            <span className="text-slate-900 font-black">fwd LIFEchain</span>
+                         </div>
+                         <div className="flex justify-between items-center text-[11px]">
+                            <span className="text-slate-400 font-bold uppercase">RPC URL:</span>
+                            <span className="text-blue-600 font-mono font-bold">https://rpc.fwdlife.vn</span>
+                         </div>
+                         <div className="flex justify-between items-center text-[11px]">
+                            <span className="text-slate-400 font-bold uppercase">Chain ID:</span>
+                            <span className="text-slate-900 font-black">1186</span>
+                         </div>
+                         <div className="flex justify-between items-center text-[11px]">
+                            <span className="text-slate-400 font-bold uppercase">Currency:</span>
+                            <span className="text-slate-900 font-black">AGRI</span>
+                         </div>
+                      </div>
+                      <div className="pt-2">
+                         <p className="text-[9px] text-slate-500 leading-relaxed">
+                            <Info size={10} className="inline mr-1 mb-0.5" />
+                            Use these settings to add the network to <strong>MetaMask</strong> or <strong>Trust Wallet</strong>.
+                         </p>
+                      </div>
+                   </div>
+
+                   <div className="p-5 bg-slate-900 rounded-2xl space-y-3">
+                      <div className="flex items-center gap-2 text-blue-400">
+                         <Terminal size={16} />
+                         <span className="text-[10px] font-black uppercase tracking-widest">Verify via Terminal</span>
+                      </div>
+                      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                         <code className="text-[10px] text-emerald-400 font-mono break-all leading-relaxed">
+                            curl -X POST --data '&#123;"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1&#125;' https://rpc.fwdlife.vn
+                         </code>
+                      </div>
+                      <p className="text-[9px] text-slate-400 leading-relaxed italic">
+                         Run this command on your computer to verify that our blockchain nodes are responding independently.
+                      </p>
+                   </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowNetworkModal(false)}
+                  className="w-full py-4 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition-all"
+                >
+                  Understood
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </header>

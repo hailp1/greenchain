@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { ethers } from 'ethers';
 import { 
-  CheckCircle2, Clock, Info, HelpCircle
+  CheckCircle2, Clock, Info, HelpCircle, ShieldCheck, HardDrive, Globe, Terminal
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -25,7 +25,6 @@ export default function TransactionDetail() {
       try {
         setLoading(true);
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        // Try Blockchain first (EVM hashes usually start with 0x and are 66 chars)
         let txData = null;
         let receiptData = null;
         let blockData = null;
@@ -46,9 +45,7 @@ export default function TransactionDetail() {
           console.warn("RPC fetch error", e);
         }
 
-        // If not found on blockchain, check Supabase (Platform Transactions)
         if (!txData) {
-          // Reconstruct UUID if it's 32 chars
           let sbQueryId = txHash.replace('0x', '');
           if (sbQueryId.length === 32) {
             sbQueryId = `${sbQueryId.slice(0,8)}-${sbQueryId.slice(8,12)}-${sbQueryId.slice(12,16)}-${sbQueryId.slice(16,20)}-${sbQueryId.slice(20)}`;
@@ -109,15 +106,6 @@ export default function TransactionDetail() {
     return ethers.formatEther(feeWei);
   };
 
-  const decodeInputData = (data: string) => {
-    if (!data || data === '0x') return 'Transfer';
-    if (data.startsWith('0x40c10f19')) return 'Mint Asset';
-    if (data.startsWith('0xa9059cbb')) return 'ERC20 Transfer';
-    if (data.startsWith('0x095ea7b3')) return 'Approve';
-    if (data.startsWith('0x368fac3d')) return 'Anchor Data';
-    return 'Contract Call';
-  };
-
   if (loading) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center">
       <div className="flex flex-col items-center gap-2">
@@ -143,149 +131,150 @@ export default function TransactionDetail() {
               <p className="text-slate-600">{error}</p>
            </div>
         ) : (
-           <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden text-sm">
-              
-              <div className="flex gap-6 border-b border-slate-200 px-4 bg-slate-50/50">
-                 {['overview', 'logs', 'state'].map((tab) => (
-                    <button 
-                      key={tab}
-                      onClick={() => setActiveTab(tab as any)}
-                      className={`py-3 px-2 font-medium capitalize transition-colors ${activeTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-600 hover:text-blue-600'}`}
-                    >
-                       {tab} {tab === 'logs' && receipt?.logs ? `(${receipt.logs.length})` : ''}
-                    </button>
-                 ))}
-              </div>
-
-              {activeTab === 'overview' && (
-                 <div className="divide-y divide-slate-100">
+           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-3">
+                 <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden text-sm">
                     
-                    <Row label="Transaction Hash">
-                       <span className="font-medium text-slate-900 break-all">{txHash}</span>
-                    </Row>
-                    
-                    <Row label="Status">
-                       <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${receipt?.status === 1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                          {receipt?.status === 1 ? <CheckCircle2 size={12} /> : <Info size={12} />}
-                          {receipt?.status === 1 ? 'Success' : 'Failed'}
-                       </div>
-                    </Row>
-                    
-                    <Row label="Block">
-                       {typeof block?.number === 'string' ? (
-                          <span className="font-medium text-slate-800">{block.number}</span>
-                       ) : (
-                          <Link href={`/explorer/blocks/${tx?.blockNumber}`} className="text-blue-600 hover:text-blue-800 font-medium">{tx?.blockNumber}</Link>
-                       )}
-                       {typeof block?.number !== 'string' && (
-                          <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded border border-slate-200">Confirmed</span>
-                       )}
-                    </Row>
-                    
-                    <Row label="Timestamp">
-                       <div className="flex items-center gap-1.5">
-                          <Clock size={14} className="text-slate-400" />
-                          <span>{block ? `${Math.floor((Date.now() - block.timestamp * 1000) / 60000)} mins ago (${new Date(block.timestamp * 1000).toLocaleString()})` : '...'}</span>
-                       </div>
-                    </Row>
-                    
-                    <div className="h-4 bg-slate-50/30"></div>
-                    
-                    <Row label="From">
-                       <Link href={`/explorer/address/${tx?.from}`} className="text-blue-600 hover:text-blue-800 font-medium break-all">{tx?.from}</Link>
-                    </Row>
-                    
-                    <Row label="To">
-                       <Link href={`/explorer/address/${tx?.to}`} className="text-blue-600 hover:text-blue-800 font-medium break-all">{tx?.to || 'Contract Creation'}</Link>
-                    </Row>
+                    <div className="flex gap-6 border-b border-slate-200 px-4 bg-slate-50/50">
+                       {['overview', 'logs', 'state'].map((tab) => (
+                          <button 
+                            key={tab}
+                            onClick={() => setActiveTab(tab as any)}
+                            className={`py-3 px-2 font-medium capitalize transition-colors ${activeTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-600 hover:text-blue-600'}`}
+                          >
+                             {tab} {tab === 'logs' && receipt?.logs ? `(${receipt.logs.length})` : ''}
+                          </button>
+                       ))}
+                    </div>
 
-                    <div className="h-4 bg-slate-50/30"></div>
-
-                    <Row label="Value">
-                       <div className="flex items-center gap-2">
-                          <span className="font-medium text-slate-900">{ethers.formatEther(tx?.value || 0)} AGRI</span>
-                          <span className="text-slate-500 text-xs">(${(parseFloat(ethers.formatEther(tx?.value || 0)) * 2326.88).toFixed(2)})</span>
-                       </div>
-                    </Row>
-
-                    <Row label="Transaction Fee">
-                       <div className="flex items-center gap-2">
-                          <span className="text-slate-900">{calculateTxFee()} AGRI</span>
-                          <span className="text-slate-500 text-xs">(${(parseFloat(calculateTxFee()) * 2326.88).toFixed(2)})</span>
-                       </div>
-                    </Row>
-
-                    <Row label="Gas Price">
-                       {ethers.formatUnits(tx?.gasPrice || 0, 'gwei')} Gwei
-                    </Row>
-
-                    <Row label="Gas Limit & Usage by Txn">
-                       {tx?.gasLimit.toString()} | {receipt?.gasUsed.toString()} <span className="text-slate-500 text-xs ml-1">({(Number(receipt?.gasUsed) / Number(tx?.gasLimit) * 100).toFixed(2)}%)</span>
-                    </Row>
-
-                    <div className="h-4 bg-slate-50/30"></div>
-
-                    <Row label="More Details">
-                       <div className="space-y-4">
-                          <div>
-                             <span className="text-slate-500 mr-2">Nonce:</span> {tx?.nonce}
-                          </div>
-                          <div>
-                             <span className="text-slate-500 mr-2">Position In Block:</span> {receipt?.transactionIndex}
-                          </div>
-                       </div>
-                    </Row>
-
-                    <Row label="Input Data">
-                       <div className="bg-slate-50 p-3 rounded border border-slate-200 font-mono text-xs text-slate-600 break-all max-h-48 overflow-y-auto whitespace-pre-wrap">
-                          {tx?.data}
-                       </div>
-                    </Row>
-
-                 </div>
-              )}
-
-              {activeTab === 'logs' && (
-                 <div className="p-4">
-                    {receipt?.logs?.length === 0 ? (
-                       <p className="text-slate-500 text-center py-8">No event logs found for this transaction.</p>
-                    ) : (
-                       <div className="space-y-4">
-                          {receipt?.logs?.map((log: any, i: number) => (
-                             <div key={i} className="flex gap-4">
-                                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
-                                   {i}
-                                </div>
-                                <div className="flex-grow space-y-2">
-                                   <div className="grid grid-cols-[100px_1fr] gap-4">
-                                      <span className="text-slate-500 font-medium">Address</span>
-                                      <Link href={`/explorer/address/${log.address}`} className="text-blue-600 hover:text-blue-800 break-all">{log.address}</Link>
-                                   </div>
-                                   <div className="grid grid-cols-[100px_1fr] gap-4">
-                                      <span className="text-slate-500 font-medium">Topics</span>
-                                      <div className="space-y-1">
-                                         {log.topics.map((t: string, idx: number) => (
-                                            <div key={idx} className="flex gap-2">
-                                               <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 text-[10px]">{idx}</span>
-                                               <span className="font-mono text-xs text-slate-700 break-all">{t}</span>
-                                            </div>
-                                         ))}
-                                      </div>
-                                   </div>
-                                   <div className="grid grid-cols-[100px_1fr] gap-4">
-                                      <span className="text-slate-500 font-medium">Data</span>
-                                      <div className="bg-slate-50 p-2 rounded border border-slate-200 font-mono text-xs break-all text-slate-600">
-                                         {log.data}
-                                      </div>
-                                   </div>
-                                </div>
+                    {activeTab === 'overview' && (
+                       <div className="divide-y divide-slate-100">
+                          
+                          <Row label="Transaction Hash">
+                             <span className="font-medium text-slate-900 break-all">{txHash}</span>
+                          </Row>
+                          
+                          <Row label="Status">
+                             <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium border ${receipt?.status === 1 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                {receipt?.status === 1 ? <CheckCircle2 size={12} /> : <Info size={12} />}
+                                {receipt?.status === 1 ? 'Success' : 'Failed'}
                              </div>
-                          ))}
+                          </Row>
+                          
+                          <Row label="Block">
+                             {block?.number === 'Platform Ledger' ? (
+                                <span className="font-medium text-slate-800">Platform Ledger</span>
+                             ) : (
+                                <Link href={`/explorer/blocks/${tx?.blockNumber}`} className="text-blue-600 hover:text-blue-800 font-medium">{tx?.blockNumber}</Link>
+                             )}
+                          </Row>
+                          
+                          <Row label="Timestamp">
+                             <div className="flex items-center gap-1.5">
+                                <Clock size={14} className="text-slate-400" />
+                                <span>{block ? `${Math.floor((Date.now() - block.timestamp * 1000) / 60000)} mins ago (${new Date(block.timestamp * 1000).toLocaleString()})` : '...'}</span>
+                             </div>
+                          </Row>
+                          
+                          <div className="h-4 bg-slate-50/30"></div>
+                          
+                          <Row label="From">
+                             <Link href={`/explorer/address/${tx?.from}`} className="text-blue-600 hover:text-blue-800 font-medium break-all">{tx?.from}</Link>
+                          </Row>
+                          
+                          <Row label="To">
+                             <Link href={`/explorer/address/${tx?.to}`} className="text-blue-600 hover:text-blue-800 font-medium break-all">{tx?.to || 'Contract Creation'}</Link>
+                          </Row>
+
+                          <div className="h-4 bg-slate-50/30"></div>
+
+                          <Row label="Value">
+                             <div className="flex items-center gap-2">
+                                <span className="font-medium text-slate-900">{ethers.formatEther(tx?.value || 0)} AGRI</span>
+                             </div>
+                          </Row>
+
+                          <Row label="Transaction Fee">
+                             <span className="text-slate-900">{calculateTxFee()} AGRI</span>
+                          </Row>
+
+                          <Row label="Input Data">
+                             <div className="bg-slate-50 p-3 rounded border border-slate-200 font-mono text-xs text-slate-600 break-all max-h-48 overflow-y-auto whitespace-pre-wrap">
+                                {tx?.data}
+                             </div>
+                          </Row>
+                       </div>
+                    )}
+
+                    {activeTab === 'logs' && (
+                       <div className="p-4">
+                          {receipt?.logs?.length === 0 ? (
+                             <p className="text-slate-500 text-center py-8">No event logs found for this transaction.</p>
+                          ) : (
+                             <div className="space-y-4">
+                                {receipt?.logs?.map((log: any, i: number) => (
+                                   <div key={i} className="flex gap-4">
+                                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                         {i}
+                                      </div>
+                                      <div className="flex-grow space-y-2">
+                                         <div className="grid grid-cols-[100px_1fr] gap-4">
+                                            <span className="text-slate-500 font-medium">Address</span>
+                                            <Link href={`/explorer/address/${log.address}`} className="text-blue-600 hover:text-blue-800 break-all">{log.address}</Link>
+                                         </div>
+                                         <div className="grid grid-cols-[100px_1fr] gap-4">
+                                            <span className="text-slate-500 font-medium">Topics</span>
+                                            <div className="space-y-1">
+                                               {log.topics.map((t: string, idx: number) => (
+                                                  <div key={idx} className="flex gap-2 text-[10px]">
+                                                     <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{idx}</span>
+                                                     <span className="font-mono text-slate-700 break-all">{t}</span>
+                                                  </div>
+                                               ))}
+                                            </div>
+                                         </div>
+                                      </div>
+                                   </div>
+                                ))}
+                             </div>
+                          )}
                        </div>
                     )}
                  </div>
-              )}
+              </div>
 
+              <div className="space-y-6">
+                  <div className="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800">
+                     <div className="flex items-center justify-between mb-4">
+                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Verify on Chain</p>
+                        <HardDrive size={16} className="text-blue-500 animate-pulse" />
+                     </div>
+                     <p className="text-[11px] text-slate-400 leading-relaxed mb-4">
+                        Run this independent command to verify transaction <strong>{txHash.slice(0,8)}...</strong> directly on the blockchain node.
+                     </p>
+                     <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-[9px] text-emerald-500 break-all select-all leading-relaxed">
+                        curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["{txHash}"],"id":1}' https://rpc.fwdlife.vn
+                     </div>
+                     <div className="mt-6 flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-emerald-500" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Verified RPC Node</span>
+                     </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                     <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Network Info</h3>
+                     <div className="space-y-2 text-[11px]">
+                        <div className="flex justify-between">
+                           <span className="text-slate-500">Chain:</span>
+                           <span className="font-bold">fwd LIFEchain</span>
+                        </div>
+                        <div className="flex justify-between">
+                           <span className="text-slate-500">Network:</span>
+                           <span className="font-bold text-emerald-600">Mainnet</span>
+                        </div>
+                     </div>
+                  </div>
+              </div>
            </div>
         )}
       </main>
