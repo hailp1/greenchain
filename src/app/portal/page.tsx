@@ -2,28 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { 
-  Globe, 
-  ShieldCheck, 
-  Cpu, 
-  LayoutDashboard, 
-  PackagePlus, 
-  Settings, 
-  Bell, 
-  LogOut, 
-  Search, 
-  MapPin, 
-  Activity, 
-  Thermometer, 
-  Droplets, 
-  Zap, 
-  CheckCircle2, 
-  CloudUpload, 
-  ArrowRight, 
-  Layers, 
-  BarChart3, 
-  Send, 
-  Award, 
-  User
+  Globe, ShieldCheck, Cpu, LayoutDashboard, PackagePlus, Settings, 
+  Bell, LogOut, Search, MapPin, Activity, Thermometer, Droplets, 
+  Zap, CheckCircle2, CloudUpload, ArrowRight, Layers, BarChart3, 
+  Send, Award, User, RefreshCw, Coins, Lock, Wallet, ArrowUpRight, 
+  ArrowDownLeft, Clock, Users, Filter, Plus, FileText, XCircle, 
+  AlertCircle, ChevronRight, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
