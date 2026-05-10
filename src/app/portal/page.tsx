@@ -277,14 +277,8 @@ export default function ProducerPortal() {
         }
       }
     };
-        if (!error && newEntity) {
-          setCurrentEntity(newEntity);
-          fetchBalance();
-        }
-      }
-    };
     fetchEntityData();
-  }, [walletAddress, user]);
+  }, [walletAddress, user, web3.isConnected, web3.address]);
 
   useEffect(() => {
     const fetchPortalData = async () => {
