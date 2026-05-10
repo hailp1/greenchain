@@ -86,6 +86,25 @@ export default function AboutPage() {
         </section>
 
         {/* Theoretical Framework - Scholarly Deep Dive */}
+        <section className="mb-40 space-y-16">
+           <div className="text-center space-y-4">
+              <h2 className="text-4xl font-black text-natural-950 tracking-tighter uppercase italic">Institutional Architecture</h2>
+              <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">A visual representation of digital trust and supply chain flow</p>
+           </div>
+           
+           <div className="bg-white rounded-[4rem] p-4 md:p-12 border border-slate-100 shadow-2xl relative overflow-hidden group">
+              <div className="aspect-[21/9] rounded-[3rem] overflow-hidden border border-slate-100 relative">
+                 <img 
+                   src="/fwd_research_model_diagram_1778393563507.png" 
+                   alt="FWD LIFEchain Research Model" 
+                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                 />
+                 <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none"></div>
+              </div>
+              <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl group-hover:bg-emerald-500/10 transition-all"></div>
+           </div>
+        </section>
+
         <section className="bg-natural-900 rounded-[5rem] p-12 md:p-24 text-white mb-40 relative overflow-hidden shadow-2xl">
            <div className="absolute top-0 right-0 p-24 opacity-5 pointer-events-none"><Microscope size={240} /></div>
            
