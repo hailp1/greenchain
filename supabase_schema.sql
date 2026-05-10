@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS public.token_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sender_id UUID REFERENCES public.entities(id),
     receiver_id UUID REFERENCES public.entities(id),
+    sender_address TEXT,
+    receiver_address TEXT,
     amount NUMERIC NOT NULL,
     type TEXT CHECK (type IN ('GAS_FEE', 'REWARD', 'PAYMENT', 'MINT', 'STAKE', 'UNSTAKE')),
     description TEXT,

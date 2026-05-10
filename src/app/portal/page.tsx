@@ -384,6 +384,8 @@ export default function ProducerPortal() {
             supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
             supabase.from('token_transactions').insert([{
               sender_id: currentEntity.id,
+              sender_address: currentEntity.wallet_address,
+              receiver_address: '0x0000000000000000000000000000000000000000', // Burn/Stake Lock
               amount: amount,
               type: 'STAKE',
               description: `Staked AGRI for node validation`
@@ -418,6 +420,8 @@ export default function ProducerPortal() {
         if (currentEntity) {
           await supabase.from('token_transactions').insert([{
             receiver_id: currentEntity.id,
+            receiver_address: currentEntity.wallet_address,
+            sender_address: '0x0000000000000000000000000000000000000000', // Reward Pool
             amount: rewardAmount,
             type: 'REWARD',
             description: `Claimed validation rewards`
@@ -451,6 +455,8 @@ export default function ProducerPortal() {
         supabase.from('entities').update({ fwd_balance: newBalance, reputation_score: newReputation }).eq('id', currentEntity.id),
         supabase.from('token_transactions').insert([{
           receiver_id: currentEntity.id,
+          receiver_address: currentEntity.wallet_address,
+          sender_address: '0x0000000000000000000000000000000000000000', // System Pool
           amount: rewardAmount,
           type: 'REWARD',
           description: `Audit reward for batch ${batchId.slice(0,8)}`

@@ -59,25 +59,32 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
 
         const entityData = entityRes?.data;
         
+        // Fetch transactions by both ID (entities) and raw address (system/guest)
+        let txQuery = supabase
+          .from('token_transactions')
+          .select(`
+            *,
+            sender:sender_id(wallet_address),
+            receiver:receiver_id(wallet_address)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
         if (entityData) {
-          const { data: txData } = await supabase
-            .from('token_transactions')
-            .select(`
-              *,
-              sender:sender_id(wallet_address),
-              receiver:receiver_id(wallet_address)
-            `)
-            .or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id}`)
-            .order('created_at', { ascending: false })
-            .limit(25);
+          txQuery = txQuery.or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
+        } else {
+          txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
+        }
+
+        const { data: txData } = await txQuery;
             
           if (txData) {
             setTransactions(txData.map(tx => ({
               hash: tx.id.replace(/-/g, '').substring(0, 40),
               timestamp: new Date(tx.created_at).toLocaleString(),
               age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-              from: tx.sender?.wallet_address || 'System',
-              to: tx.receiver?.wallet_address || 'System',
+              from: tx.sender?.wallet_address || tx.sender_address || 'System',
+              to: tx.receiver?.wallet_address || tx.receiver_address || 'System',
               value: `${tx.amount}`,
               type: tx.type,
             })));
