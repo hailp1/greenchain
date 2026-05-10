@@ -53,6 +53,8 @@ export default function ProducerPortal() {
   const [batches, setBatches] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [claimLoading, setClaimLoading] = useState(false);
+  const [lastClaim, setLastClaim] = useState<string | null>(null);
   const [recipientWallet, setRecipientWallet] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [isTransferring, setIsTransferring] = useState(false);
@@ -506,6 +508,62 @@ export default function ProducerPortal() {
   };
 
   // Final check for auth loading before rendering the main UI
+  const handleClaimReward = async () => {
+    if (!currentEntity) return;
+    
+    // 1. Check if user has stake
+    const stakeAmount = Number(currentEntity.staked_balance || 0);
+    if (stakeAmount <= 0) {
+      alert("Bạn cần Stake ít nhất 1 AGRI để nhận thưởng hàng ngày!");
+      return;
+    }
+
+    // 2. Check last claim
+    const today = new Date().toISOString().split('T')[0];
+    if (currentEntity.last_daily_claim) {
+       const lastDate = new Date(currentEntity.last_daily_claim).toISOString().split('T')[0];
+       if (lastDate === today) {
+         alert("Bạn đã nhận thưởng ngày hôm nay rồi!");
+         return;
+       }
+    }
+
+    setClaimLoading(true);
+    try {
+      // 3. Update last_daily_claim
+      const { error: updateError } = await supabase
+        .from('entities')
+        .update({ last_daily_claim: new Date().toISOString() })
+        .eq('id', currentEntity.id);
+
+      if (updateError) throw updateError;
+
+      // 4. Create Transaction
+      const { error: txError } = await supabase
+        .from('token_transactions')
+        .insert([{
+           sender_id: null,
+           receiver_id: currentEntity.id,
+           sender_address: '0x0000000000000000000000000000000000000000',
+           receiver_address: currentEntity.wallet_address,
+           amount: 500,
+           type: 'REWARD',
+           description: 'Daily Stake Loyalty Reward'
+        }]);
+
+      if (txError) throw txError;
+
+      alert("Chúc mừng! Bạn đã nhận được 500 AGRI thưởng hàng ngày.");
+      fetchEntityData();
+      fetchPortalData();
+    } catch (err: any) {
+      console.error("Claim error:", err);
+      alert("Lỗi khi nhận thưởng: " + err.message);
+    } finally {
+      setClaimLoading(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center">
@@ -717,7 +775,17 @@ export default function ProducerPortal() {
                           </div>
                           <div className="p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20">
                              <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-2">Unclaimed Rewards</p>
-                             <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.pendingRewards).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                             <div className="flex flex-col gap-3">
+                                <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.pendingRewards).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                                <button 
+                                  onClick={handleClaimReward}
+                                  disabled={claimLoading}
+                                  className="w-full py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                                >
+                                  {claimLoading ? <RefreshCw size={12} className="animate-spin" /> : <Zap size={12} />}
+                                  Claim Daily (500 AGRI)
+                                </button>
+                              </div>
                           </div>
                        </div>
                     </div>
@@ -1138,7 +1206,17 @@ export default function ProducerPortal() {
                        <div key={p.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 group hover:border-emerald-200 transition-all">
                           <div className="space-y-2">
                              <div className="flex items-center gap-3">
-                                <span className={`px-2 py-1 rounded-full text-[7px] font-black uppercase ${p.status === 'Active' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
+                                <span className={`px-2 py-1 rounded-full text-[7px] font-black uppercase ${p.status === 'Active' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                                  {p.status}
+                                </span>
+                                <button 
+                                  onClick={handleClaimReward}
+                                  disabled={claimLoading}
+                                  className="px-2 py-1 bg-emerald-600/20 border border-emerald-500/30 rounded-full text-[7px] font-black text-emerald-400 uppercase tracking-widest hover:bg-emerald-600/30 transition-all flex items-center justify-center gap-1"
+                                >
+                                  {claimLoading ? <RefreshCw size={10} className="animate-spin" /> : <Zap size={10} />}
+                                  Claim Daily Reward
+                                </button>
                                 <span className="text-[10px] font-mono text-slate-400">Proposal #{p.id}</span>
                              </div>
                              <h4 className="text-xl font-black text-natural-900 italic uppercase italic font-serif leading-tight">{p.title}</h4>

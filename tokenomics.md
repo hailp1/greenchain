@@ -8,11 +8,12 @@ This document outlines the economic model and technical infrastructure of the **
 *   **Network:** fwd LIFEchain (Geth Proof-of-Authority)
 *   **Standard:** ERC-20
 *   **Initial Supply:** 18,200,015 AGRI (Current Ledger State)
-*   **Maximum Supply:** 1,000,000,000 AGRI (Fixed Hard Cap)
+*   **Maximum Supply:** 10,000,000,000 AGRI (Updated Hard Cap)
 
 ## 2. Core Economic Mechanisms
 
 ### A. EARN (Income Streams)
+*   **Daily Stake Reward:** Active users with a positive stake balance can claim **500 AGRI daily** as a loyalty incentive.
 *   **Audit Rewards:** Validators and Auditors earn AGRI for every agricultural batch successfully verified and anchored to the blockchain.
 *   **Staking Yield:** Holders who lock their AGRI in the Staking Contract receive periodic rewards from the network's reserve pool.
 *   **Platform Participation:** Direct incentives for farmers who maintain high data fidelity and transparency in their supply chain.

@@ -46,8 +46,9 @@ export default function ExplorerHome() {
         }
         
         setStats((prev: any) => ({ ...prev, totalTx: (supabaseTxCount || 0).toLocaleString() }));
-      } catch (e) {
+      } catch (e: any) {
         console.warn("Supabase initial fetch error:", e);
+        setError("Supabase Sync Error: " + e.message);
       }
 
       // 2. Blockchain Fetch (With Hard Timeouts)
