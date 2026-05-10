@@ -57,6 +57,7 @@ export default function ProducerPortal() {
   const [authLoading, setAuthLoading] = useState(true);
   const [balance, setBalance] = useState("0.00");
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const isCreatingGuest = useRef(false);
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -252,18 +253,31 @@ export default function ProducerPortal() {
         setWalletAddress(addr);
         fetchBalance();
       } else {
-        // AUTO-CREATE Guest Entity...
-        const { data: newEntity } = await supabase
-          .from('entities')
-          .insert([{
-            name: `Guest ${addr.substring(0, 6)}`,
-            wallet_address: addr,
-            role: 'FARM',
-            reputation_score: 50,
-            fwd_balance: 0
-          }])
-          .select()
-          .maybeSingle();
+        // Prevent race conditions during React StrictMode double mounts
+        if (isCreatingGuest.current) return;
+        isCreatingGuest.current = true;
+
+        try {
+          // AUTO-CREATE Guest Entity...
+          const { data: newEntity } = await supabase
+            .from('entities')
+            .insert([{
+              name: `Guest ${addr.substring(0, 6)}`,
+              wallet_address: addr,
+              role: 'FARM',
+              reputation_score: 50,
+              fwd_balance: 0
+            }])
+            .select()
+            .maybeSingle();
+          
+          if (newEntity) {
+            setCurrentEntity(newEntity);
+            setWalletAddress(addr);
+          }
+        } finally {
+          isCreatingGuest.current = false;
+        }
         
         if (newEntity) {
           setCurrentEntity(newEntity);

@@ -12,12 +12,25 @@ const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY;
 const ANCHOR_ADDRESS = process.env.FWD_ANCHOR_ADDRESS || "0x368fAc3D5745a4E6319D443017F72761f830e33C";
 
+import { createClient as createServerClient } from '@/lib/server';
+
 export async function POST(request: Request) {
   try {
+    const authClient = await createServerClient();
+    const { data: { session } } = await authClient.auth.getSession();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+    }
+
     const { entity_id, product_name, quantity, gps } = await request.json();
 
     if (!entity_id || !product_name || !quantity) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    if (entity_id !== session.user.id) {
+      return NextResponse.json({ error: 'Forbidden. Entity ID mismatch.' }, { status: 403 });
     }
 
     // 1. Create batch in Supabase

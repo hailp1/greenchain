@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
+import { createClient } from '@supabase/supabase-js';
 
 const RPC_URL = "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
 const TOKEN_ADDRESS = process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
 
-const claimHistory = new Map<string, number>();
 const COOLDOWN_HOURS = 1;
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: Request) {
   try {
@@ -16,12 +21,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Address is required' }, { status: 400 });
     }
 
-    // Rate Limiting Logic
-    const lastClaim = claimHistory.get(address.toLowerCase());
-    const now = Date.now();
-    if (lastClaim && now - lastClaim < COOLDOWN_HOURS * 60 * 60 * 1000) {
-      const remainingMinutes = Math.ceil((COOLDOWN_HOURS * 60 * 60 * 1000 - (now - lastClaim)) / (60 * 1000));
-      return NextResponse.json({ error: `You have already claimed tokens recently. Please wait ${remainingMinutes} minutes before requesting again.` }, { status: 429 });
+    // Persistent Rate Limiting Logic via Supabase
+    const { data: lastClaim } = await supabase
+      .from('token_transactions')
+      .select('created_at')
+      .ilike('receiver_address', address)
+      .eq('type', 'FAUCET')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastClaim) {
+      const msSince = Date.now() - new Date(lastClaim.created_at).getTime();
+      const cooldownMs = COOLDOWN_HOURS * 60 * 60 * 1000;
+      if (msSince < cooldownMs) {
+        const remainingMinutes = Math.ceil((cooldownMs - msSince) / (60 * 1000));
+        return NextResponse.json({ error: `You have already claimed tokens recently. Please wait ${remainingMinutes} minutes before requesting again.` }, { status: 429 });
+      }
     }
 
     if (!OPERATOR_PRIVATE_KEY || !RPC_URL) {
@@ -51,8 +67,13 @@ export async function POST(request: Request) {
     const tx = await tokenContract.mint(address, amount);
     await tx.wait();
 
-    // Record the claim time on success
-    claimHistory.set(address.toLowerCase(), Date.now());
+    // Record the claim time on success in database
+    await supabase.from('token_transactions').insert([{
+      receiver_address: address.toLowerCase(),
+      amount: 1000,
+      type: 'FAUCET',
+      description: 'System Faucet Claim'
+    }]);
 
     return NextResponse.json({ success: true, txHash: tx.hash, amount: "1000" });
   } catch (err: any) {
