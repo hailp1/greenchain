@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { supabase } from '@/lib/supabase';
 
 export default function TransactionDetail() {
   const params = useParams();
@@ -23,21 +24,68 @@ export default function TransactionDetail() {
     const fetchTxData = async () => {
       try {
         setLoading(true);
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        
-        const [txData, receiptData] = await Promise.all([
-          provider.getTransaction(txHash),
-          provider.getTransactionReceipt(txHash)
-        ]);
+        // Try Blockchain first (EVM hashes usually start with 0x and are 66 chars)
+        let txData = null;
+        let receiptData = null;
+        let blockData = null;
+        const queryHash = txHash.startsWith('0x') ? txHash : `0x${txHash}`;
+
+        try {
+          if (txHash.length >= 60) {
+            [txData, receiptData] = await Promise.all([
+              provider.getTransaction(queryHash),
+              provider.getTransactionReceipt(queryHash)
+            ]);
+
+            if (txData && txData.blockNumber != null) {
+              blockData = await provider.getBlock(txData.blockNumber);
+            }
+          }
+        } catch (e) {
+          console.warn("RPC fetch error", e);
+        }
+
+        // If not found on blockchain, check Supabase (Platform Transactions)
+        if (!txData) {
+          // Reconstruct UUID if it's 32 chars
+          let sbQueryId = txHash.replace('0x', '');
+          if (sbQueryId.length === 32) {
+            sbQueryId = `${sbQueryId.slice(0,8)}-${sbQueryId.slice(8,12)}-${sbQueryId.slice(12,16)}-${sbQueryId.slice(16,20)}-${sbQueryId.slice(20)}`;
+          }
+
+          const { data: sbTx } = await supabase
+            .from('token_transactions')
+            .select('*')
+            .eq('id', sbQueryId)
+            .maybeSingle();
+
+          if (sbTx) {
+            txData = {
+              hash: txHash,
+              from: sbTx.sender_address || '0x0000000000000000000000000000000000000000',
+              to: sbTx.receiver_address || '0x0000000000000000000000000000000000000000',
+              value: ethers.parseEther((sbTx.amount || 0).toString()),
+              gasPrice: 0n,
+              gasLimit: 0n,
+              nonce: 0,
+              data: `Platform Transfer: ${sbTx.description || sbTx.type}`
+            };
+            receiptData = {
+              status: 1,
+              gasUsed: 0n,
+              transactionIndex: 0,
+              logs: []
+            };
+            blockData = {
+              timestamp: Math.floor(new Date(sbTx.created_at).getTime() / 1000),
+              number: 'Platform Ledger'
+            };
+          }
+        }
 
         if (!txData) {
           setError("Transaction not found.");
           return;
-        }
-
-        let blockData = null;
-        if (txData.blockNumber != null) {
-          blockData = await provider.getBlock(txData.blockNumber);
         }
 
         setTx(txData);
@@ -123,8 +171,14 @@ export default function TransactionDetail() {
                     </Row>
                     
                     <Row label="Block">
-                       <Link href={`/explorer/blocks/${tx?.blockNumber}`} className="text-blue-600 hover:text-blue-800 font-medium">{tx?.blockNumber}</Link>
-                       <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded border border-slate-200">12 Block Confirmations</span>
+                       {typeof block?.number === 'string' ? (
+                          <span className="font-medium text-slate-800">{block.number}</span>
+                       ) : (
+                          <Link href={`/explorer/blocks/${tx?.blockNumber}`} className="text-blue-600 hover:text-blue-800 font-medium">{tx?.blockNumber}</Link>
+                       )}
+                       {typeof block?.number !== 'string' && (
+                          <span className="ml-2 px-1.5 py-0.5 bg-slate-100 text-slate-600 text-[10px] rounded border border-slate-200">Confirmed</span>
+                       )}
                     </Row>
                     
                     <Row label="Timestamp">
