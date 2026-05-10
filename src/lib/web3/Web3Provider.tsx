@@ -132,10 +132,13 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // ─── Auto-connect on mount ──────────────────────────────────
   useEffect(() => {
     const checkConnection = async () => {
+      console.log("[Web3] Checking for persistent connection...");
       if (typeof window !== 'undefined' && window.ethereum && localStorage.getItem('fwd_wallet_connected') === 'true') {
         try {
           const browserProvider = new BrowserProvider(window.ethereum);
+          console.log("[Web3] Requesting accounts...");
           const accounts = await browserProvider.listAccounts();
+          console.log("[Web3] Accounts found:", accounts.length);
           if (accounts.length > 0) {
             const network = await browserProvider.getNetwork();
             const userSigner = await browserProvider.getSigner();
@@ -148,11 +151,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
               address: accounts[0].address,
               chainId: Number(network.chainId),
             }));
+            console.log("[Web3] Auto-connected to:", accounts[0].address);
           }
         } catch (err) {
-          console.error('Auto-connect error:', err);
+          console.error('[Web3] Auto-connect error:', err);
           localStorage.removeItem('fwd_wallet_connected');
         }
+      } else {
+        console.log("[Web3] No persistent connection found or provider missing.");
       }
     };
     checkConnection();

@@ -90,8 +90,11 @@ export default function ProducerPortal() {
     }
   };
 
+  // ─── Authentication Logic ────────────────────────────────────
   useEffect(() => {
+    // 1. Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[Portal] Auth Event:", event);
       if (session) {
         setUser(session.user);
         setAuthLoading(false);
@@ -100,60 +103,61 @@ export default function ProducerPortal() {
       }
     });
 
-    const initAuth = async () => {
-      // 1. Check Supabase Session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        setUser(session.user);
-        setAuthLoading(false);
-        return;
-      }
-
-      // 2. Check for Google OAuth Redirect Hash
-      if (window.location.hash.includes('access_token')) {
-        let retries = 0;
-        const interval = setInterval(async () => {
-          const { data: { session: retrySession } } = await supabase.auth.getSession();
-          if (retrySession) {
-            setUser(retrySession.user);
-            setAuthLoading(false);
-            clearInterval(interval);
-          }
-          if (retries++ > 15) { // Increased retries
-            clearInterval(interval);
-            if (!web3.isConnected) {
-              window.location.href = '/signin';
-            } else {
-              setAuthLoading(false);
-            }
-          }
-        }, 500);
-        return;
-      }
-
-      // 3. Allow MetaMask access
-      // Give it a short moment to initialize from localStorage
-      setTimeout(() => {
-        if (web3.isConnected) {
+    // 2. Initial Session Check
+    const checkInitialAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setUser(session.user);
           setAuthLoading(false);
-        } else {
-          // Final check for session again just in case
-          supabase.auth.getSession().then(({ data: { session: finalSession } }) => {
-            if (finalSession) {
-              setUser(finalSession.user);
-              setAuthLoading(false);
-            } else {
-              window.location.href = '/signin';
-            }
-          });
+          return;
         }
-      }, 1500); 
+
+        // Handle Google Redirect Hash
+        if (window.location.hash.includes('access_token')) {
+          console.log("[Portal] Detected OAuth hash, waiting for session...");
+          return; // onAuthStateChange or retries will handle this
+        }
+
+        // If no session and no hash, wait for MetaMask or redirect
+        console.log("[Portal] No active session, checking MetaMask...");
+      } catch (err) {
+        console.error("[Portal] Auth check error:", err);
+      }
     };
 
-    initAuth();
+    checkInitialAuth();
     return () => subscription.unsubscribe();
-  }, [web3.isConnected]);
+  }, []);
+
+  // 3. Monitor for MetaMask Connection or Timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    if (authLoading) {
+      // If MetaMask connects, we can stop loading
+      if (web3.isConnected) {
+        console.log("[Portal] MetaMask connected, authorized.");
+        setAuthLoading(false);
+      } else {
+        // Safe Start: If after 3 seconds no Supabase session AND no MetaMask, 
+        // we check one last time then redirect or authorize.
+        timeoutId = setTimeout(async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session || web3.isConnected) {
+            setAuthLoading(false);
+          } else if (!window.location.hash.includes('access_token')) {
+            console.log("[Portal] Auth timeout, redirecting to signin...");
+            window.location.href = '/signin';
+          }
+        }, 3000);
+      }
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [authLoading, web3.isConnected]);
 
   useEffect(() => {
     console.log("[Portal] Auth State:", { authLoading, user: user?.id, isConnected: web3.isConnected });
