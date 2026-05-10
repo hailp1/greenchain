@@ -77,6 +77,7 @@ const Header = () => {
 
   const navLinks = [
     { name: 'Philosophy', href: '/about' },
+    { name: 'Insights', href: '/news' },
     { name: 'Blockchain Explorer', href: '/explorer' },
     { name: 'Network Validators', href: '/explorer/nodes' },
     { name: 'Leaderboard', href: '/reputation' },
