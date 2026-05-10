@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Search, Box, Zap, FileText, ArrowRight, Server, Globe, Database, Clock, Activity
 } from 'lucide-react';
