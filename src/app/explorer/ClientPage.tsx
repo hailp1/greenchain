@@ -17,6 +17,22 @@ const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwo
 export default function ExplorerClient({ initialData }: { initialData: any }) {
   const [searchVal, setSearchVal] = useState('');
 
+  const handleSearch = () => {
+    if (!searchVal) return;
+    const val = searchVal.trim();
+    if (val.length === 66 || val.startsWith('0x')) {
+       if (val.length === 66) {
+         window.location.href = `/explorer/tx/${val}`;
+       } else if (val.length === 42) {
+         window.location.href = `/explorer/address/${val}`;
+       } else {
+         window.location.href = `/explorer/address/${val}`;
+       }
+    } else if (!isNaN(Number(val)) && val !== '') {
+       window.location.href = `/explorer/blocks/${val}`;
+    }
+  };
+
   const fetcher = async () => {
     // Run RPC and Supabase in PARALLEL
     const [rpcResult, sbResult] = await Promise.allSettled([
@@ -112,10 +128,16 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
               type="text" 
               value={searchVal}
               onChange={(e) => setSearchVal(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               placeholder="Search by Address / Txn Hash / Block..."
               className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-6 pl-16 pr-8 text-sm md:text-base font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 backdrop-blur-xl transition-all"
             />
-            <button className="absolute right-4 top-1/2 -translate-y-1/2 px-6 py-2 bg-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">Find</button>
+            <button 
+              onClick={handleSearch}
+              className="absolute right-4 top-1/2 -translate-y-1/2 px-6 py-2 bg-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20"
+            >
+              Find
+            </button>
           </div>
 
           {/* Core Stats */}
