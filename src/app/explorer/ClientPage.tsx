@@ -96,7 +96,11 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
   const { data, isLoading } = useSWR('explorer_home_data', fetcher, {
     fallbackData: initialData,
     refreshInterval: 15000,
-    revalidateOnFocus: true
+    revalidateOnFocus: true,
+    onSuccess: () => {
+      // Trigger background sync for missed blocks
+      fetch('/api/explorer/sync').catch(() => {});
+    }
   });
 
   const stats = data?.stats || initialData.stats;
