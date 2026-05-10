@@ -198,7 +198,6 @@ export default function ProducerPortal() {
       setWalletAddress(web3.address);
       fetchBalance();
     }
-  }, [web3.isConnected, web3.address]);
   }, [web3.isConnected, web3.address, fetchBalance]);
 
   useEffect(() => {
