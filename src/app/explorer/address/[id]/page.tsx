@@ -27,6 +27,7 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   const [txLoading, setTxLoading] = useState(true);
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
 
+  useEffect(() => {
     const fetchIdentity = async () => {
       if (!addressId) return;
       const addr = addressId.toLowerCase();
