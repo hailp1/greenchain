@@ -48,7 +48,7 @@ export default function AboutPage() {
            >
               <div className="aspect-video lg:aspect-[4/5] rounded-[4rem] overflow-hidden shadow-2xl relative z-10 border-8 border-white group">
                  <img 
-                   src="https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?w=800&q=80" 
+                   src="/fwd_global_reach_supply_chain_1778393933803.png" 
                    alt="Agricultural Supply Chain" 
                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                  />
