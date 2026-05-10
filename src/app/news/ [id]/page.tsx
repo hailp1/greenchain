@@ -32,23 +32,14 @@ export default function DynamicNewsPage({ params }: { params: Promise<{ id: stri
           <p className="text-xl font-medium text-slate-700 mb-8 border-l-4 border-emerald-500 pl-6 italic">
              Chiến dịch "SỐ HÓA NIỀM TIN" nhằm mục tiêu hỗ trợ nông dân Việt Nam tiếp cận công nghệ Blockchain để minh bạch hóa nguồn gốc nông sản.
           </p>
-          <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6 tracking-tight">1. Tại sao lại là Blockchain cho Nông dân?</h2>
+          <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6">1. Tại sao lại là Blockchain cho Nông dân?</h2>
           <p>
              Vấn đề lớn nhất của nông sản Việt không phải là chất lượng, mà là <strong>Niềm tin</strong>. Blockchain giúp tạo ra một cuốn sổ cái bất biến, ghi lại mọi quy trình từ hạt giống đến bàn ăn.
           </p>
-          <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6 tracking-tight">2. Giải pháp ST-PoO</h2>
+          <h2 className="text-2xl font-black text-slate-900 uppercase mt-12 mb-6">2. Giải pháp ST-PoO</h2>
           <p>
              Công nghệ ST-PoO giúp xác thực nguồn gốc không gian - thời gian, đảm bảo sản phẩm thực sự đến từ vùng trồng đã đăng ký.
           </p>
-          <div className="my-10 p-8 bg-emerald-50 border border-emerald-100 rounded-[2.5rem] space-y-4">
-             <h4 className="text-sm font-black text-emerald-800 uppercase tracking-widest">Đăng ký tham gia</h4>
-             <p className="text-xs text-emerald-700 leading-relaxed">
-                Chúng tôi đang tìm kiếm 50 hộ nông dân tiên phong để triển khai miễn phí hệ thống truy xuất nguồn gốc Blockchain. 
-             </p>
-             <button className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20">
-                Gửi yêu cầu hỗ trợ
-             </button>
-          </div>
         </>
       )
     },
@@ -70,9 +61,6 @@ export default function DynamicNewsPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">1. Conceptual Model (S-O-R Focus)</h2>
-          <p className="text-slate-600">
-             We use Signaling Theory to explain how blockchain transparency reduces information asymmetry.
-          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
              <div className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
                 <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Stimulus (S)</span>
@@ -130,7 +118,7 @@ export default function DynamicNewsPage({ params }: { params: Promise<{ id: stri
            <span>/</span>
            <Link href="/news" className="hover:text-emerald-600">News</Link>
            <span>/</span>
-           <span className="text-slate-900 uppercase">{article.category}</span>
+           <span className="text-slate-900">{article.category}</span>
         </div>
 
         <div className="space-y-8 mb-12">
@@ -138,7 +126,6 @@ export default function DynamicNewsPage({ params }: { params: Promise<{ id: stri
               <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest">
                  {article.category}
               </span>
-              <div className="h-px flex-grow bg-slate-100"></div>
            </div>
            
            <h1 className="text-4xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight">
