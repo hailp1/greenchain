@@ -2,77 +2,59 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  })
+  try {
+    let supabaseResponse = NextResponse.next({
+      request,
+    })
 
-  // With Fluid compute, don't put this client in a global environment
-  // variable. Always create a new one on each request.
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'placeholder-key'
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'placeholder-key'
 
-  const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+    const supabase = createServerClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            supabaseResponse = NextResponse.next({
+              request,
+            })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
+      }
+    )
+
+    const { data } = await supabase.auth.getUser()
+    const user = data?.user
+
+    const isPublicRoute = 
+      request.nextUrl.pathname === '/' ||
+      request.nextUrl.pathname.startsWith('/about') ||
+      request.nextUrl.pathname.startsWith('/explorer') ||
+      request.nextUrl.pathname.startsWith('/verify') ||
+      request.nextUrl.pathname.startsWith('/signin') ||
+      request.nextUrl.pathname.startsWith('/api/') ||
+      request.nextUrl.pathname.startsWith('/auth') ||
+      request.nextUrl.pathname.startsWith('/portal') ||
+      request.nextUrl.pathname.startsWith('/reputation') ||
+      request.nextUrl.pathname.startsWith('/legal');
+
+    if (!user && !isPublicRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/signin'
+      return NextResponse.redirect(url)
     }
-  )
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
-
-  // IMPORTANT: If you remove getClaims() and you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getUser()
-  const user = data?.user
-
-  // Public routes that don't require auth
-  const isPublicRoute = 
-    request.nextUrl.pathname === '/' ||
-    request.nextUrl.pathname.startsWith('/about') ||
-    request.nextUrl.pathname.startsWith('/explorer') ||
-    request.nextUrl.pathname.startsWith('/verify') ||
-    request.nextUrl.pathname.startsWith('/signin') ||
-    request.nextUrl.pathname.startsWith('/api/') ||
-    request.nextUrl.pathname.startsWith('/auth') ||
-    request.nextUrl.pathname.startsWith('/portal') ||
-    request.nextUrl.pathname.startsWith('/reputation') ||
-    request.nextUrl.pathname.startsWith('/legal');
-
-  if (!user && !isPublicRoute) {
-    // no user and not a public route, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/signin'
-    return NextResponse.redirect(url)
+    return supabaseResponse
+  } catch (e) {
+    console.error("[Middleware] Critical Error:", e);
+    return NextResponse.next({ request });
   }
-
-  // IMPORTANT: You *must* return the supabaseResponse object as it is.
-  // If you're creating a new response object with NextResponse.next() make sure to:
-  // 1. Pass the request in it, like so:
-  //    const myNewResponse = NextResponse.next({ request })
-  // 2. Copy over the cookies, like so:
-  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-  // 3. Change the myNewResponse object to fit your needs, but avoid changing
-  //    the cookies!
-  // 4. Finally:
-  //    return myNewResponse
-  // If this is not done, you may be causing the browser and server to go out
-  // of sync and terminate the user's session prematurely!
-
-  return supabaseResponse
 }
