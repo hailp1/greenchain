@@ -24,18 +24,16 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   const [tokenBalance, setTokenBalance] = useState<string>("0");
   const [isContract, setIsContract] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [txLoading, setTxLoading] = useState(true);
   const [isTokenDropdownOpen, setIsTokenDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
+    const fetchIdentity = async () => {
       if (!addressId) return;
+      const addr = addressId.toLowerCase();
       
       try {
         setLoading(true);
-        const addr = addressId.toLowerCase();
-        console.log("[AddressPage] Fetching data for:", addr);
-        
-        // Parallel fetching with individual error handling
+        // Step 1: Fetch Balance & Identity (FAST)
         const results = await Promise.allSettled([
           provider.getBalance(addr).catch(() => BigInt(0)),
           (async () => {
@@ -48,7 +46,6 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
           supabase.from('entities').select('id, wallet_address').eq('wallet_address', addr).maybeSingle()
         ]);
 
-        // Process results safely
         const nBal = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
         const tBal = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
         const code = results[2].status === 'fulfilled' ? (results[2].value as string) : '0x';
@@ -56,67 +53,53 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
 
         setNativeBalance(ethers.formatEther(nBal));
         setTokenBalance(ethers.formatEther(tBal));
-        
-        // Zero address is always a "system" address, not a contract in the typical sense
-        if (addr === '0x0000000000000000000000000000000000000000') {
-          setIsContract(false);
-        } else {
-          setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
-        }
+        setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
+        setLoading(false); // Stop main loading early
 
-        const entityData = entityRes?.data;
-        console.log("[AddressPage] Entity found:", !!entityData);
-        
-        // Fetch transactions using simple flat query (no JOINs)
-        try {
-          let txQuery = supabase
-            .from('token_transactions')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50);
-            
-          if (entityData) {
-            txQuery = txQuery.or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
-          } else {
-            txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
-          }
-
-          const sbPromise = txQuery;
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Address tx timeout')), 20000)
-          );
-          const { data: txData, error: txError } = await Promise.race([sbPromise, timeoutPromise]) as any;
-              
-          if (txError) {
-            console.warn("[AddressPage] Tx query error:", txError.message);
-          }
-
-          if (txData && txData.length > 0) {
-            console.log("[AddressPage] Transactions found:", txData.length);
-            setTransactions(txData.map((tx: any) => ({
-              hash: tx.id.replace(/-/g, '').substring(0, 40),
-              timestamp: new Date(tx.created_at).toLocaleString(),
-              age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-              from: tx.sender_address || 'System',
-              to: tx.receiver_address || 'System',
-              value: `${tx.amount}`,
-              type: tx.type,
-            })));
-          } else {
-            console.log("[AddressPage] No transactions for this address");
-            setTransactions([]);
-          }
-        } catch (txErr: any) {
-          console.warn("[AddressPage] Tx fetch failed:", txErr.message);
-          setTransactions([]);
-        }
+        // Step 2: Fetch Transactions (BACKGROUND)
+        fetchTransactions(addr, entityRes?.data?.id);
       } catch (err) {
-        console.error("[AddressPage] Critical load error:", err);
-      } finally {
+        console.error("[AddressPage] Identity fetch error:", err);
         setLoading(false);
       }
     };
-    fetchData();
+
+    const fetchTransactions = async (addr: string, entityId?: string) => {
+      try {
+        setTxLoading(true);
+        let txQuery = supabase
+          .from('token_transactions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20);
+          
+        if (entityId) {
+          txQuery = txQuery.or(`sender_id.eq.${entityId},receiver_id.eq.${entityId},sender_address.eq.${addr},receiver_address.eq.${addr}`);
+        } else {
+          txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
+        }
+
+        const { data: txData, error: txError } = await txQuery;
+            
+        if (!txError && txData) {
+          setTransactions(txData.map((tx: any) => ({
+            hash: tx.id.replace(/-/g, '').substring(0, 40),
+            timestamp: new Date(tx.created_at).toLocaleString(),
+            age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+            from: tx.sender_address || 'System',
+            to: tx.receiver_address || 'System',
+            value: `${tx.amount}`,
+            type: tx.type,
+          })));
+        }
+      } catch (err) {
+        console.warn("[AddressPage] Tx fetch failed:", err);
+      } finally {
+        setTxLoading(false);
+      }
+    };
+
+    fetchIdentity();
   }, [addressId]);
 
   const handleCopy = () => {
@@ -249,7 +232,14 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 text-xs">
-                       {transactions.length === 0 ? (
+                        {txLoading ? (
+                           <tr>
+                              <td colSpan={7} className="px-6 py-20 text-center">
+                                 <div className="w-6 h-6 border-2 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                                 <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Loading History...</p>
+                              </td>
+                           </tr>
+                        ) : transactions.length === 0 ? (
                           <tr>
                              <td colSpan={7} className="px-6 py-20 text-center opacity-30">
                                 <Database size={32} className="mx-auto mb-2" />
