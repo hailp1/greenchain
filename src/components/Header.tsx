@@ -35,8 +35,10 @@ const Header = () => {
       if (!walletAddress || walletAddress.startsWith('pending_')) return;
       try {
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        // Using the native balance for AGRI display to match portal's main indicator
-        const bal = await provider.getBalance(walletAddress);
+        const tokenAddress = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
+        const abi = ["function balanceOf(address) view returns (uint256)"];
+        const contract = new ethers.Contract(tokenAddress, abi, provider);
+        const bal = await contract.balanceOf(walletAddress);
         setFwdBalance(ethers.formatEther(bal));
       } catch (e) {
         console.error("Error fetching header token balance:", e);
