@@ -35,9 +35,21 @@ import { ethers } from 'ethers';
 export default function ProducerPortal() {
   const web3 = useWeb3();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('overview');
   const [isSigning, setIsSigning] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [blockHeight, setBlockHeight] = useState(19450281);
+  const [tps, setTps] = useState(14.2);
+
+  // Network Simulation
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBlockHeight(prev => prev + 1);
+      setTps(12 + Math.random() * 5);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [batches, setBatches] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,12 +280,7 @@ export default function ProducerPortal() {
     }
   };
 
-  const stats = [
-    { label: "Active Batches", value: loading ? "..." : batches.length.toString(), icon: Layers },
-    { label: "AGRI Balance", value: mounted && web3.isConnected ? Number(web3.fwdBalance).toLocaleString(undefined, { minimumFractionDigits: 2 }) : (authLoading ? "..." : Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 })), icon: Zap },
-    { label: "Trust Score", value: currentEntity?.reputation_score ? `${currentEntity.reputation_score}%` : "---", icon: ShieldCheck },
-    { label: "Total Yield", value: batches.length > 0 ? batches.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0).toFixed(1) + " KG" : "0.0 KG", icon: BarChart3 }
-  ];
+
 
   const handleSign = async () => {
     try {
@@ -457,12 +464,13 @@ export default function ProducerPortal() {
 
         <nav className="flex-grow p-4 space-y-2 mt-6">
            {[
-             { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-             { id: 'harvest', label: 'Sign Harvest', icon: PackagePlus, roles: ['PRODUCER', 'FARMER'] },
-             { id: 'audit', label: 'Audit & Verify', icon: ShieldCheck, roles: ['AUDITOR', 'GOVERNMENT'] },
-             { id: 'tokenomics', label: 'Tokenomics', icon: Zap },
-             { id: 'governance', label: 'DAO Governance', icon: Globe },
-             { id: 'settings', label: 'Settings', icon: Settings }
+             { id: 'overview', label: 'Network Overview', icon: LayoutDashboard },
+             { id: 'supply', label: 'Supply Chain', icon: PackagePlus, roles: ['FARM', 'COMPANY', 'ADMIN'] },
+             { id: 'audit', label: 'Audit & Verify', icon: ShieldCheck, roles: ['AUDITOR', 'GOVERNMENT', 'ADMIN'] },
+             { id: 'staking', label: 'Validator Hub', icon: Cpu },
+             { id: 'portfolio', label: 'Assets & History', icon: Zap },
+             { id: 'governance', label: 'Governance', icon: Globe },
+             { id: 'settings', label: 'System Settings', icon: Settings }
            ].filter(item => !item.roles || item.roles.includes(currentEntity?.role)).map((item) => (
              <button 
                key={item.id}
@@ -485,10 +493,28 @@ export default function ProducerPortal() {
 
       <main className="flex-grow flex flex-col min-w-0">
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
-           <div className="flex items-center gap-2 md:gap-4 min-w-0 shrink">
+           <div className="flex items-center gap-4 md:gap-8 min-w-0 shrink">
               <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate">
                 {currentEntity?.name || user?.user_metadata?.full_name || (authLoading ? 'Verifying...' : 'Guest Node')} 
               </h2>
+              
+              {/* Network Pulse - NEW */}
+              <div className="hidden lg:flex items-center gap-6 px-6 py-2 bg-slate-50 rounded-2xl border border-slate-100">
+                 <div className="flex flex-col">
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Mainnet Height</span>
+                    <span className="text-[10px] font-mono font-bold text-emerald-600">#{blockHeight.toLocaleString()}</span>
+                 </div>
+                 <div className="w-px h-6 bg-slate-200"></div>
+                 <div className="flex flex-col">
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Network TPS</span>
+                    <span className="text-[10px] font-mono font-bold text-blue-600">{tps.toFixed(1)}</span>
+                 </div>
+                 <div className="w-px h-6 bg-slate-200"></div>
+                 <div className="flex flex-col">
+                    <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Stability</span>
+                    <span className="text-[10px] font-mono font-bold text-emerald-500">99.99%</span>
+                 </div>
+              </div>
            </div>
            <div className="flex items-center gap-2 md:gap-4 shrink-0">
               <div className="flex flex-col items-end">
@@ -568,75 +594,184 @@ export default function ProducerPortal() {
          </AnimatePresence>
 
         <div className="p-4 md:p-12 space-y-8 md:space-y-12 overflow-y-auto max-h-[calc(100vh-4rem)]">
-           {activeTab === 'dashboard' && (
+           {activeTab === 'overview' && (
              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                   {stats.map((s, i) => (
-                     <div key={i} className="bg-white p-5 md:p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-900/5">
-                        <div className="text-emerald-500 mb-4 md:mb-6 bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center"><s.icon size={20} /></div>
-                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
-                        <p className="text-lg md:text-2xl lg:text-3xl font-black text-natural-950 truncate">{s.value}</p>
-                     </div>
-                   ))}
-                </div>
-
-                {/* New Quick Action Card for Staking */}
-                 <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl shadow-emerald-900/20 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700"></div>
-                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
-                       <div className="space-y-3 text-center lg:text-left">
-                          <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Start Staking <span className="text-emerald-200">& Earn Rewards</span></h3>
-                          <p className="text-emerald-100/70 text-xs md:text-sm font-medium max-w-md mx-auto lg:mx-0">Kích hoạt quyền xác thực của Node và bắt đầu nhận AGRI Token thưởng mỗi giây từ mạng lưới FWD Lifechain.</p>
-                       </div>
-                       <button 
-                         onClick={() => {
-                           if (!web3.isConnected) {
-                             web3.connect();
-                           } else {
-                             setActiveTab('tokenomics');
-                           }
-                         }}
-                         className="px-10 py-5 bg-white text-emerald-700 rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs hover:scale-105 transition-all shadow-xl shadow-black/10 shrink-0"
-                       >
-                          {web3.isConnected ? "GO TO STAKING CENTER" : "CONNECT WALLET TO START"}
-                       </button>
+                 {/* Network Vital Signs */}
+                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-emerald-500 mb-4 bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center"><Activity size={18} /></div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Block</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950">#{blockHeight.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-blue-500 mb-4 bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center"><Zap size={18} /></div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Network TPS</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950">{tps.toFixed(1)} / 1.5k</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-purple-500 mb-4 bg-purple-50 w-10 h-10 rounded-xl flex items-center justify-center"><Cpu size={18} /></div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Nodes</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950">1,204</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
+                        <div className="text-amber-500 mb-4 bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center"><Globe size={18} /></div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value Locked</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950">84.2M <span className="text-[10px] opacity-40">AGRI</span></p>
                     </div>
                  </div>
 
-                <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
-                   <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                      <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Active Supply Chain Batches</h3>
-                   </div>
-                   <div className="divide-y divide-slate-50">
-                      {loading ? (
-                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Loading ledger data...</div>
-                      ) : batches.length === 0 ? (
-                        <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No batches found</div>
-                      ) : batches.map((batch, i) => (
-                        <div key={i} className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:bg-slate-50/50 transition-colors">
-                           <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white">
-                                 <Activity size={18} />
-                              </div>
-                              <div>
-                                 <p className="text-sm font-black text-natural-950">{batch.id.slice(0,8)} - {batch.product_name}</p>
-                                 <p className="text-[10px] text-slate-400 font-bold tracking-widest">Harvest Date: {new Date(batch.timestamp).toLocaleDateString()}</p>
-                              </div>
-                           </div>
-                           <div className="flex items-center gap-6">
-                              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${batch.blockchain_ledger?.[0]?.tx_hash ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
-                                 {batch.blockchain_ledger?.[0]?.tx_hash ? 'VERIFIED' : 'PENDING'}
-                              </span>
-                              <ArrowRight size={16} className="text-slate-300" />
-                           </div>
-                        </div>
-                      ))}
-                   </div>
-                </section>
-             </motion.div>
+                 {/* My Ecosystem Portfolio */}
+                 <section className="bg-natural-950 rounded-[4rem] p-8 md:p-12 text-white relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] -mr-48 -mt-48"></div>
+                    <div className="relative z-10 space-y-8">
+                       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                          <div>
+                             <h3 className="text-xs font-black text-emerald-500 uppercase tracking-[0.3em] mb-2">My Portfolio</h3>
+                             <p className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter italic font-serif">Layer 1 <span className="text-emerald-400">Assets</span></p>
+                          </div>
+                          <button onClick={() => setActiveTab('portfolio')} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Details Hub</button>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                          <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Available</p>
+                             <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.fwdBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                          </div>
+                          <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
+                             <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Staked</p>
+                             <p className="text-2xl font-black">{mounted ? Number(web3.stakedBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                          </div>
+                          <div className="p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20">
+                             <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-2">Unclaimed Rewards</p>
+                             <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.pendingRewards).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                          </div>
+                       </div>
+                    </div>
+                 </section>
+
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Recent Feed */}
+                    <div className="lg:col-span-2 bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                       <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                          <h3 className="text-xs font-black text-natural-900 uppercase tracking-widest">Network Live Feed</h3>
+                          <span className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[8px] font-black animate-pulse">● LIVE</span>
+                       </div>
+                       <div className="p-4 space-y-4">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-emerald-200 transition-all">
+                               <div className="flex items-center gap-4">
+                                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-slate-400 font-mono text-[10px]">B{blockHeight - i}</div>
+                                  <div>
+                                     <p className="text-[10px] font-black text-natural-950 uppercase">Block Verified</p>
+                                     <p className="text-[8px] text-slate-400 font-bold uppercase">By Node: 0x{Math.random().toString(16).slice(2, 8)}...{Math.random().toString(16).slice(2, 6)}</p>
+                                  </div>
+                               </div>
+                               <div className="text-[8px] font-black text-emerald-600 uppercase">+1.2 AGRI Reward</div>
+                            </div>
+                          ))}
+                       </div>
+                    </div>
+
+                    {/* Governance Peek */}
+                    <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl p-8 space-y-6">
+                       <div className="flex items-center justify-between">
+                          <h3 className="text-xs font-black text-natural-900 uppercase tracking-widest">DAO Governance</h3>
+                          <Globe size={16} className="text-slate-300" />
+                       </div>
+                       <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-4">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-[7px] font-black uppercase tracking-widest">Active Proposal</span>
+                          <p className="text-xs font-black text-natural-900 leading-relaxed uppercase italic">#042: Cập nhật APR Staking lên 15.5% cho chu kỳ tiếp theo</p>
+                          <div className="w-full bg-slate-200 h-1 rounded-full overflow-hidden">
+                             <div className="bg-emerald-500 h-full w-[72%]"></div>
+                          </div>
+                          <div className="flex justify-between text-[7px] font-black uppercase text-slate-400 tracking-widest">
+                             <span>Yes: 72%</span>
+                             <span>No: 28%</span>
+                          </div>
+                       </div>
+                       <button onClick={() => setActiveTab('governance')} className="w-full py-4 border-2 border-slate-100 rounded-2xl text-[9px] font-black text-slate-500 uppercase tracking-widest hover:bg-slate-50 transition-all">Go to Voting</button>
+                    </div>
+                 </div>
+
+              </motion.div>
+            )}
+           {/* End Overview */}
+
+           {activeTab === 'supply' && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12">
+                 <div className="text-center space-y-4">
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Supply Chain <span className="text-emerald-500">Ops</span></h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Blockchain Ledger for Agricultural Verification</p>
+                 </div>
+
+                 <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
+                          <select 
+                            value={newHarvest.product_name}
+                            onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
+                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                          >
+                             <option value="">Select Product...</option>
+                             <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
+                             <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
+                             <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
+                             <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
+                          </select>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
+                          <input 
+                            type="number" 
+                            value={newHarvest.quantity}
+                            onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
+                            className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
+                          />
+                       </div>
+                    </div>
+
+                    <button 
+                      onClick={handleSign}
+                      disabled={isSigning || isSuccess}
+                      className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black'}`}
+                    >
+                       {isSigning ? 'SIGNING LEDGER...' : isSuccess ? 'HARVEST VERIFIED' : 'SIGN DATA TO BLOCKCHAIN'}
+                    </button>
+                 </div>
+
+                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Recent Batch History</h3>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                       {batches.length === 0 ? (
+                         <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No operational batches found</div>
+                       ) : batches.map((batch, i) => (
+                         <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50 transition-colors">
+                            <div className="flex items-center gap-4">
+                               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                  <PackagePlus size={18} />
+                               </div>
+                               <div>
+                                  <p className="text-sm font-black text-natural-950 uppercase">{batch.product_name}</p>
+                                  <p className="text-[10px] text-slate-400 font-bold tracking-widest">ID: {batch.id.slice(0,8)}</p>
+                               </div>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-sm font-black text-natural-950">{batch.quantity} KG</p>
+                               <span className={`px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest ${batch.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                  {batch.status}
+                               </span>
+                            </div>
+                         </div>
+                       ))}
+                    </div>
+                 </section>
+              </motion.div>
            )}
 
-           {activeTab === 'tokenomics' && (
+           {activeTab === 'staking' && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-12">
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5 relative overflow-hidden group">
@@ -838,47 +973,111 @@ export default function ProducerPortal() {
               </motion.div>
            )}
 
-           {activeTab === 'harvest' && (
-             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12 pt-12">
-                <div className="text-center space-y-4">
-                   <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Sign New <span className="text-emerald-500">Harvest</span></h2>
-                </div>
+           {activeTab === 'portfolio' && (
+              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl space-y-8">
+                       <div className="space-y-2">
+                          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Asset Transfer</h3>
+                          <p className="text-3xl font-black italic uppercase tracking-tighter">Send <span className="text-emerald-500">AGRI</span></p>
+                       </div>
+                       <div className="space-y-4">
+                          <input 
+                             type="text" 
+                             placeholder="Recipient Wallet Address (0x...)"
+                             value={recipientWallet}
+                             onChange={(e) => setRecipientWallet(e.target.value)}
+                             className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
+                          />
+                          <input 
+                             type="number" 
+                             placeholder="Amount"
+                             value={transferAmount}
+                             onChange={(e) => setTransferAmount(e.target.value)}
+                             className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                          />
+                          <button 
+                            onClick={handleTransfer}
+                            disabled={isTransferring}
+                            className="w-full py-6 bg-natural-900 text-white rounded-3xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-black/10"
+                          >
+                             {isTransferring ? 'PROCESSING...' : 'EXECUTE TRANSFER'}
+                          </button>
+                       </div>
+                    </div>
 
-                <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Product Category</label>
-                         <select 
-                           value={newHarvest.product_name}
-                           onChange={(e) => setNewHarvest({...newHarvest, product_name: e.target.value})}
-                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
-                         >
-                            <option value="Trà Atisô (Lạc Dương)">Trà Atisô (Lạc Dương)</option>
-                            <option value="Yến Sào (Ninh Hòa)">Yến Sào (Ninh Hòa)</option>
-                            <option value="Sầu Riêng (Đắk Lắk)">Sầu Riêng (Đắk Lắk)</option>
-                            <option value="Cà Phê Arabica (Cầu Đất)">Cà Phê Arabica (Cầu Đất)</option>
-                         </select>
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Estimated Yield (kg)</label>
-                         <input 
-                           type="number" 
-                           value={newHarvest.quantity}
-                           onChange={(e) => setNewHarvest({...newHarvest, quantity: Number(e.target.value)})}
-                           className="w-full p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 outline-none" 
-                         />
-                      </div>
-                   </div>
+                    <div className="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl flex flex-col justify-between">
+                       <div className="space-y-6 text-center">
+                          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto">
+                             <Globe size={32} className="text-emerald-500" />
+                          </div>
+                          <h3 className="text-xl font-black uppercase tracking-widest">Digital Passport</h3>
+                          <p className="text-slate-500 text-sm font-medium">Your wallet is your identity on fwd LIFEchain. Use it to verify agricultural origins and manage network assets.</p>
+                       </div>
+                       <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 font-mono text-[10px] break-all text-center text-slate-400">
+                          {web3.address}
+                       </div>
+                    </div>
+                 </div>
 
-                   <button 
-                     onClick={handleSign}
-                     disabled={isSigning || isSuccess}
-                     className={`w-full py-6 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl transition-all ${isSuccess ? 'bg-emerald-500 text-white' : 'bg-natural-900 text-white hover:bg-black'}`}
-                   >
-                      {isSigning ? 'SIGNING LEDGER...' : isSuccess ? 'HARVEST VERIFIED' : 'SIGN DATA TO BLOCKCHAIN'}
-                   </button>
-                </div>
-             </motion.div>
+                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                       <h3 className="text-sm font-black text-natural-900 uppercase tracking-widest">Transaction History</h3>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                       {transactions.length === 0 ? (
+                          <div className="p-12 text-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">No recent transactions found on ledger</div>
+                       ) : transactions.map((tx, i) => (
+                          <div key={i} className="p-6 flex items-center justify-between group hover:bg-slate-50 transition-colors">
+                             <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === 'REWARD' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
+                                   {tx.type === 'REWARD' ? <Award size={18} /> : <Send size={18} />}
+                                </div>
+                                <div>
+                                   <p className="text-sm font-black text-natural-950 uppercase">{tx.type.replace('_', ' ')}</p>
+                                   <p className="text-[10px] text-slate-400 font-bold">{new Date(tx.created_at).toLocaleString()}</p>
+                                </div>
+                             </div>
+                             <p className={`text-sm font-black ${tx.type === 'REWARD' ? 'text-emerald-600' : 'text-natural-900'}`}>
+                                {tx.type === 'REWARD' ? '+' : '-'}{tx.amount} AGRI
+                             </p>
+                          </div>
+                       ))}
+                    </div>
+                 </section>
+              </motion.div>
+           )}
+
+           {activeTab === 'governance' && (
+              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12">
+                 <div className="text-center space-y-4">
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Network <span className="text-emerald-500">Governance</span></h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Decentralized Decision Making for fwd LIFEchain</p>
+                 </div>
+
+                 <div className="grid grid-cols-1 gap-8">
+                    {[
+                       { id: 42, title: "Cập nhật APR Staking lên 15.5% cho chu kỳ tiếp theo", status: "Active", end: "2 days left", votes: 72 },
+                       { id: 41, title: "Mở rộng danh mục Nông sản xác thực vùng Tây Nguyên", status: "Active", end: "5 days left", votes: 89 },
+                       { id: 40, title: "Tích hợp AI Oracle cho xác thực GPS và Khí hậu", status: "Ended", end: "Passed", votes: 94 }
+                    ].map((p) => (
+                       <div key={p.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6 group hover:border-emerald-200 transition-all">
+                          <div className="space-y-2">
+                             <div className="flex items-center gap-3">
+                                <span className={`px-2 py-1 rounded-full text-[7px] font-black uppercase ${p.status === 'Active' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>{p.status}</span>
+                                <span className="text-[10px] font-mono text-slate-400">Proposal #{p.id}</span>
+                             </div>
+                             <h4 className="text-xl font-black text-natural-900 italic uppercase italic font-serif leading-tight">{p.title}</h4>
+                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Closing in: {p.end}</p>
+                          </div>
+                          <div className="flex flex-col items-center gap-2 shrink-0">
+                             <p className="text-2xl font-black text-emerald-600">{p.votes}% <span className="text-[10px] opacity-40 font-normal">YES</span></p>
+                             <button className="px-8 py-3 bg-natural-900 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-lg shadow-black/10">CAST VOTE</button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </motion.div>
            )}
 
            {activeTab === 'audit' && (
