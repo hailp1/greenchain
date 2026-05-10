@@ -51,12 +51,18 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
         // Process results safely
         const nBal = results[0].status === 'fulfilled' ? results[0].value : BigInt(0);
         const tBal = results[1].status === 'fulfilled' ? results[1].value : BigInt(0);
-        const code = results[2].status === 'fulfilled' ? results[2].value : '0x';
+        const code = results[2].status === 'fulfilled' ? (results[2].value as string) : '0x';
         const entityRes = results[3].status === 'fulfilled' ? results[3].value : null;
 
         setNativeBalance(ethers.formatEther(nBal));
         setTokenBalance(ethers.formatEther(tBal));
-        setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
+        
+        // Zero address is always a "system" address, not a contract in the typical sense
+        if (addr === '0x0000000000000000000000000000000000000000') {
+          setIsContract(false);
+        } else {
+          setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
+        }
 
         const entityData = entityRes?.data;
         console.log("[AddressPage] Entity found:", !!entityData);

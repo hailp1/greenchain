@@ -409,19 +409,20 @@ export default function ProducerPortal() {
       if (txHash) {
         setLastTxHash(txHash);
         
-        if (currentEntity) {
-          const newStaked = (Number(currentEntity.staked_balance) || 0) + amount;
-          await Promise.all([
-            supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
-            supabase.from('token_transactions').insert([{
-              sender_id: currentEntity.id,
-              sender_address: currentEntity.wallet_address,
-              receiver_address: '0x0000000000000000000000000000000000000000', // Burn/Stake Lock
-              amount: amount,
-              type: 'STAKE',
-              description: `Staked AGRI for node validation`
-            }])
-          ]);
+        // Use Server-side API for database updates
+        const response = await fetch('/api/portal/stake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            entity_id: user ? user.id : currentEntity?.id,
+            wallet_address: web3.address,
+            amount: amount,
+            tx_hash: txHash
+          })
+        });
+
+        if (!response.ok) {
+           console.error("Stake API failed to update database");
         }
         
         setIsSuccess(true);
@@ -543,30 +544,21 @@ export default function ProducerPortal() {
     }
 
     try {
-      // 4. Update last_daily_claim
-      const { error: updateError } = await supabase
-        .from('entities')
-        .update({ last_daily_claim: new Date().toISOString() })
-        .eq('id', currentEntity.id);
+      setClaimLoading(true);
+      // Call Server-side API for reward claim
+      const response = await fetch('/api/portal/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entity_id: user ? user.id : currentEntity?.id,
+          wallet_address: web3.address
+        })
+      });
 
-      if (updateError) throw updateError;
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Claim failed');
 
-      // 5. Create Transaction
-      const { error: txError } = await supabase
-        .from('token_transactions')
-        .insert([{
-           sender_id: null,
-           receiver_id: currentEntity.id,
-           sender_address: '0x0000000000000000000000000000000000000000',
-           receiver_address: currentEntity.wallet_address,
-           amount: rewardAmount,
-           type: 'REWARD',
-           description: `Daily Stake Loyalty Reward (${rewardAmount} AGRI)`
-        }]);
-
-      if (txError) throw txError;
-
-      alert(`Success! You have received ${rewardAmount} AGRI daily reward.`);
+      alert(`Success! You have received ${result.reward} AGRI daily reward.`);
       fetchEntityData();
       fetchPortalData();
     } catch (err: any) {
