@@ -4,7 +4,7 @@ import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { Calendar, User, ArrowRight, Tag, Share2, ShieldCheck, Zap, BookOpen, Layers } from 'lucide-react';
+import { Calendar, User, ArrowRight, Tag, Share2, ShieldCheck, Zap, BookOpen, Layers, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
