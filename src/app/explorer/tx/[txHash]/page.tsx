@@ -24,6 +24,7 @@ export default function TransactionDetail() {
     const fetchTxData = async () => {
       try {
         setLoading(true);
+        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
         // Try Blockchain first (EVM hashes usually start with 0x and are 66 chars)
         let txData = null;
         let receiptData = null;
