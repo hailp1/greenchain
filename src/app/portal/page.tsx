@@ -669,8 +669,8 @@ export default function ProducerPortal() {
 
       <main className="flex-grow flex flex-col min-w-0">
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
-           <div className="flex items-center gap-4 md:gap-8 min-w-0 shrink">
-              <h2 className="text-[10px] md:text-lg font-black tracking-tight uppercase italic truncate">
+           <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
+              <h2 className="text-xs md:text-lg font-black tracking-tight uppercase italic truncate">
                 {currentEntity?.name || user?.user_metadata?.full_name || (authLoading ? 'Verifying...' : 'Guest Node')} 
               </h2>
               
@@ -746,26 +746,26 @@ export default function ProducerPortal() {
            {activeTab === 'overview' && (
              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
                  {/* Network Vital Signs */}
-                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-emerald-500 mb-4 bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center"><Activity size={18} /></div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Block</p>
-                        <p className="text-xl md:text-2xl font-black text-natural-950">#{blockHeight.toLocaleString()}</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">#{blockHeight.toLocaleString()}</p>
                     </div>
                     <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-blue-500 mb-4 bg-blue-50 w-10 h-10 rounded-xl flex items-center justify-center"><Zap size={18} /></div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Network TPS</p>
-                        <p className="text-xl md:text-2xl font-black text-natural-950">{tps.toFixed(1)} / 1.5k</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">{tps.toFixed(1)} / 1.5k</p>
                     </div>
                     <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-purple-500 mb-4 bg-purple-50 w-10 h-10 rounded-xl flex items-center justify-center"><Cpu size={18} /></div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Nodes</p>
-                        <p className="text-xl md:text-2xl font-black text-natural-950">1,204</p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">1,204</p>
                     </div>
                     <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-amber-500 mb-4 bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center"><Globe size={18} /></div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value Locked</p>
-                        <p className="text-xl md:text-2xl font-black text-natural-950">84.2M <span className="text-[10px] opacity-40">AGRI</span></p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">84.2M <span className="text-[10px] opacity-40">AGRI</span></p>
                     </div>
                  </div>
 
