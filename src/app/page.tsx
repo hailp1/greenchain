@@ -142,7 +142,7 @@ export default function Home() {
         <section className="mb-24 md:mb-40">
           <div className="flex items-center gap-3 mb-10 md:mb-16">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-natural-900 text-white flex items-center justify-center shadow-xl shrink-0">
-              <Activity size={20} md={24} />
+              <Activity size={20} />
             </div>
             <div>
               <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase italic">Network <span className="text-emerald-500">Pulse</span></h2>
@@ -156,7 +156,7 @@ export default function Home() {
                 whileHover={{ y: -5 }}
                 className="p-6 md:p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col justify-between"
               >
-                <div className={`${stat.color} mb-6`}><stat.icon size={20} md={24} /></div>
+                <div className={`${stat.color} mb-6`}><stat.icon size={20} /></div>
                 <div>
                   <p className="text-xl md:text-3xl lg:text-4xl font-black text-natural-900 tracking-tighter mb-1 truncate">{stat.value}</p>
                   <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
