@@ -89,32 +89,48 @@ export default function TransactionsPage() {
 
       // 2. Fetch from Supabase
       console.log("[TxPage] Fetching Supabase ledger...");
-      const { data: sbData, error: sbError } = await supabase
-        .from('token_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(40);
+      let platformTxs: TxInfo[] = [];
+      try {
+        const { data: sbData, error: sbError } = await supabase
+          .from('token_transactions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(40);
 
-      if (sbError) console.error("[TxPage] Supabase error:", sbError);
+        if (sbError) {
+          console.error("[TxPage] Supabase error:", sbError);
+        } else if (sbData) {
+          console.log("[TxPage] Supabase raw data count:", sbData.length);
+          platformTxs = sbData.map(tx => {
+            try {
+              return {
+                hash: (tx.id || '').toString().replace(/-/g, '').substring(0, 40),
+                blockNumber: 0, 
+                timestamp: tx.created_at ? Math.floor(new Date(tx.created_at).getTime() / 1000) : Math.floor(Date.now()/1000),
+                from: tx.sender_address || '0x000...000',
+                to: tx.receiver_address || '0x000...000',
+                value: tx.amount?.toString() || '0',
+                type: tx.type || 'Platform'
+              };
+            } catch (mapErr) {
+               console.warn("[TxPage] Mapping single tx error:", mapErr);
+               return null;
+            }
+          }).filter((tx): tx is TxInfo => tx !== null);
+        }
+      } catch (sbFatal) {
+        console.error("[TxPage] Supabase fatal fetch error:", sbFatal);
+      }
 
-      const platformTxs: TxInfo[] = (sbData || []).map(tx => ({
-        hash: tx.id.replace(/-/g, '').substring(0, 40),
-        blockNumber: 0, 
-        timestamp: tx.created_at ? Math.floor(new Date(tx.created_at).getTime() / 1000) : Math.floor(Date.now()/1000),
-        from: tx.sender_address || '0x000...000',
-        to: tx.receiver_address || '0x000...000',
-        value: `${tx.amount}`,
-        type: tx.type || 'Platform'
-      }));
-
-      console.log("[TxPage] Total merged txs:", chainTxs.length + platformTxs.length);
+      console.log("[TxPage] Merging:", chainTxs.length, "chain txs and", platformTxs.length, "platform txs");
 
       // Merge and sort safely
       const merged = [...chainTxs, ...platformTxs]
-        .filter(tx => tx && tx.timestamp)
+        .filter(tx => tx && tx.hash && tx.timestamp)
         .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
         .slice(0, 50);
       
+      console.log("[TxPage] Final merged count:", merged.length);
       setTransactions(merged);
 
     } catch (err: any) {
