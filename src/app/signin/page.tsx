@@ -67,6 +67,10 @@ export default function LoginPage() {
         options: {
           redirectTo: `${window.location.origin}/portal`,
           skipBrowserRedirect: false,
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          }
         },
       });
       if (error) throw error;

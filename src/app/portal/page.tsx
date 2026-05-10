@@ -653,9 +653,16 @@ export default function ProducerPortal() {
         </nav>
 
         <div className="p-4 border-t border-white/5">
-           <button onClick={() => supabase.auth.signOut().then(() => window.location.href = '/')} className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400">
+           <button 
+             onClick={async () => {
+               await supabase.auth.signOut();
+               window.localStorage.clear(); // Clear all local storage to be safe
+               window.location.href = '/';
+             }} 
+             className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 transition-colors"
+           >
               <LogOut size={20} />
-              <span className="hidden md:block font-bold text-sm">Logout</span>
+              <span className="hidden md:block font-bold text-sm uppercase tracking-widest">Logout System</span>
            </button>
         </div>
       </aside>
