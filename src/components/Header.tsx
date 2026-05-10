@@ -140,8 +140,10 @@ const Header = () => {
                    )}
                 </div>
                 <div className="hidden lg:flex flex-col">
-                  <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop() || 'Account'}</span>
-                  <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
+                   <span className="text-[10px] font-black text-slate-900 uppercase leading-none">
+                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Researcher'}
+                   </span>
+                   <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Control Panel</span>
                 </div>
               </Link>
             ) : mounted && web3.isConnected ? (
