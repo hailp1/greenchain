@@ -45,26 +45,39 @@ export default function NodesPage() {
           console.warn("RPC fetch failed, falling back to static status");
         }
         
-        // 2. Fetch Entities from Supabase
-        const { data: entities } = await supabase
-          .from('entities')
-          .select('*')
-          .order('staked_balance', { ascending: false });
-
+        // 2. Fetch Entities from Supabase with Timeout
         let totalS = 0;
-        const formattedNodes = (entities || []).map(e => {
-          const staked = Number(e.staked_balance || 0);
-          totalS += staked;
-          return {
-            address: e.wallet_address,
-            name: e.name,
-            role: e.role,
-            staked: staked,
-            reputation: e.reputation_score,
-            isActive: activeMiners.has(e.wallet_address?.toLowerCase() || ''),
-            type: e.role === 'ADMIN' ? 'Authority' : 'Stakeholder'
+        let formattedNodes: any[] = [];
+        try {
+          const fetchWithTimeout = async () => {
+             const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 5000));
+             const fetchPromise = supabase
+               .from('entities')
+               .select('*')
+               .order('staked_balance', { ascending: false });
+             return await Promise.race([fetchPromise, timeoutPromise]) as any;
           };
-        });
+
+          const { data: entities, error: sbError } = await fetchWithTimeout();
+
+          if (entities) {
+            formattedNodes = entities.map((e: any) => {
+              const staked = Number(e.staked_balance || 0);
+              totalS += staked;
+              return {
+                address: e.wallet_address,
+                name: e.name,
+                role: e.role,
+                staked: staked,
+                reputation: e.reputation_score,
+                isActive: activeMiners.has(e.wallet_address?.toLowerCase() || ''),
+                type: e.role === 'ADMIN' ? 'Authority' : 'Stakeholder'
+              };
+            });
+          }
+        } catch (sbErr) {
+           console.warn("Nodes Page Supabase skipped:", sbErr);
+        }
 
         // 3. Add Hardcoded Authority Nodes if missing
         AUTHORITY_NODES.forEach(auth => {

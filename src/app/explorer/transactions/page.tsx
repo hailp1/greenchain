@@ -87,21 +87,28 @@ export default function TransactionsPage() {
         }
       }
 
-      // 2. Fetch from Supabase
+      // 2. Fetch from Supabase with Timeout
       console.log("[TxPage] Fetching Supabase ledger...");
       let platformTxs: TxInfo[] = [];
       try {
-        const { data: sbData, error: sbError } = await supabase
-          .from('token_transactions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(40);
+        const fetchWithTimeout = async () => {
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 5000));
+          const fetchPromise = supabase
+            .from('token_transactions')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(40);
+          
+          return await Promise.race([fetchPromise, timeoutPromise]) as any;
+        };
+
+        const { data: sbData, error: sbError } = await fetchWithTimeout();
 
         if (sbError) {
           console.error("[TxPage] Supabase error:", sbError);
         } else if (sbData) {
           console.log("[TxPage] Supabase raw data count:", sbData.length);
-          platformTxs = sbData.map(tx => {
+          platformTxs = sbData.map((tx: any) => {
             try {
               return {
                 hash: (tx.id || '').toString().replace(/-/g, '').substring(0, 40),
@@ -113,13 +120,12 @@ export default function TransactionsPage() {
                 type: tx.type || 'Platform'
               };
             } catch (mapErr) {
-               console.warn("[TxPage] Mapping single tx error:", mapErr);
                return null;
             }
-          }).filter((tx): tx is TxInfo => tx !== null);
+          }).filter((tx: any): tx is TxInfo => tx !== null);
         }
       } catch (sbFatal) {
-        console.error("[TxPage] Supabase fatal fetch error:", sbFatal);
+        console.warn("[TxPage] Supabase skipped (Timeout/Error):", sbFatal);
       }
 
       console.log("[TxPage] Merging:", chainTxs.length, "chain txs and", platformTxs.length, "platform txs");
