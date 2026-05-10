@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Globe, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Globe, ArrowRight, Wallet, Chrome } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -10,57 +10,92 @@ import { useWeb3 } from '@/lib/web3';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const { address, isConnected, isConnecting, connect, error: web3Error } = useWeb3();
   const router = useRouter();
 
+  // ─── Check existing auth on mount ──────────────────────────
   useEffect(() => {
-    // Check MetaMask connection
-    if (isConnected && address) {
-      router.push('/portal');
-    }
+    let cancelled = false;
 
-    // Check Supabase session
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.push('/portal');
+    const checkExistingAuth = async () => {
+      // 1. Check Supabase session first
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && !cancelled) {
+          console.log("[SignIn] Existing Supabase session found, redirecting...");
+          router.replace('/portal');
+          return;
+        }
+      } catch (e) {
+        console.warn("[SignIn] Session check error:", e);
       }
-    };
-    checkSession();
 
-    // Listen for auth changes
+      // 2. Check Web3 wallet
+      if (isConnected && address && !cancelled) {
+        console.log("[SignIn] Wallet already connected, redirecting...");
+        router.replace('/portal');
+        return;
+      }
+
+      if (!cancelled) setCheckingAuth(false);
+    };
+
+    checkExistingAuth();
+
+    // 3. Listen for auth state changes (handles OAuth redirect completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        router.push('/portal');
+      console.log("[SignIn] Auth event:", event);
+      if (event === 'SIGNED_IN' && session && !cancelled) {
+        console.log("[SignIn] Sign-in detected, redirecting to portal...");
+        router.replace('/portal');
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [isConnected, address, router]);
 
+  // ─── Google Login Handler ──────────────────────────────────
   const handleGoogleLogin = async () => {
     setLoading(true);
-    console.log("[Auth] Initiating Google Login...");
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/portal`,
-          skipBrowserRedirect: false
+          skipBrowserRedirect: false,
         },
       });
-      if (error) {
-        console.error("[Auth] Google Login Error:", error);
-        throw error;
-      }
-      console.log("[Auth] Google Login Data:", data);
+      if (error) throw error;
     } catch (error: any) {
-      console.error("[Auth] Google Login Exception:", error);
-      alert('Lỗi đăng nhập Google: ' + error.message);
-    } finally {
+      console.error("[Auth] Google Login Error:", error);
+      alert('Google login failed: ' + error.message);
       setLoading(false);
     }
   };
+
+  // ─── Web3 Login Handler ────────────────────────────────────
+  const handleWalletLogin = async () => {
+    await connect();
+    // The useEffect above will detect isConnected and redirect
+  };
+
+  // Show loading while checking existing auth
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#0a0f0a] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mx-auto"></div>
+          <p className="text-emerald-500 font-black text-xs uppercase tracking-widest animate-pulse">
+            Checking authentication...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f0a] text-white flex items-center justify-center p-6 relative overflow-hidden">
@@ -90,7 +125,7 @@ export default function LoginPage() {
             </Link>
             <div className="space-y-2">
                <h2 className="text-3xl font-black tracking-tight uppercase italic">Welcome <span className="text-emerald-500">Back</span></h2>
-               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Truy cập cổng quản trị nông sản chuỗi khối</p>
+               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Access the blockchain-powered agricultural portal</p>
             </div>
           </div>
 
@@ -101,8 +136,9 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Social Login Button */}
+          {/* Login Buttons */}
           <div className="space-y-4">
+             {/* Google Login */}
              <button 
                onClick={handleGoogleLogin}
                disabled={loading}
@@ -113,29 +149,28 @@ export default function LoginPage() {
                ) : (
                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
                )}
-               TIẾP TỤC VỚI GOOGLE
+               CONTINUE WITH GOOGLE
              </button>
              
              <div className="relative flex items-center py-4">
                 <div className="flex-grow border-t border-white/5"></div>
-                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Hoặc đăng nhập bằng ví</span>
+                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Or connect a wallet</span>
                 <div className="flex-grow border-t border-white/5"></div>
              </div>
 
-             <div className="grid grid-cols-1 gap-4">
-                <button 
-                  onClick={connect}
-                  disabled={isConnecting}
-                  className="py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
-                >
-                   {isConnecting ? (
-                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                   ) : (
-                     <Globe size={18} />
-                   )}
-                   KẾT NỐI VÍ METAMASK / TRUST WALLET
-                </button>
-             </div>
+             {/* MetaMask / Trust Wallet */}
+             <button 
+               onClick={handleWalletLogin}
+               disabled={isConnecting}
+               className="w-full py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
+             >
+                {isConnecting ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <Wallet size={18} />
+                )}
+                CONNECT METAMASK / TRUST WALLET
+             </button>
           </div>
 
           {/* Features Info */}
@@ -169,7 +204,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-            Bằng cách tiếp tục, bạn đồng ý với Điều khoản của fwd LIFEchain
+            By continuing, you agree to fwd LIFEchain's Terms of Service
           </p>
         </motion.div>
       </div>

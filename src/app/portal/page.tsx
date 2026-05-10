@@ -99,9 +99,10 @@ export default function ProducerPortal() {
       }
     });
 
-    // 2. Initial Session Check
+    // 2. Initial Session Check with OAuth hash retry
     const checkInitialAuth = async () => {
       try {
+        // First quick check
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           console.log("[Portal] Initial session found:", session.user.id);
@@ -110,21 +111,29 @@ export default function ProducerPortal() {
           return;
         }
 
-        // Handle Google Redirect Hash - give more time
-        if (window.location.hash.includes('access_token')) {
-          console.log("[Portal] Detected OAuth hash, suspending redirect for 10s...");
-          // Wait longer for Supabase to parse the hash
-          setTimeout(async () => {
-            const { data: { session: finalSession } } = await supabase.auth.getSession();
-            if (finalSession) {
-               console.log("[Portal] OAuth Success after wait");
-               setUser(finalSession.user);
-               setAuthLoading(false);
-            } else {
-               console.log("[Portal] OAuth failed after 10s, redirecting...");
-               window.location.href = '/signin';
+        // Handle Google OAuth redirect hash
+        const hasOAuthHash = typeof window !== 'undefined' && (
+          window.location.hash.includes('access_token') || 
+          window.location.hash.includes('error')
+        );
+
+        if (hasOAuthHash) {
+          console.log("[Portal] Detected OAuth hash, waiting for Supabase to parse...");
+          // Retry every 2s for up to 20s
+          for (let i = 0; i < 10; i++) {
+            await new Promise(r => setTimeout(r, 2000));
+            const { data: { session: retrySession } } = await supabase.auth.getSession();
+            if (retrySession) {
+              console.log("[Portal] OAuth success on retry", i + 1);
+              setUser(retrySession.user);
+              setAuthLoading(false);
+              // Clean up the URL hash
+              window.history.replaceState(null, '', window.location.pathname);
+              return;
             }
-          }, 10000);
+          }
+          console.log("[Portal] OAuth hash parse failed after retries");
+          window.location.href = '/signin';
           return;
         }
 
@@ -143,22 +152,24 @@ export default function ProducerPortal() {
     let timeoutId: NodeJS.Timeout;
 
     // Only run timeout if we aren't in the middle of an OAuth redirect
-    if (authLoading && !window.location.hash.includes('access_token')) {
+    const hasOAuthHash = typeof window !== 'undefined' && window.location.hash.includes('access_token');
+    
+    if (authLoading && !hasOAuthHash) {
       if (web3.isConnected) {
         console.log("[Portal] Authorized via Wallet:", web3.address);
         setAuthLoading(false);
       } else {
-        // Increased to 15 seconds for reliability
+        // Wait 20s before giving up — wallet extensions can be slow to inject
         timeoutId = setTimeout(async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session || web3.isConnected) {
             console.log("[Portal] Final session check success");
             setAuthLoading(false);
           } else {
-            console.log("[Portal] Total Auth Failure after 15s, forcing login...");
+            console.log("[Portal] Total Auth Failure after 20s, forcing login...");
             window.location.href = '/signin';
           }
-        }, 15000);
+        }, 20000);
       }
     }
 

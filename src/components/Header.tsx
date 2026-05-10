@@ -126,8 +126,8 @@ const Header = () => {
 
         {/* Action Area (Wallet & Profile) - Visible on all screens */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Wallet & Balance - Condensed on Mobile */}
-          {user && (
+          {/* Wallet & Balance - Visible for Google OR Web3 users */}
+          {(user || (mounted && web3.isConnected)) && (
             <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-right-4 duration-500">
               <div className="flex flex-col items-end">
                   <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
@@ -168,6 +168,16 @@ const Header = () => {
               <div className="hidden lg:flex flex-col">
                 <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
+              </div>
+            </Link>
+          ) : mounted && web3.isConnected ? (
+            <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
+                 <Wallet size={16} className="text-emerald-600" />
+              </div>
+              <div className="hidden lg:flex flex-col">
+                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Wallet</span>
               </div>
             </Link>
           ) : (
