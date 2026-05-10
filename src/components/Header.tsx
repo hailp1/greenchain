@@ -15,7 +15,8 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
-  const { address, balance, isConnecting, connect } = useWeb3();
+  const web3 = useWeb3();
+  const { address, balance, isConnecting, connect } = web3;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -31,44 +32,37 @@ const Header = () => {
   const [fwdBalance, setFwdBalance] = useState("0.00");
 
   useEffect(() => {
-    const fetchRealBalance = async (walletAddress: string) => {
+    const fetchTokenBalance = async (walletAddress: string) => {
       try {
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        const bal = await provider.getBalance(walletAddress);
+        const tokenAddress = process.env.NEXT_PUBLIC_FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
+        const abi = ["function balanceOf(address) view returns (uint256)"];
+        const contract = new ethers.Contract(tokenAddress, abi, provider);
+        const bal = await contract.balanceOf(walletAddress);
         setFwdBalance(ethers.formatEther(bal));
       } catch (e) {
-        console.error("Error fetching header balance:", e);
+        console.error("Error fetching header token balance:", e);
       }
     };
 
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
       if (session?.user) {
-        // First get wallet address from entities
-        const { data } = await supabase
-          .from('entities')
-          .select('wallet_address')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (data?.wallet_address) {
-          fetchRealBalance(data.wallet_address);
-        }
+        setUser(session.user);
+        const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
+        if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
       }
     };
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Header] Auth Event:", event);
       if (session?.user) {
-        const { data } = await supabase
-          .from('entities')
-          .select('wallet_address')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        if (data?.wallet_address) fetchRealBalance(data.wallet_address);
+        setUser(session.user);
+        const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
+        if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
       } else {
+        setUser(null);
         setFwdBalance("0.00");
       }
     });
@@ -136,10 +130,14 @@ const Header = () => {
             <div className="flex flex-col items-end">
                 <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
                 <span className="text-[10px] md:text-xs font-black text-emerald-600">
-                  {mounted ? (address ? Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
+                  {mounted ? (
+                    address && web3.fwdBalance !== "0.00" 
+                      ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) 
+                      : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})
+                  ) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
                 </span>
                 {mounted && address && (
-                   <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(balance).toFixed(4)}</span>
+                   <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(web3.balance).toFixed(4)}</span>
                 )}
             </div>
             <button 
