@@ -66,14 +66,14 @@ export default function TransactionDetail() {
               from: sbTx.sender_address || '0x0000000000000000000000000000000000000000',
               to: sbTx.receiver_address || '0x0000000000000000000000000000000000000000',
               value: ethers.parseEther((sbTx.amount || 0).toString()),
-              gasPrice: 0n,
-              gasLimit: 0n,
+              gasPrice: BigInt(0),
+              gasLimit: BigInt(0),
               nonce: 0,
               data: `Platform Transfer: ${sbTx.description || sbTx.type}`
             };
             receiptData = {
               status: 1,
-              gasUsed: 0n,
+              gasUsed: BigInt(0),
               transactionIndex: 0,
               logs: []
             };
