@@ -18,12 +18,15 @@ export default function LoginPage() {
   useEffect(() => {
     let cancelled = false;
 
+    // Safety timeout: If auth check takes > 3s, just show the login page
+    const timeout = setTimeout(() => {
+      if (!cancelled) setCheckingAuth(false);
+    }, 3000);
+
     const checkExistingAuth = async () => {
-      // 1. Check Supabase session first
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session && !cancelled) {
-          console.log("[SignIn] Existing Supabase session found, redirecting...");
           router.replace('/portal');
           return;
         }
@@ -31,29 +34,26 @@ export default function LoginPage() {
         console.warn("[SignIn] Session check error:", e);
       }
 
-      // 2. Check Web3 wallet
       if (isConnected && address && !cancelled) {
-        console.log("[SignIn] Wallet already connected, redirecting...");
         router.replace('/portal');
         return;
       }
 
       if (!cancelled) setCheckingAuth(false);
+      clearTimeout(timeout);
     };
 
     checkExistingAuth();
 
-    // 3. Listen for auth state changes (handles OAuth redirect completion)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[SignIn] Auth event:", event);
       if (event === 'SIGNED_IN' && session && !cancelled) {
-        console.log("[SignIn] Sign-in detected, redirecting to portal...");
         router.replace('/portal');
       }
     });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, [isConnected, address, router]);
