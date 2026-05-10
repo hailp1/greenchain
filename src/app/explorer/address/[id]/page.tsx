@@ -101,8 +101,6 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
   }, [swrData]);
 
   const handleCopy = () => {
-
-  const handleCopy = () => {
     navigator.clipboard.writeText(addressId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
