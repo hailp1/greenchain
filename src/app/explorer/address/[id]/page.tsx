@@ -56,11 +56,11 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
 
     try {
       // 2a. Fetch from RPC (Latest 10 blocks)
-      const blockNum = await rpcProvider.getBlockNumber();
+      const blockNum = await provider.getBlockNumber();
       const blockPromises = [];
       for (let i = 0; i < 10; i++) {
         if (blockNum - i >= 0) {
-          blockPromises.push(rpcProvider.getBlock(blockNum - i, true).catch(() => null));
+          blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
         }
       }
       const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
