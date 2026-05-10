@@ -62,7 +62,7 @@ export default function TransactionsPage() {
       let chainTxs: TxInfo[] = [];
       if (blockNum > 0) {
         const blockPromises = [];
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 30; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
           }
@@ -94,7 +94,7 @@ export default function TransactionsPage() {
       let platformTxs: TxInfo[] = [];
       try {
         const fetchWithTimeout = async () => {
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 15000));
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 30000));
           const fetchPromise = supabase
             .from('token_transactions')
             .select('*', { count: 'exact' })
@@ -139,9 +139,12 @@ export default function TransactionsPage() {
         .slice(0, 50);
       
       setTransactions(prev => {
-        if (merged.length > 0 || prev.length === 0) return merged;
-        console.log("[TxPage] Keep existing data due to empty fetch results");
-        return prev;
+        if (merged.length > 0) return merged;
+        if (prev.length > 0) {
+          console.log("[TxPage] Keeping existing data as new fetch returned 0 results");
+          return prev;
+        }
+        return [];
       });
 
     } catch (err: any) {
