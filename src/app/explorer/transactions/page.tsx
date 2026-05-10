@@ -60,7 +60,7 @@ export default function TransactionsPage() {
       let chainTxs: TxInfo[] = [];
       if (blockNum > 0) {
         const blockPromises = [];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 50; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
           }

@@ -78,6 +78,7 @@ const Header = () => {
   const navLinks = [
     { name: 'Triết lý fwd', href: '/about' },
     { name: 'Blockchain Explorer', href: '/explorer' },
+    { name: 'Network Validators', href: '/explorer/nodes' },
     { name: 'Bảng xếp hạng', href: '/reputation' },
   ];
 
@@ -209,11 +210,11 @@ const Header = () => {
                    <Link href="/signin" onClick={() => setIsOpen(false)} className="w-full py-4 bg-slate-100 text-slate-900 text-[10px] font-black rounded-xl text-center uppercase tracking-widest">Login</Link>
                  )}
                  <Link 
-                   href="/verify" 
+                   href="/explorer/nodes" 
                    onClick={() => setIsOpen(false)}
                    className="w-full py-4 bg-emerald-600 text-white text-xs font-black rounded-xl text-center uppercase tracking-widest"
                  >
-                   Xác thực ngay
+                   Network Validators
                  </Link>
               </div>
             </div>

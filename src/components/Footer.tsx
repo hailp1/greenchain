@@ -50,8 +50,7 @@ export default function Footer() {
                   { name: "Triết lý FWD", href: "/about" },
                   { name: "Blockchain Explorer", href: "/explorer" },
                   { name: "Cổng nhà sản xuất", href: "/portal" },
-                  { name: "Xác thực nhanh", href: "/verify/YEN-001" },
-                  { name: "Mạng lưới Node", href: "/explorer/nodes" }
+                  { name: "Network Validators", href: "/explorer/nodes" }
                 ].map((link, i) => (
                   <li key={i}>
                     <Link href={link.href} className="text-sm font-bold text-slate-400 hover:text-white transition-colors">{link.name}</Link>
