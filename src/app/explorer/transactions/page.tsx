@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 import { 
-  Activity, Clock, RefreshCw, Zap, Database
+  Activity, Clock, RefreshCw, Zap, Database, ArrowUpRight
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -19,6 +19,7 @@ function shortAddr(addr: string): string {
 
 function timeAgo(timestamp: number): string {
   const diff = Math.floor(Date.now() / 1000) - timestamp;
+  if (diff < 0) return 'just now';
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -37,149 +38,159 @@ interface TxInfo {
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<TxInfo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [backgroundLoading, setBackgroundLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [rpcOnline, setRpcOnline] = useState(false);
+  const [supabaseOnline, setSupabaseOnline] = useState(false);
+  const [blockHeight, setBlockHeight] = useState(0);
+  const [txCount, setTxCount] = useState(0);
+  const isFetching = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchTransactions = useCallback(async () => {
-    try {
-      console.log("[TxPage] Starting fetch...");
-      if (transactions.length === 0) setLoading(true);
-      setBackgroundLoading(true);
-      const provider = new ethers.JsonRpcProvider(RPC_URL);
-      
-      // 1. Fetch from Blockchain
-      let blockNum = 0;
-      try {
-        blockNum = await provider.getBlockNumber();
-        console.log("[TxPage] Block height:", blockNum);
-        setRpcOnline(true);
-      } catch (e) {
-        console.warn("[TxPage] RPC Height fetch failed");
-        setRpcOnline(false);
-      }
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchData = async () => {
+      if (isFetching.current) return;
+      isFetching.current = true;
+      setSyncing(true);
 
       let chainTxs: TxInfo[] = [];
-      if (blockNum > 0) {
+      let platformTxs: TxInfo[] = [];
+
+      // ── Step 1: Fetch Supabase FIRST (most reliable data source) ──
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 25000);
+
+        const { data: sbData, count, error: sbError } = await supabase
+          .from('token_transactions')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .limit(50)
+          .abortSignal(controller.signal);
+
+        clearTimeout(timeout);
+
+        if (!sbError && sbData && sbData.length > 0) {
+          console.log("[TxPage] Supabase OK:", sbData.length, "rows");
+          if (mounted) {
+            setSupabaseOnline(true);
+            setTxCount(count || sbData.length);
+          }
+          platformTxs = sbData.map((tx: any) => {
+            try {
+              return {
+                hash: (tx.id || '').toString().replace(/-/g, '').substring(0, 40),
+                blockNumber: 0,
+                timestamp: tx.created_at
+                  ? Math.floor(new Date(tx.created_at).getTime() / 1000)
+                  : Math.floor(Date.now() / 1000),
+                from: tx.sender_address || '0x000...system',
+                to: tx.receiver_address || '0x000...system',
+                value: tx.amount?.toString() || '0',
+                type: tx.type || 'Platform',
+              };
+            } catch {
+              return null;
+            }
+          }).filter((tx: any): tx is TxInfo => tx !== null);
+        } else {
+          console.warn("[TxPage] Supabase returned empty or error:", sbError?.message);
+        }
+      } catch (e: any) {
+        console.warn("[TxPage] Supabase fetch failed:", e.message);
+      }
+
+      // ── Step 2: Fetch Blockchain (secondary, often empty on quiet networks) ──
+      try {
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        const blockNum = await provider.getBlockNumber();
+        if (mounted) {
+          setRpcOnline(true);
+          setBlockHeight(blockNum);
+        }
+        console.log("[TxPage] RPC block:", blockNum);
+
+        // Scan last 20 blocks (lightweight)
         const blockPromises = [];
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 20; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
           }
         }
         const blocks = await Promise.all(blockPromises);
-        console.log("[TxPage] Blocks fetched:", blocks.length);
-        
+
         for (const b of blocks) {
           if (!b) continue;
           for (const tx of (b.transactions || [])) {
-             const txObj = tx as any;
-             chainTxs.push({
-               hash: txObj.hash || txObj,
-               blockNumber: b.number,
-               timestamp: b.timestamp || Math.floor(Date.now()/1000),
-               from: txObj.from || '0x...',
-               to: txObj.to || "Contract",
-               value: txObj.value ? ethers.formatEther(txObj.value) : '0',
-               type: txObj.to ? 'Transfer' : 'Contract'
-             });
-             if (chainTxs.length >= 20) break;
+            const txObj = tx as any;
+            chainTxs.push({
+              hash: txObj.hash || txObj,
+              blockNumber: b.number,
+              timestamp: b.timestamp || Math.floor(Date.now() / 1000),
+              from: txObj.from || '0x...',
+              to: txObj.to || 'Contract',
+              value: txObj.value ? ethers.formatEther(txObj.value) : '0',
+              type: txObj.to ? 'Transfer' : 'Contract',
+            });
+            if (chainTxs.length >= 15) break;
           }
-          if (chainTxs.length >= 20) break;
+          if (chainTxs.length >= 15) break;
         }
+        console.log("[TxPage] Chain txs found:", chainTxs.length);
+      } catch (e: any) {
+        console.warn("[TxPage] RPC fetch failed:", e.message);
+        if (mounted) setRpcOnline(false);
       }
 
-      // 2. Fetch from Supabase with Timeout
-      console.log("[TxPage] Fetching Supabase ledger...");
-      let platformTxs: TxInfo[] = [];
-      try {
-        const fetchWithTimeout = async () => {
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 30000));
-          const fetchPromise = supabase
-            .from('token_transactions')
-            .select('*', { count: 'exact' })
-            .order('created_at', { ascending: false })
-            .limit(50);
-          
-          return await Promise.race([fetchPromise, timeoutPromise]) as any;
-        };
-
-        const { data: sbData, error: sbError } = await fetchWithTimeout();
-
-        if (sbError) {
-          console.error("[TxPage] Supabase error:", sbError);
-        } else if (sbData) {
-          console.log("[TxPage] Supabase raw data count:", sbData.length);
-          platformTxs = sbData.map((tx: any) => {
-            try {
-              return {
-                hash: (tx.id || '').toString().replace(/-/g, '').substring(0, 40),
-                blockNumber: 0, 
-                timestamp: tx.created_at ? Math.floor(new Date(tx.created_at).getTime() / 1000) : Math.floor(Date.now()/1000),
-                from: tx.sender_address || '0x000...000',
-                to: tx.receiver_address || '0x000...000',
-                value: tx.amount?.toString() || '0',
-                type: tx.type || 'Platform'
-              };
-            } catch (mapErr) {
-               return null;
-            }
-          }).filter((tx: any): tx is TxInfo => tx !== null);
-        }
-      } catch (sbFatal) {
-        console.warn("[TxPage] Supabase skipped (Timeout/Error):", sbFatal);
-      }
-
-      console.log("[TxPage] Merging:", chainTxs.length, "chain txs and", platformTxs.length, "platform txs");
-
-      // Merge and sort safely
-      const merged = [...chainTxs, ...platformTxs]
-        .filter(tx => tx && tx.hash && tx.timestamp)
-        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-        .slice(0, 50);
-      
-      setTransactions(prev => {
-        if (merged.length > 0) return merged;
-        if (prev.length > 0) {
-          console.log("[TxPage] Keeping existing data as new fetch returned 0 results");
-          return prev;
-        }
-        return [];
+      // ── Step 3: Merge, deduplicate, sort ──
+      const allTxs = [...chainTxs, ...platformTxs];
+      const seen = new Set<string>();
+      const unique = allTxs.filter(tx => {
+        if (!tx || !tx.hash) return false;
+        if (seen.has(tx.hash)) return false;
+        seen.add(tx.hash);
+        return true;
       });
+      const sorted = unique.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
 
-    } catch (err: any) {
-      console.error("[TxPage] Fatal Fetch Error:", err.message);
-      setRpcOnline(false);
-    } finally {
-      setLoading(false);
-      setBackgroundLoading(false);
-    }
-  }, []);
+      console.log("[TxPage] Final merge:", sorted.length, "transactions");
 
-  useEffect(() => {
-    let isMounted = true;
-    let timer: NodeJS.Timeout;
+      if (mounted) {
+        // Only update if we have data, otherwise keep what we had
+        setTransactions(prev => {
+          if (sorted.length > 0) return sorted;
+          return prev;
+        });
+        setInitialLoad(false);
+        setSyncing(false);
+      }
 
-    const poll = async () => {
-      if (!isMounted) return;
-      await fetchTransactions();
-      if (isMounted) {
-        timer = setTimeout(poll, 15000);
+      isFetching.current = false;
+
+      // Schedule next poll
+      if (mounted) {
+        timerRef.current = setTimeout(fetchData, 20000);
       }
     };
 
-    poll();
+    fetchData();
+
     return () => {
-      isMounted = false;
-      clearTimeout(timer);
+      mounted = false;
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [fetchTransactions]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
       <Header />
       
       <section className="pt-40 pb-20 bg-[#020617] text-white relative overflow-hidden">
+         <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #3b82f6 0.5px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+         </div>
          <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
                <div className="space-y-4">
@@ -193,9 +204,40 @@ export default function TransactionsPage() {
                   </p>
                </div>
                
-               <div className="flex items-center gap-2 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-                  <div className={`w-2 h-2 rounded-full ${rpcOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                  <span className="text-sm font-black italic uppercase">{rpcOnline ? 'GETH POA LIVE' : 'RPC OFFLINE'}</span>
+               <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                     <div className={`w-2 h-2 rounded-full ${rpcOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                     <span className="text-sm font-black italic uppercase">{rpcOnline ? 'GETH POA LIVE' : 'CONNECTING...'}</span>
+                  </div>
+                  {blockHeight > 0 && (
+                     <div className="hidden md:flex items-center gap-2 px-4 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Block</span>
+                        <span className="text-sm font-mono font-black text-blue-400">#{blockHeight.toLocaleString()}</span>
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            {/* Quick Stats Bar */}
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Transactions</p>
+                  <p className="text-lg font-black">{txCount > 0 ? txCount.toLocaleString() : '—'}</p>
+               </div>
+               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Data Source</p>
+                  <p className="text-lg font-black">{supabaseOnline ? 'Supabase Live' : rpcOnline ? 'RPC Only' : 'Connecting...'}</p>
+               </div>
+               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Displayed</p>
+                  <p className="text-lg font-black">{transactions.length} Txns</p>
+               </div>
+               <div className="p-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                  <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Sync Status</p>
+                  <div className="flex items-center gap-2">
+                     <div className={`w-1.5 h-1.5 rounded-full ${syncing ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                     <p className="text-lg font-black">{syncing ? 'Syncing' : 'Idle'}</p>
+                  </div>
                </div>
             </div>
          </div>
@@ -205,10 +247,21 @@ export default function TransactionsPage() {
          
          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden">
             <div className="p-8 md:p-12 border-b border-slate-100 flex justify-between items-center">
-               <h3 className="text-xl font-black text-slate-900 uppercase italic">Recent <span className="text-blue-600">Transactions</span></h3>
-               <button onClick={fetchTransactions} className="p-3 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
-                  <RefreshCw size={20} className={(loading || backgroundLoading) ? 'animate-spin' : ''} />
-               </button>
+               <div className="flex items-center gap-4">
+                  <h3 className="text-xl font-black text-slate-900 uppercase italic">Recent <span className="text-blue-600">Transactions</span></h3>
+                  {syncing && <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>}
+               </div>
+               <div className="flex items-center gap-3">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:block">
+                     {transactions.length > 0 ? `${transactions.length} records` : 'Loading...'}
+                  </span>
+                  <button 
+                     onClick={() => window.location.reload()} 
+                     className="p-3 hover:bg-slate-50 rounded-full transition-colors text-slate-400"
+                  >
+                     <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
+                  </button>
+               </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -223,21 +276,31 @@ export default function TransactionsPage() {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                     {loading && transactions.length === 0 ? (
+                     {initialLoad && transactions.length === 0 ? (
                        <tr>
                          <td colSpan={5} className="px-8 py-24 text-center">
                             <RefreshCw size={32} className="text-blue-500 animate-spin mx-auto mb-4" />
-                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Scanning network ledger...</span>
+                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest block">Connecting to ledger...</span>
+                            <span className="text-[10px] text-slate-300 font-bold mt-2 block">Fetching data from Supabase & Geth RPC</span>
                          </td>
                        </tr>
                      ) : transactions.length > 0 ? (
-                        transactions.map((tx) => (
-                          <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors group">
+                        transactions.map((tx, idx) => (
+                          <tr key={`${tx.hash}-${idx}`} className="hover:bg-slate-50/50 transition-colors group">
                              <td className="px-8 py-6">
-                                <Link href={`/explorer/tx/${tx.hash}`} className="text-xs font-mono font-bold text-blue-600 hover:underline">{tx.hash.slice(0, 18)}...</Link>
+                                <Link href={`/explorer/tx/${tx.hash}`} className="text-xs font-mono font-bold text-blue-600 hover:underline flex items-center gap-1">
+                                   {tx.hash.slice(0, 18)}...
+                                   <ArrowUpRight size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </Link>
                              </td>
                              <td className="px-8 py-6">
-                                <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-widest text-slate-600">
+                                <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                                   tx.type === 'Transfer' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                   tx.type === 'REWARD' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                   tx.type === 'STAKE' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                   tx.type === 'PAYMENT' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                   'bg-slate-100 text-slate-600 border-slate-200'
+                                }`}>
                                    {tx.type}
                                 </span>
                              </td>
@@ -260,7 +323,7 @@ export default function TransactionsPage() {
                              </td>
                              <td className="px-8 py-6 text-right">
                                 <div className="flex flex-col">
-                                   <span className="text-sm font-black text-slate-900 italic">{tx.value}</span>
+                                   <span className="text-sm font-black text-slate-900 italic">{Number(tx.value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">AGRI</span>
                                 </div>
                              </td>
@@ -272,7 +335,13 @@ export default function TransactionsPage() {
                              <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
                                 <Activity size={24} className="text-slate-300" />
                              </div>
-                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No recent transactions found on the ledger.</span>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">No recent transactions found on the ledger.</span>
+                             <button 
+                                onClick={() => window.location.reload()}
+                                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all"
+                             >
+                                Retry Connection
+                             </button>
                           </td>
                         </tr>
                      )}

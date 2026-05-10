@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Search, Box, Zap, FileText, ArrowRight, Server, Globe, Database, Clock, Activity
 } from 'lucide-react';
@@ -24,96 +24,99 @@ export default function ExplorerHome() {
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
   const [latestTxns, setLatestTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const [searchVal, setSearchVal] = useState('');
-
-  const fetchData = useCallback(async () => {
-    try {
-      if (latestTxns.length === 0) setLoading(true);
-      setBackgroundLoading(true);
-      const provider = new ethers.JsonRpcProvider(RPC_URL);
-      
-      const [blockNum, feeData] = await Promise.all([
-        provider.getBlockNumber(),
-        provider.getFeeData()
-      ]);
-
-      const blockPromises = [];
-      for (let i = 0; i < 6; i++) {
-        if (blockNum - i >= 0) {
-          blockPromises.push(provider.getBlock(blockNum - i));
-        }
-      }
-      const blocks = await Promise.all(blockPromises);
-      const validBlocks = blocks.filter(b => b !== null);
-
-      setLatestBlocks(validBlocks.map((b: any) => ({
-        number: b.number,
-        timestamp: b.timestamp * 1000,
-        validator: b.miner,
-        transactionCount: b.transactions?.length || 0,
-        reward: "0.01402 AGRI"
-      })));
-
-      const fetchWithTimeout = async () => {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 10000));
-        const fetchPromise = supabase
-          .from('token_transactions')
-          .select('*', { count: 'exact' })
-          .order('created_at', { ascending: false })
-          .limit(6);
-        return await Promise.race([fetchPromise, timeoutPromise]) as any;
-      };
-
-      const { data: sbTxData, count: txCount, error: sbError } = await fetchWithTimeout();
-      
-      if (!sbError && sbTxData) {
-        const txs = sbTxData.map((tx: any) => ({
-          hash: tx.id.replace(/-/g, '').substring(0, 40),
-          timestamp: new Date(tx.created_at).getTime(),
-          from: tx.sender_address || '0x000...000',
-          to: tx.receiver_address || '0x000...000',
-          value: `${tx.amount}`
-        }));
-        setLatestTxns(prev => {
-          if (txs.length > 0 || prev.length === 0) return txs;
-          return prev;
-        });
-        setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
-      }
-
-      setStats((prev: any) => ({
-        ...prev,
-        latestBlock: blockNum,
-        gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
-      }));
-
-    } catch (err) {
-      console.error("Explorer Home Fetch Error:", err);
-    } finally {
-      setLoading(false);
-      setBackgroundLoading(false);
-    }
-  }, []);
+  const hasLoaded = useRef(false);
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
     let timer: NodeJS.Timeout;
 
-    const poll = async () => {
-      if (!isMounted) return;
-      await fetchData();
-      if (isMounted) {
-        timer = setTimeout(poll, 15000);
+    const fetchData = async () => {
+      try {
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        
+        const [blockNum, feeData] = await Promise.all([
+          provider.getBlockNumber(),
+          provider.getFeeData()
+        ]);
+
+        const blockPromises = [];
+        for (let i = 0; i < 6; i++) {
+          if (blockNum - i >= 0) {
+            blockPromises.push(provider.getBlock(blockNum - i));
+          }
+        }
+        const blocks = await Promise.all(blockPromises);
+        const validBlocks = blocks.filter(b => b !== null);
+
+        if (mounted) {
+          setLatestBlocks(validBlocks.map((b: any) => ({
+            number: b.number,
+            timestamp: b.timestamp * 1000,
+            validator: b.miner,
+            transactionCount: b.transactions?.length || 0,
+            reward: "0.01402 AGRI"
+          })));
+        }
+
+        // Supabase fetch with 20s timeout
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 20000);
+
+          const { data: sbTxData, count: txCount, error: sbError } = await supabase
+            .from('token_transactions')
+            .select('*', { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .limit(6)
+            .abortSignal(controller.signal);
+
+          clearTimeout(timeout);
+
+          if (!sbError && sbTxData && mounted) {
+            const txs = sbTxData.map((tx: any) => ({
+              hash: tx.id.replace(/-/g, '').substring(0, 40),
+              timestamp: new Date(tx.created_at).getTime(),
+              from: tx.sender_address || '0x000...000',
+              to: tx.receiver_address || '0x000...000',
+              value: `${tx.amount}`
+            }));
+            setLatestTxns(prev => txs.length > 0 ? txs : prev);
+            setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
+          }
+        } catch (sbErr) {
+          console.warn("Explorer Supabase timeout:", sbErr);
+        }
+
+        if (mounted) {
+          setStats((prev: any) => ({
+            ...prev,
+            latestBlock: blockNum,
+            gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+          }));
+        }
+
+      } catch (err) {
+        console.error("Explorer Home Fetch Error:", err);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          hasLoaded.current = true;
+        }
+      }
+
+      // Schedule next poll
+      if (mounted) {
+        timer = setTimeout(fetchData, 15000);
       }
     };
 
-    poll();
+    fetchData();
     return () => {
-      isMounted = false;
+      mounted = false;
       clearTimeout(timer);
     };
-  }, [fetchData]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100">
