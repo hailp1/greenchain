@@ -7,7 +7,16 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Calendar, User, ArrowRight, Tag, Share2, ShieldCheck, Zap } from 'lucide-react';
 
+import { supabase } from '@/lib/supabase';
+
 export default function NewsIndexPage() {
+  // Auth Isolation: Ensure this page never redirects to portal
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+       console.log("[NewsIndex] Auth event ignored:", event);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   const news = [
     {
       id: "so-hoa-niem-tin-nong-san-viet",

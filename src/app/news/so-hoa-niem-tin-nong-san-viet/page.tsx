@@ -7,7 +7,17 @@ import { motion } from 'framer-motion';
 import { Calendar, User, ShieldCheck, Zap, ArrowRight, Share2, Facebook, Twitter, Linkedin } from 'lucide-react';
 import Link from 'next/link';
 
+import { supabase } from '@/lib/supabase';
+
 export default function NewsDetailPage() {
+  // Auth Isolation: Ensure this page never redirects to portal
+  React.useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+       // Just listen, do not redirect
+       console.log("[News] Auth event ignored to stay on public page:", event);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
       <Header />
