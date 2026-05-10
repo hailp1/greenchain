@@ -126,36 +126,33 @@ const Header = () => {
 
         {/* Action Area (Wallet & Profile) - Visible on all screens */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Wallet & Balance - Visible for Google OR Web3 users */}
-          {(user || (mounted && web3.isConnected)) && (
-            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-right-4 duration-500">
+          {/* Wallet Balance Pill - shows when wallet is connected */}
+          {mounted && web3.isConnected && address && (
+            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md">
               <div className="flex flex-col items-end">
                   <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
                   <span className="text-[10px] md:text-xs font-black text-emerald-600">
-                    {mounted ? (
-                      address && web3.fwdBalance !== "0.00" 
-                        ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) 
-                        : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})
-                    ) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
+                    {Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} <span className="text-[8px] opacity-60">AGRI</span>
                   </span>
-                  {mounted && address && (
-                    <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(web3.balance).toFixed(4)}</span>
-                  )}
+                  <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(web3.balance).toFixed(4)}</span>
               </div>
-              <button 
-                onClick={connect}
-                disabled={isConnecting}
-                className="flex items-center gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all shrink-0 active:scale-95"
-              >
-                <Wallet size={12} className="text-emerald-500" />
-                <span className="hidden sm:inline-block">
-                  {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? '...' : 'CONNECT')) : '...'}
-                </span>
-              </button>
+              <div className="px-2 md:px-3 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-500">
+                <span className="hidden sm:inline">{address.slice(0, 4)}...{address.slice(-4)}</span>
+                <Wallet size={12} className="text-emerald-500 sm:hidden" />
+              </div>
             </div>
           )}
 
-          {/* Profile/Auth Area */}
+          {/* Google user balance (no wallet connected) */}
+          {user && !web3.isConnected && Number(fwdBalance) > 0 && (
+            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full px-4 py-2 gap-2 shadow-sm">
+              <span className="text-[10px] font-black text-emerald-600">
+                {Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} <span className="text-[8px] opacity-60">AGRI</span>
+              </span>
+            </div>
+          )}
+
+          {/* Profile/Auth Area — Google user takes priority */}
           {user ? (
             <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
               <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
@@ -166,7 +163,7 @@ const Header = () => {
                  )}
               </div>
               <div className="hidden lg:flex flex-col">
-                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop()}</span>
+                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{user.user_metadata?.full_name?.split(' ').pop() || 'Account'}</span>
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Portal</span>
               </div>
             </Link>
@@ -176,12 +173,15 @@ const Header = () => {
                  <Wallet size={16} className="text-emerald-600" />
               </div>
               <div className="hidden lg:flex flex-col">
-                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Wallet</span>
+                <span className="text-[10px] font-black text-slate-900 uppercase leading-none">Portal</span>
+                <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Connected</span>
               </div>
             </Link>
           ) : (
-            <Link href="/signin" className="hidden sm:block text-[10px] font-black text-slate-500 hover:text-emerald-600 uppercase tracking-widest px-2 transition-colors">Sign In</Link>
+            <Link href="/signin" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">
+              <User size={14} />
+              Sign In
+            </Link>
           )}
 
           {/* Mobile Toggle */}
