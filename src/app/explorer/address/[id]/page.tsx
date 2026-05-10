@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
-  Copy, ChevronDown, CheckCircle2, Info, FileText, ArrowRight, Globe, Database
+  Copy, ChevronDown, CheckCircle2, Info, FileText, ArrowRight, Globe, Database, ShieldCheck
 } from 'lucide-react';
 import Link from 'next/link';
 import { ethers } from 'ethers';
