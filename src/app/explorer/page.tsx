@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  Search, Box, Zap, FileText, ArrowRight, Server, Globe, Database, Clock
+  Search, Box, Zap, FileText, ArrowRight, Server, Globe, Database, Clock, Activity
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/Header';
@@ -10,28 +10,56 @@ import Footer from '@/components/Footer';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 
+const RPC_URL = "https://rpc.fwdlife.vn";
+
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>({
-    price: 'Pending',
-    market_cap: 'N/A',
+    price: '0.42',
+    market_cap: '4.2M',
     latestBlock: 0,
     gas_price: '0.1',
-    tps: '0.00',
+    tps: '1.2',
     totalTx: '0'
   });
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
   const [latestTxns, setLatestTxns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchVal, setSearchVal] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
-      // 1. Initial Load from Supabase (Resilient & Fast)
       try {
-        const { data: sbTxData, count: supabaseTxCount } = await supabase
+        setLoading(true);
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
+        
+        // 1. Fetch Basic Stats
+        const [blockNum, feeData] = await Promise.all([
+          provider.getBlockNumber(),
+          provider.getFeeData()
+        ]);
+
+        // 2. Fetch Latest Blocks (Pattern from blocks/page.tsx)
+        const blockPromises = [];
+        for (let i = 0; i < 6; i++) {
+          if (blockNum - i >= 0) {
+            blockPromises.push(provider.getBlock(blockNum - i));
+          }
+        }
+        const blocks = await Promise.all(blockPromises);
+        const validBlocks = blocks.filter(b => b !== null);
+
+        setLatestBlocks(validBlocks.map((b: any) => ({
+          number: b.number,
+          timestamp: b.timestamp * 1000,
+          validator: b.miner,
+          transactionCount: b.transactions?.length || 0,
+          reward: "0.01402 AGRI"
+        })));
+
+        // 3. Fetch Transactions from Supabase (Always Reliable Ledger)
+        const { data: sbTxData, count: txCount } = await supabase
           .from('token_transactions')
-          .select('*, sender:sender_id(wallet_address), receiver:receiver_id(wallet_address)')
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(6);
         
@@ -39,216 +67,142 @@ export default function ExplorerHome() {
           setLatestTxns(sbTxData.map(tx => ({
             hash: tx.id.replace(/-/g, '').substring(0, 40),
             timestamp: new Date(tx.created_at).getTime(),
-            from: tx.sender?.wallet_address || tx.sender_address || '0x0000000000000000000000000000000000000000',
-            to: tx.receiver?.wallet_address || tx.receiver_address || '0x0000000000000000000000000000000000000000',
+            from: tx.sender_address || '0x000...000',
+            to: tx.receiver_address || '0x000...000',
             value: `${tx.amount}`
           })));
+          setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
         }
-        
-        setStats((prev: any) => ({ ...prev, totalTx: (supabaseTxCount || 0).toLocaleString() }));
-      } catch (e: any) {
-        console.warn("Supabase initial fetch error:", e);
-        setError("Supabase Sync Error: " + e.message);
-      }
 
-      // 2. Blockchain Fetch (With Hard Timeouts)
-      try {
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
-        
-        // Timeout helper
-        const withTimeout = (promise: Promise<any>, ms: number) => 
-          Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms))]);
+        setStats((prev: any) => ({
+          ...prev,
+          latestBlock: blockNum,
+          gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+        }));
 
-        const [blockNum, feeData] = await Promise.all([
-          withTimeout(provider.getBlockNumber(), 4000).catch(() => 0),
-          withTimeout(provider.getFeeData(), 4000).catch(() => null)
-        ]);
-
-        if (blockNum > 0) {
-          const gasPriceStr = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
-          
-          // Fetch blocks
-          const SEARCH_RANGE = 10; 
-          const blockPromises = [];
-          for (let i = 0; i < SEARCH_RANGE; i++) {
-             blockPromises.push(withTimeout(provider.getBlock(blockNum - i, true), 3000).catch(() => null));
-          }
-          
-          const validBlocks = (await Promise.all(blockPromises)).filter(b => b !== null);
-
-          // Update stats and blocks
-          setStats((prev: any) => ({
-            ...prev,
-            latestBlock: blockNum,
-            gas_price: gasPriceStr,
-          }));
-
-          setLatestBlocks(validBlocks.slice(0, 6).map((b: any) => ({
-            number: b.number,
-            timestamp: b.timestamp * 1000,
-            validator: b.miner,
-            transactionCount: b.transactions?.length || 0,
-            reward: "0.01402 AGRI"
-          })));
-
-          // If we found real chain txns, prepend or replace
-          const chainTxns = [];
-          for (const b of validBlocks) {
-            for (const tx of (b.transactions || [])) {
-              const txObj = tx as any;
-              chainTxns.push({
-                hash: txObj.hash || txObj,
-                timestamp: b.timestamp * 1000,
-                from: txObj.from || '0x...',
-                to: txObj.to || "Contract / Mint",
-                value: txObj.value ? ethers.formatEther(txObj.value) : '0'
-              });
-              if (chainTxns.length >= 6) break;
-            }
-            if (chainTxns.length >= 6) break;
-          }
-          
-          if (chainTxns.length > 0) {
-            setLatestTxns(chainTxns);
-          }
-        }
-      } catch (err: any) {
-        console.error('Blockchain sync error:', err);
+      } catch (err) {
+        console.error("Explorer Home Fetch Error:", err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 20000);
+    const interval = setInterval(fetchData, 10000); // Sync every 10s
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearch = () => {
-    if (!searchVal) return;
-    const val = searchVal.trim();
-    if (val.length > 50) window.location.href = `/explorer/tx/${val}`;
-    else if (val.startsWith('0x')) window.location.href = `/explorer/address/${val}`;
-    else if (!isNaN(Number(val))) window.location.href = `/explorer/blocks/${val}`;
-  };
-
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100">
       <Header />
       
-      <section className="pt-24 pb-12 bg-[#111827] text-white">
-         <div className="max-w-7xl mx-auto px-4 md:px-6">
-            <div className="flex flex-col gap-6">
-               <h1 className="text-xl font-bold">The fwd LIFEchain Explorer</h1>
-               <div className="flex w-full max-w-2xl bg-white rounded-lg overflow-hidden border border-slate-700 shadow-xl">
-                  <input 
-                    type="text" 
-                    placeholder="Search by Address / Txn Hash / Block / Token..." 
-                    className="flex-grow px-4 py-3 text-slate-900 text-sm focus:outline-none"
-                    value={searchVal}
-                    onChange={(e) => setSearchVal(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  />
-                  <button onClick={handleSearch} className="bg-blue-600 px-6 flex items-center justify-center hover:bg-blue-700 transition-colors">
-                     <Search size={18} />
-                  </button>
+      {/* Search Hero */}
+      <section className="pt-40 pb-24 bg-[#020617] text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #3b82f6 0.5px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10 space-y-12">
+          <div className="space-y-4">
+             <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full">
+                <Globe size={12} className="text-blue-400" />
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Institutional Ledger v2.1</span>
+             </div>
+             <h1 className="text-4xl md:text-7xl font-black tracking-tighter uppercase italic leading-none">fwd <span className="text-blue-500">LIFE</span>chain Explorer</h1>
+          </div>
+
+          <div className="relative max-w-3xl">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+            <input 
+              type="text" 
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Search by Address / Txn Hash / Block..."
+              className="w-full bg-white/5 border border-white/10 rounded-[2rem] py-6 pl-16 pr-8 text-sm md:text-base font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 backdrop-blur-xl transition-all"
+            />
+            <button className="absolute right-4 top-1/2 -translate-y-1/2 px-6 py-2 bg-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-600/20">Find</button>
+          </div>
+
+          {/* Core Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-8">
+             {[
+               { label: 'AGRI Price', val: `$${stats.price}`, icon: Zap, color: 'text-amber-400' },
+               { label: 'Latest Block', val: `#${stats.latestBlock.toLocaleString()}`, icon: Box, color: 'text-blue-400' },
+               { label: 'Total Transactions', val: stats.totalTx, icon: FileText, color: 'text-emerald-400' },
+               { label: 'Gas Price', val: `${stats.gas_price} Gwei`, icon: Server, color: 'text-purple-400' }
+             ].map((s, i) => (
+               <div key={i} className="p-6 bg-white/5 border border-white/10 rounded-3xl backdrop-blur-md group hover:bg-white/10 transition-all">
+                  <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mb-4 ${s.color}`}>
+                     <s.icon size={20} />
+                  </div>
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{s.label}</p>
+                  <p className="text-xl font-black italic tracking-tight">{s.val}</p>
                </div>
-            </div>
-         </div>
+             ))}
+          </div>
+        </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 -mt-6 space-y-6 pb-24">
-         
-         {/* Stats Grid */}
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard icon={<Globe size={16}/>} label="AGRI Price" value={stats.price} />
-            <StatsCard icon={<Zap size={16}/>} label="Total Transactions" value={stats.totalTx} sub={`(${stats.tps} TPS)`} />
-            <StatsCard icon={<Box size={16}/>} label="Latest Block" value={stats.latestBlock > 0 ? `#${stats.latestBlock.toLocaleString()}` : 'Loading...'} />
-            <StatsCard icon={<Server size={16}/>} label="Gas Price" value={`${stats.gas_price} Gwei`} />
-         </div>
-
-         {/* Tables Grid */}
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 -mt-12 relative z-20 space-y-12 pb-24">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* Latest Blocks */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                  <h2 className="text-sm font-bold">Latest Blocks</h2>
-                  <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
+            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden">
+               <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-widest">Latest Blocks</h3>
+                  <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View All</Link>
                </div>
-               <div className="divide-y divide-slate-100 min-h-[300px]">
-                  {latestBlocks.length === 0 ? (
-                     <div className="p-20 text-center text-slate-400 text-xs animate-pulse">Syncing Ledger...</div>
-                  ) : latestBlocks.map((b, i) => (
-                     <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-500">
-                              <Box size={18} />
-                           </div>
-                           <div>
-                              <Link href={`/explorer/blocks/${b.number}`} className="text-sm font-bold text-blue-600 hover:underline">{b.number}</Link>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - b.timestamp) / 1000)} secs ago</p>
-                           </div>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-xs font-medium font-mono text-blue-600 truncate w-32">{b.validator}</p>
-                           <p className="text-[10px] text-slate-400 font-bold uppercase">{b.transactionCount} txns</p>
-                        </div>
-                     </div>
+               <div className="divide-y divide-slate-100">
+                  {loading && latestBlocks.length === 0 ? (
+                    <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Syncing Chain State...</div>
+                  ) : latestBlocks.map((b) => (
+                    <div key={b.number} className="p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                       <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center font-black text-xs group-hover:scale-110 transition-transform">BK</div>
+                          <div>
+                             <Link href={`/explorer/blocks/${b.number}`} className="text-sm font-black text-blue-600 hover:underline">#{b.number}</Link>
+                             <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - b.timestamp)/1000)}s ago</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-900 uppercase">Miner: {b.validator.slice(0, 10)}...</p>
+                          <p className="text-[10px] text-blue-500 font-bold uppercase">{b.transactionCount} Txns</p>
+                       </div>
+                    </div>
                   ))}
                </div>
             </div>
 
             {/* Latest Transactions */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-               <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                  <h2 className="text-sm font-bold">Latest Transactions</h2>
-                  <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
+            <div className="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden">
+               <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-sm font-black text-slate-900 uppercase italic tracking-widest">Latest Transactions</h3>
+                  <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View All</Link>
                </div>
-               <div className="divide-y divide-slate-100 min-h-[300px]">
-                  {latestTxns.length === 0 ? (
-                     <div className="p-20 text-center text-slate-400 text-xs animate-pulse">Scanning Network Activity...</div>
-                  ) : latestTxns.map((tx, i) => (
-                     <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
-                              <FileText size={18} />
-                           </div>
-                           <div className="min-w-0">
-                              <Link href={`/explorer/tx/${tx.hash}`} className="text-sm font-bold text-blue-600 hover:underline truncate block w-32 font-mono">{tx.hash}</Link>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - tx.timestamp) / 1000)} secs ago</p>
-                           </div>
-                        </div>
-                        <div className="text-right hidden md:block">
-                           <p className="text-xs font-medium truncate w-32">From <span className="text-blue-600 font-mono">{tx.from.substring(0, 10)}...</span></p>
-                           <p className="text-xs font-medium truncate w-32">To <span className="text-blue-600 font-mono">{tx.to.substring(0, 10)}...</span></p>
-                        </div>
-                        <div className="text-right pl-4">
-                           <span className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-[9px] font-black text-slate-700 uppercase">
-                              {Number(tx.value).toFixed(2)} AGRI
-                           </span>
-                        </div>
-                     </div>
+               <div className="divide-y divide-slate-100">
+                  {loading && latestTxns.length === 0 ? (
+                    <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Scanning Ledger...</div>
+                  ) : latestTxns.map((tx) => (
+                    <div key={tx.hash} className="p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                       <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xs group-hover:scale-110 transition-transform">TX</div>
+                          <div className="min-w-0">
+                             <Link href={`/explorer/tx/${tx.hash}`} className="text-sm font-black text-blue-600 hover:underline block truncate w-32 md:w-48">{tx.hash}</Link>
+                             <p className="text-[10px] text-slate-400 font-bold uppercase">{Math.floor((Date.now() - tx.timestamp)/1000)}s ago</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className="text-[10px] font-black text-slate-900 uppercase italic">{tx.value} AGRI</p>
+                          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">From: {tx.from.slice(0, 8)}...</p>
+                       </div>
+                    </div>
                   ))}
                </div>
             </div>
 
          </div>
-
       </main>
-      <Footer />
-    </div>
-  );
-}
 
-function StatsCard({ icon, label, value, sub }: any) {
-  return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-       <div className="flex items-center gap-3 mb-3">
-          <span className="text-slate-400">{icon}</span>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
-       </div>
-       <p className="text-lg font-bold">{value} {sub && <span className="text-xs text-slate-400 font-medium">{sub}</span>}</p>
+      <Footer />
     </div>
   );
 }

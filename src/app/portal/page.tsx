@@ -659,14 +659,13 @@ export default function ProducerPortal() {
                  )}
               </div>
 
-              {!web3.isConnected ? (
+              {!web3.isConnected && (
                 <button 
                   onClick={() => web3.connect()}
                   className="px-3 md:px-6 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-600/20 shrink-0"
                 >
                    CONNECT
                 </button>
-              ) : (
               )}
 
                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
