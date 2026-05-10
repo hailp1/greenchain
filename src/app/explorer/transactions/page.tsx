@@ -53,27 +53,33 @@ export default function TransactionsPage() {
     const fetchData = async () => {
       if (isFetching.current) return;
       isFetching.current = true;
-      setSyncing(true);
+      if (mounted) setSyncing(true);
 
+      console.log("[TxPage] === Starting fetch cycle ===");
       let chainTxs: TxInfo[] = [];
       let platformTxs: TxInfo[] = [];
 
-      // ── Step 1: Fetch Supabase FIRST (most reliable data source) ──
+      // ── Step 1: Fetch Supabase FIRST (most reliable) ──
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 25000);
-
-        const { data: sbData, count, error: sbError } = await supabase
+        console.log("[TxPage] Step 1: Querying Supabase...");
+        
+        const supabasePromise = supabase
           .from('token_transactions')
           .select('*', { count: 'exact' })
           .order('created_at', { ascending: false })
-          .limit(50)
-          .abortSignal(controller.signal);
+          .limit(50);
 
-        clearTimeout(timeout);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Supabase timeout (25s)')), 25000)
+        );
 
-        if (!sbError && sbData && sbData.length > 0) {
-          console.log("[TxPage] Supabase OK:", sbData.length, "rows");
+        const result = await Promise.race([supabasePromise, timeoutPromise]) as any;
+        const { data: sbData, count, error: sbError } = result;
+
+        if (sbError) {
+          console.warn("[TxPage] Supabase error:", sbError.message);
+        } else if (sbData && sbData.length > 0) {
+          console.log("[TxPage] Supabase OK:", sbData.length, "rows, total:", count);
           if (mounted) {
             setSupabaseOnline(true);
             setTxCount(count || sbData.length);
@@ -95,15 +101,17 @@ export default function TransactionsPage() {
               return null;
             }
           }).filter((tx: any): tx is TxInfo => tx !== null);
+          console.log("[TxPage] Platform txs mapped:", platformTxs.length);
         } else {
-          console.warn("[TxPage] Supabase returned empty or error:", sbError?.message);
+          console.log("[TxPage] Supabase returned 0 rows");
         }
       } catch (e: any) {
-        console.warn("[TxPage] Supabase fetch failed:", e.message);
+        console.warn("[TxPage] Supabase failed:", e.message);
       }
 
-      // ── Step 2: Fetch Blockchain (secondary, often empty on quiet networks) ──
+      // ── Step 2: Fetch Blockchain ──
       try {
+        console.log("[TxPage] Step 2: Querying RPC...");
         const provider = new ethers.JsonRpcProvider(RPC_URL);
         const blockNum = await provider.getBlockNumber();
         if (mounted) {
@@ -112,9 +120,8 @@ export default function TransactionsPage() {
         }
         console.log("[TxPage] RPC block:", blockNum);
 
-        // Scan last 20 blocks (lightweight)
         const blockPromises = [];
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 15; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
           }
@@ -134,13 +141,13 @@ export default function TransactionsPage() {
               value: txObj.value ? ethers.formatEther(txObj.value) : '0',
               type: txObj.to ? 'Transfer' : 'Contract',
             });
-            if (chainTxs.length >= 15) break;
+            if (chainTxs.length >= 10) break;
           }
-          if (chainTxs.length >= 15) break;
+          if (chainTxs.length >= 10) break;
         }
         console.log("[TxPage] Chain txs found:", chainTxs.length);
       } catch (e: any) {
-        console.warn("[TxPage] RPC fetch failed:", e.message);
+        console.warn("[TxPage] RPC failed:", e.message);
         if (mounted) setRpcOnline(false);
       }
 
@@ -155,14 +162,10 @@ export default function TransactionsPage() {
       });
       const sorted = unique.sort((a, b) => b.timestamp - a.timestamp).slice(0, 50);
 
-      console.log("[TxPage] Final merge:", sorted.length, "transactions");
+      console.log("[TxPage] Final result:", sorted.length, "unique transactions");
 
       if (mounted) {
-        // Only update if we have data, otherwise keep what we had
-        setTransactions(prev => {
-          if (sorted.length > 0) return sorted;
-          return prev;
-        });
+        setTransactions(prev => sorted.length > 0 ? sorted : prev);
         setInitialLoad(false);
         setSyncing(false);
       }
@@ -206,7 +209,7 @@ export default function TransactionsPage() {
                
                <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
-                     <div className={`w-2 h-2 rounded-full ${rpcOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                     <div className={`w-2 h-2 rounded-full ${rpcOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500 animate-pulse'}`}></div>
                      <span className="text-sm font-black italic uppercase">{rpcOnline ? 'GETH POA LIVE' : 'CONNECTING...'}</span>
                   </div>
                   {blockHeight > 0 && (
@@ -253,7 +256,7 @@ export default function TransactionsPage() {
                </div>
                <div className="flex items-center gap-3">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest hidden md:block">
-                     {transactions.length > 0 ? `${transactions.length} records` : 'Loading...'}
+                     {transactions.length > 0 ? `${transactions.length} records` : initialLoad ? 'Loading...' : 'No data'}
                   </span>
                   <button 
                      onClick={() => window.location.reload()} 

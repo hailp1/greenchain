@@ -59,19 +59,19 @@ export default function ExplorerHome() {
           })));
         }
 
-        // Supabase fetch with 20s timeout
+        // Supabase fetch with 20s timeout (Promise.race pattern)
         try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 20000);
-
-          const { data: sbTxData, count: txCount, error: sbError } = await supabase
+          const sbPromise = supabase
             .from('token_transactions')
             .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
-            .limit(6)
-            .abortSignal(controller.signal);
+            .limit(6);
 
-          clearTimeout(timeout);
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Explorer Supabase timeout')), 20000)
+          );
+
+          const { data: sbTxData, count: txCount, error: sbError } = await Promise.race([sbPromise, timeoutPromise]) as any;
 
           if (!sbError && sbTxData && mounted) {
             const txs = sbTxData.map((tx: any) => ({
