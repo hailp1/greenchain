@@ -199,118 +199,123 @@ export default function ProducerPortal() {
       fetchBalance();
     }
   }, [web3.isConnected, web3.address]);
+  }, [web3.isConnected, web3.address, fetchBalance]);
 
   useEffect(() => {
     fetchBalance();
-  }, [walletAddress, user]);
+  }, [walletAddress, user, fetchBalance]);
 
   useEffect(() => {
     if (!authLoading) setMounted(true);
   }, [authLoading]);
 
-  useEffect(() => {
-    const fetchEntityData = async () => {
-      // 1. Priority: Logged in user (Supabase Auth)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: entity } = await supabase
-          .from('entities')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        
-        if (entity) {
-          // AUTO-LINK Wallet: If logged in but wallet is 'pending', link current MetaMask address
-          if (entity.wallet_address?.startsWith('pending_') && web3.isConnected && web3.address) {
-             console.log("[Portal] Activating wallet for user:", web3.address);
-             const { data: updated } = await supabase
-               .from('entities')
-               .update({ wallet_address: web3.address.toLowerCase() })
-               .eq('id', entity.id)
-               .select()
-               .single();
-             if (updated) {
-                setCurrentEntity(updated);
-                setWalletAddress(web3.address);
-                fetchBalance();
-                return;
-             }
-          }
-          
-          setCurrentEntity(entity);
-          if (entity.wallet_address && !entity.wallet_address.startsWith('pending_')) {
-            setWalletAddress(entity.wallet_address);
-          }
-          fetchBalance();
-          return;
-        }
-      }
-
-      // 2. Secondary: Connected Wallet (MetaMask/Guest)
-      if (!web3.isConnected || !web3.address) return;
-      const addr = web3.address.toLowerCase();
-      
-      const { data: existingEntity } = await supabase
+  // ─── Data Fetching Functions ──────────────────────────────────
+  const fetchEntityData = useCallback(async () => {
+    // 1. Priority: Logged in user (Supabase Auth)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data: entity } = await supabase
         .from('entities')
         .select('*')
-        .ilike('wallet_address', addr)
+        .eq('id', session.user.id)
         .maybeSingle();
       
-      if (existingEntity) {
-        setCurrentEntity(existingEntity);
-        setWalletAddress(addr);
-        fetchBalance();
-      } else {
-        // AUTO-CREATE Entity for new wallet connections (Guest Mode)
-        const { data: newEntity } = await supabase
-          .from('entities')
-          .insert([{
-            name: `Guest ${addr.substring(0, 6)}`,
-            wallet_address: addr,
-            role: 'FARM',
-            reputation_score: 50,
-            fwd_balance: 0
-          }])
-          .select()
-          .maybeSingle();
-        
-        if (newEntity) {
-          setCurrentEntity(newEntity);
-          setWalletAddress(addr);
+      if (entity) {
+        // AUTO-LINK Wallet: If logged in but wallet is 'pending', link current MetaMask address
+        if (entity.wallet_address?.startsWith('pending_') && web3.isConnected && web3.address) {
+           console.log("[Portal] Activating wallet for user:", web3.address);
+           const { data: updated } = await supabase
+             .from('entities')
+             .update({ wallet_address: web3.address.toLowerCase() })
+             .eq('id', entity.id)
+             .select()
+             .single();
+           if (updated) {
+              setCurrentEntity(updated);
+              setWalletAddress(web3.address);
+              fetchBalance();
+              return;
+           }
         }
+        
+        setCurrentEntity(entity);
+        if (entity.wallet_address && !entity.wallet_address.startsWith('pending_')) {
+          setWalletAddress(entity.wallet_address);
+        }
+        fetchBalance();
+        return;
       }
-    };
-    fetchEntityData();
-  }, [walletAddress, user, web3.isConnected, web3.address]);
+    }
+
+    // 2. Secondary: Connected Wallet (MetaMask/Guest)
+    if (!web3.isConnected || !web3.address) return;
+    const addr = web3.address.toLowerCase();
+    
+    const { data: existingEntity } = await supabase
+      .from('entities')
+      .select('*')
+      .ilike('wallet_address', addr)
+      .maybeSingle();
+    
+    if (existingEntity) {
+      setCurrentEntity(existingEntity);
+      setWalletAddress(addr);
+      fetchBalance();
+    } else {
+      // AUTO-CREATE Entity for new wallet connections (Guest Mode)
+      const { data: newEntity } = await supabase
+        .from('entities')
+        .insert([{
+          name: `Guest ${addr.substring(0, 6)}`,
+          wallet_address: addr,
+          role: 'FARM',
+          reputation_score: 50,
+          fwd_balance: 0
+        }])
+        .select()
+        .maybeSingle();
+      
+      if (newEntity) {
+        setCurrentEntity(newEntity);
+        setWalletAddress(addr);
+      }
+    }
+  }, [web3.isConnected, web3.address, fetchBalance]);
+
+  const fetchPortalData = useCallback(async () => {
+    if (!currentEntity) return;
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('batches')
+        .select('*, blockchain_ledger(tx_hash)')
+        .eq('entity_id', currentEntity.id)
+        .order('timestamp', { ascending: false });
+
+      if (error) throw error;
+      setBatches(data || []);
+      
+      const { data: txData } = await supabase
+        .from('token_transactions')
+        .select('*')
+        .or(`sender_id.eq.${currentEntity.id},receiver_id.eq.${currentEntity.id}`)
+        .order('created_at', { ascending: false });
+      
+      setTransactions(txData || []);
+    } catch (err: any) {
+      console.error("[Portal] Fetch error:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentEntity]);
 
   useEffect(() => {
-    const fetchPortalData = async () => {
-      if (!currentEntity) return;
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('batches')
-          .select('*, blockchain_ledger(tx_hash)')
-          .eq('entity_id', currentEntity.id)
-          .order('timestamp', { ascending: false });
+    fetchEntityData();
+  }, [fetchEntityData]);
 
-        if (error) throw error;
-        setBatches(data || []);
-
-        const { data: txData } = await supabase
-          .from('token_transactions')
-          .select('*')
-          .or(`sender_id.eq.${currentEntity.id},receiver_id.eq.${currentEntity.id}`)
-          .order('created_at', { ascending: false });
-        setTransactions(txData || []);
-      } catch (err) {
-        console.error('Portal data error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
     fetchPortalData();
-  }, [currentEntity]);
+  }, [fetchPortalData]);
 
   const handleTransfer = async () => {
     if (!recipientWallet || !transferAmount) return;

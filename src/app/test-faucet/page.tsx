@@ -1,240 +1,138 @@
 'use client';
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { ethers } from 'ethers';
-import { FWD_TOKEN_ADDRESS, FWD_STAKING_ADDRESS, FWD_ANCHOR_ADDRESS } from '@/lib/contracts/config';
-import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
+import { 
+  Zap, Box, Search, RefreshCw, ShieldCheck, Database, ArrowRight
+} from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
-export default function DebugDashboard() {
-  const [address, setAddress] = useState('0x9f51163eCAF618ca4d1977fF71C962AeaaF43ee5');
-  const [rpcStatus, setRpcStatus] = useState<'testing' | 'online' | 'offline'>('testing');
-  const [contractStatus, setContractStatus] = useState<Record<string, boolean>>({});
-  const [walletInfo, setWalletInfo] = useState<any>(null);
-  const [faucetLogs, setFaucetLogs] = useState<string[]>([]);
+const RPC_URL = 'https://rpc.fwdlife.vn';
+
+export default function TestFaucet() {
   const [loading, setLoading] = useState(false);
-  const [tokenImageUrl, setTokenImageUrl] = useState('https://cdn-icons-png.flaticon.com/512/188/188333.png');
+  const [target, setTarget] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // 1. Kiểm tra kết nối RPC
-  const checkRPC = async () => {
-    try {
-      const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-      const network = await provider.getNetwork();
-      setRpcStatus('online');
-      return network;
-    } catch (err) {
-      setRpcStatus('offline');
-      return null;
-    }
-  };
-
-  // 2. Kiểm tra các hợp đồng
-  const checkContracts = async () => {
-    const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-    const status: Record<string, boolean> = {};
-    const contracts = [
-      { name: 'Token', addr: FWD_TOKEN_ADDRESS },
-      { name: 'Staking', addr: FWD_STAKING_ADDRESS },
-      { name: 'Anchor', addr: FWD_ANCHOR_ADDRESS }
-    ];
-
-    for (const c of contracts) {
-      try {
-        const code = await provider.getCode(c.addr);
-        status[c.name] = code !== '0x';
-      } catch {
-        status[c.name] = false;
-      }
-    }
-    setContractStatus(status);
-  };
-
-  // 3. Gọi Faucet
-  const runFaucet = async () => {
+  const checkData = async () => {
     setLoading(true);
-    const timestamp = new Date().toLocaleTimeString();
+    setError(null);
+    setResult(null);
+    
     try {
-      const res = await fetch('/api/faucet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setFaucetLogs(prev => [`[${timestamp}] ✅ Thành công: ${data.txHash.slice(0, 20)}...`, ...prev]);
+      const provider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
+      
+      let data: any = null;
+      if (target.startsWith('0x') && target.length > 42) {
+        // Transaction Hash
+        data = await provider.getTransaction(target);
+      } else if (!isNaN(Number(target))) {
+        // Block Number
+        data = await provider.getBlock(Number(target), true);
       } else {
-        setFaucetLogs(prev => [`[${timestamp}] ❌ Lỗi: ${data.error}`, ...prev]);
+        // Current Stats
+        const blockNum = await provider.getBlockNumber();
+        const fee = await provider.getFeeData();
+        data = { latestBlock: blockNum, gasPrice: ethers.formatUnits(fee.gasPrice || 0, 'gwei') };
       }
+
+      if (!data) throw new Error("No data found for the given target.");
+      setResult(data);
     } catch (err: any) {
-      setFaucetLogs(prev => [`[${timestamp}] ❌ Lỗi kết nối API`, ...prev]);
+      console.error(err);
+      setError(err.message || "Failed to fetch data from RPC.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 4. Thêm Token vào Ví
-  const addTokenToWallet = async () => {
-    if (!window.ethereum) return;
-    const timestamp = new Date().toLocaleTimeString();
-    try {
-      await window.ethereum.request({
-        method: 'wallet_watchAsset',
-        params: {
-          type: 'ERC20',
-          options: {
-            address: FWD_TOKEN_ADDRESS,
-            symbol: 'AGRI',
-            decimals: 18,
-            image: tokenImageUrl,
-          },
-        } as any,
-      });
-      setFaucetLogs(prev => [`[${timestamp}] ✅ Đã gửi yêu cầu thêm Token AGRI vào ví`, ...prev]);
-    } catch (err: any) {
-      setFaucetLogs(prev => [`[${timestamp}] ❌ Lỗi thêm token: ${err.message}`, ...prev]);
-    }
-  };
-
-  useEffect(() => {
-    checkRPC();
-    checkContracts();
-  }, []);
-
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white p-8 font-sans">
-      <div className="max-w-4xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-black bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-            FWD SYSTEM DIAGNOSTICS
-          </h1>
-          <p className="text-slate-400">Trung tâm kiểm soát và chẩn đoán hạ tầng Blockchain</p>
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
+      <Header />
+      
+      <main className="max-w-4xl mx-auto px-6 pt-40 pb-24 space-y-12">
+        <div className="text-center space-y-4">
+           <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full">
+              <Zap size={12} className="text-amber-600" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Advanced Diagnostic Tool</span>
+           </div>
+           <h1 className="text-5xl font-black tracking-tighter uppercase italic">Test <span className="text-blue-600">Faucet</span> & Diagnostic</h1>
+           <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Verify raw blockchain data directly from Geth Node</p>
         </div>
 
+        <div className="bg-white p-8 md:p-12 rounded-[3rem] border border-slate-200 shadow-2xl space-y-8">
+           <div className="flex flex-col gap-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Block Number / Tx Hash (Leave empty for latest stats)</label>
+              <div className="flex gap-4">
+                 <input 
+                   type="text" 
+                   value={target}
+                   onChange={(e) => setTarget(e.target.value)}
+                   placeholder="e.g. 18240 or 0x..."
+                   className="flex-grow p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-mono font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                 />
+                 <button 
+                   onClick={checkData}
+                   disabled={loading}
+                   className="px-8 bg-blue-600 text-white rounded-2xl font-black uppercase italic hover:bg-blue-700 transition-all flex items-center gap-3 shadow-xl shadow-blue-600/20"
+                 >
+                   {loading ? <RefreshCw className="animate-spin" size={18} /> : <Search size={18} />}
+                   Check
+                 </button>
+              </div>
+           </div>
+
+           {error && (
+             <div className="p-6 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold uppercase flex items-center gap-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center shrink-0">!</div>
+                {error}
+             </div>
+           )}
+
+           {result && (
+             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between">
+                   <h3 className="text-sm font-black text-slate-900 uppercase">Raw Result Data</h3>
+                   <span className="text-[10px] font-black text-emerald-500 uppercase">OK - Data Received</span>
+                </div>
+                <div className="p-6 bg-slate-950 rounded-2xl border border-white/10 overflow-auto max-h-[500px]">
+                   <pre className="text-[11px] font-mono text-emerald-400 leading-relaxed">
+                      {JSON.stringify(result, (key, value) => 
+                        typeof value === 'bigint' ? value.toString() : value, 
+                      2)}
+                   </pre>
+                </div>
+             </div>
+           )}
+        </div>
+
+        {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {/* Infrastructure Card */}
-          <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-3xl space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Hạ tầng mạng: Geth PoA (Clique)
-            </h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5">
-                <div className="flex flex-col">
-                  <span className="font-bold">Public RPC Tunnel</span>
-                  <span className="text-[10px] text-slate-400">rpc.fwdlife.vn ➔ Port 8546</span>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs font-bold ${rpcStatus === 'online' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                  {rpcStatus.toUpperCase()}
-                </span>
+           <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm flex items-start gap-6">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
+                 <ShieldCheck size={24} />
               </div>
-              
-              {/* Validator Nodes */}
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5 space-y-2">
-                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Active Genesis Validators</p>
-                <div className="text-xs font-mono text-slate-300 space-y-1">
-                  <div className="flex justify-between"><span>[Node 1] Farm (RPC):</span><span className="text-emerald-400">0x6e10...685b</span></div>
-                  <div className="flex justify-between"><span>[Node 2] Auditor:</span><span className="text-emerald-400">0x3C46...7358</span></div>
-                  <div className="flex justify-between"><span>[Node 3] Retail:</span><span className="text-emerald-400">0xC064...E060</span></div>
-                </div>
+              <div className="space-y-2">
+                 <h4 className="text-xs font-black uppercase tracking-widest">PoA Validation</h4>
+                 <p className="text-[11px] text-slate-500 font-medium">Verify that blocks are being minted correctly by the authorized validator set on fwd LIFEchain.</p>
               </div>
-
-              <div className="space-y-2 pt-2">
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Trạng thái Hợp đồng</p>
-                {Object.entries(contractStatus).map(([name, active]) => (
-                  <div key={name} className="flex justify-between items-center p-2 border-b border-white/5">
-                    <span className="text-slate-300 font-mono text-xs">{name}: {name === 'Token' ? FWD_TOKEN_ADDRESS : name === 'Staking' ? FWD_STAKING_ADDRESS : FWD_ANCHOR_ADDRESS}</span>
-                    <span className={active ? 'text-emerald-400' : 'text-red-400'}>
-                      {active ? '● Active' : '○ Missing'}
-                    </span>
-                  </div>
-                ))}
+           </div>
+           <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm flex items-start gap-6">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
+                 <Database size={24} />
               </div>
-            </div>
-          </div>
-          {/* Faucet Card */}
-          <div className="bg-white/5 border border-white/10 backdrop-blur-xl p-6 rounded-3xl space-y-4">
-            <h2 className="text-xl font-bold flex items-center gap-2 text-emerald-400">
-              ⚡ Faucet Tức thì
-            </h2>
-            <div className="space-y-4">
-              <button 
-                onClick={async () => {
-                  if (!window.ethereum) return;
-                  try {
-                    await window.ethereum.request({
-                      method: 'wallet_addEthereumChain',
-                      params: [{
-                        chainId: '0x495C9',
-                        chainName: 'fwd LIFEchain (Official)',
-                        rpcUrls: ['https://rpc.fwdlife.vn'],
-                        nativeCurrency: { name: 'AGRI', symbol: 'AGRI', decimals: 18 },
-                        blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
-                      }],
-                    });
-                    alert('Đã sửa xong mạng! Bây giờ bạn hãy thử Stake lại.');
-                  } catch (err) {
-                    alert('Lỗi khi sửa mạng: ' + (err as any).message);
-                  }
-                }}
-                className="w-full bg-orange-500 hover:bg-orange-400 py-2 rounded-xl font-bold transition-all text-sm mb-2"
-              >
-                🛠 SỬA LỖI KẾT NỐI VÍ (QUAN TRỌNG)
-              </button>
-              <div className="space-y-1">
-                <label className="text-xs text-slate-500">ĐỊA CHỈ VÍ NHẬN AGRI</label>
-                <input 
-                  className="w-full bg-black/40 border border-white/10 p-3 rounded-xl font-mono text-sm focus:border-emerald-500 outline-none transition-all" 
-                  value={address} 
-                  onChange={e => setAddress(e.target.value)}
-                />
+              <div className="space-y-2">
+                 <h4 className="text-xs font-black uppercase tracking-widest">Direct RPC Access</h4>
+                 <p className="text-[11px] text-slate-500 font-medium">This tool bypasses all caching layers to provide a raw view of the current ledger state for debugging.</p>
               </div>
-              <button 
-                onClick={runFaucet}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 disabled:opacity-50 py-3 rounded-xl font-bold transition-all shadow-lg shadow-emerald-900/20"
-              >
-                {loading ? 'ĐANG XỬ LÝ GIAO DỊCH...' : 'MINT 1,000 AGRI NGAY'}
-              </button>
-
-              <div className="pt-4 border-t border-white/10 space-y-3">
-                <div className="space-y-1">
-                  <label className="text-xs text-slate-500">LOGO TOKEN (URL HÌNH ẢNH)</label>
-                  <div className="flex gap-2">
-                    <img src={tokenImageUrl} alt="Token Logo" className="w-10 h-10 rounded-full bg-white/10 p-1 object-cover" onError={(e) => (e.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/188/188333.png')} />
-                    <input 
-                      className="flex-1 bg-black/40 border border-white/10 p-2 rounded-xl font-mono text-xs focus:border-blue-500 outline-none transition-all" 
-                      value={tokenImageUrl} 
-                      onChange={e => setTokenImageUrl(e.target.value)}
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <button 
-                  onClick={addTokenToWallet}
-                  className="w-full bg-white/10 hover:bg-white/20 py-2 rounded-xl font-bold transition-all text-sm border border-white/20 flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">🦊</span> ĐĂNG KÝ TOKEN VÀO VÍ
-                </button>
-              </div>
-            </div>
-          </div>
+           </div>
         </div>
 
-        {/* Logs Card */}
-        <div className="bg-black/40 border border-white/10 p-6 rounded-3xl">
-          <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Lịch sử hệ thống</h2>
-          <div className="h-48 overflow-y-auto space-y-2 font-mono text-xs text-slate-400 pr-2 custom-scrollbar">
-            {faucetLogs.length === 0 && <p className="italic text-slate-600">Chưa có hoạt động nào được ghi nhận...</p>}
-            {faucetLogs.map((log, i) => (
-              <div key={i} className="p-2 bg-white/5 rounded border-l-2 border-blue-500">
-                {log}
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
+      </main>
+      
+      <Footer />
     </div>
   );
 }
