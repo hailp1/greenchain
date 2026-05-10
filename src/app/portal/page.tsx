@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Globe, ShieldCheck, Cpu, LayoutDashboard, PackagePlus, Settings, 
   Bell, LogOut, Search, MapPin, Activity, Thermometer, Droplets, 
