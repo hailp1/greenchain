@@ -10,6 +10,9 @@ import Footer from '@/components/Footer';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 
+// Persistent provider
+const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn", undefined, { staticNetwork: true });
+
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>(null);
   const [latestBlocks, setLatestBlocks] = useState<any[]>([]);
@@ -22,19 +25,25 @@ export default function ExplorerHome() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
         
-        // 1. Fetch Basic Network Stats
-        const [blockNum, feeData, { count: supabaseTxCount }] = await Promise.all([
+        // 1. Fetch Basic Network Stats & Supabase count in parallel
+        const results = await Promise.allSettled([
           provider.getBlockNumber(),
           provider.getFeeData(),
           supabase.from('token_transactions').select('*', { count: 'exact', head: true })
         ]);
         
-        const gasPriceStr = feeData.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
+        const blockNum = results[0].status === 'fulfilled' ? results[0].value : 0;
+        const feeData = results[1].status === 'fulfilled' ? results[1].value : null;
+        const supabaseRes = results[2].status === 'fulfilled' ? results[2].value : { count: 0 };
+        const supabaseTxCount = supabaseRes.count || 0;
 
-        // 2. Scan blocks for real-time activity
-        const SEARCH_RANGE = 40; 
+        if (blockNum === 0) throw new Error("Could not connect to fwd LIFEchain RPC");
+
+        const gasPriceStr = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
+
+        // 2. Scan a smaller range of blocks for real-time activity (faster)
+        const SEARCH_RANGE = 20; 
         const blockPromises = [];
         for (let i = 0; i < SEARCH_RANGE; i++) {
           if (blockNum - i >= 0) {
@@ -42,8 +51,11 @@ export default function ExplorerHome() {
           }
         }
         
-        const fetchedBlocks = await Promise.all(blockPromises);
-        const validBlocks = fetchedBlocks.filter(b => b !== null);
+        const fetchedBlocksResults = await Promise.allSettled(blockPromises);
+        const validBlocks = fetchedBlocksResults
+          .filter(r => r.status === 'fulfilled')
+          .map((r: any) => r.value)
+          .filter(b => b !== null);
 
         // 3. Calculate Real-time TPS
         let totalTxInScan = 0;
@@ -59,7 +71,7 @@ export default function ExplorerHome() {
           latestBlock: blockNum,
           gas_price: gasPriceStr,
           tps: realTps,
-          totalTx: (supabaseTxCount || 0).toLocaleString()
+          totalTx: supabaseTxCount.toLocaleString()
         });
 
         // 4. Format Latest Blocks
@@ -76,7 +88,6 @@ export default function ExplorerHome() {
         for (const b of validBlocks) {
           const blockTxs = b.transactions || [];
           for (const tx of blockTxs) {
-            // Handle both full transactions and hashes (casting for TS)
             const txObj = tx as any;
             txns.push({
               hash: txObj.hash || txObj,
@@ -99,6 +110,10 @@ export default function ExplorerHome() {
       }
     };
     fetchData();
+    
+    // Auto-refresh every 15 seconds
+    const interval = setInterval(fetchData, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSearch = () => {
@@ -113,7 +128,6 @@ export default function ExplorerHome() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
       <Header />
       
-      {/* Search & Hero Section (Standard Etherscan Style) */}
       <section className="pt-24 pb-12 bg-[#111827] text-white">
          <div className="max-w-7xl mx-auto px-4 md:px-6">
             <div className="flex flex-col gap-6">
@@ -179,7 +193,7 @@ export default function ExplorerHome() {
                   <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
                <div className="divide-y divide-slate-100">
-                  {loading ? (
+                  {loading && latestBlocks.length === 0 ? (
                      <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Syncing Ledger...</div>
                   ) : latestBlocks.map((b, i) => (
                      <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
@@ -208,12 +222,12 @@ export default function ExplorerHome() {
                   <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View all</Link>
                </div>
                <div className="divide-y divide-slate-100 min-h-[400px]">
-                  {loading ? (
+                  {loading && latestTxns.length === 0 ? (
                      <div className="p-8 text-center text-slate-400 text-xs animate-pulse">Scanning Network Activity...</div>
                   ) : latestTxns.length === 0 ? (
                      <div className="p-20 text-center flex flex-col items-center gap-4 opacity-30">
                         <Database size={32} />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No recent transactions found in last 40 blocks</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest">No recent transactions found in last 20 blocks</p>
                      </div>
                   ) : latestTxns.map((tx, i) => (
                      <div key={i} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
@@ -242,7 +256,6 @@ export default function ExplorerHome() {
 
          </div>
 
-         {/* Footer Note */}
          <div className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest px-2">
             <Database size={12} />
             Data provided by fwd LIFEchain RPC (Geth/PoA) & Supabase Indexer
