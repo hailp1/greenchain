@@ -19,7 +19,7 @@ export default function NewsIndexPage() {
   }, []);
   const news = [
     {
-      id: "so-hoa-niem-tin-nong-san-viet",
+      id: "chien-dich-01",
       title: "Số hóa niềm tin: Miễn phí 100% giải pháp Blockchain cho nông dân Việt Nam",
       excerpt: "Chiến dịch 'Nâng tầm nông sản Việt' chính thức khởi động, mang công nghệ ST-PoO đến với các HTX và hộ nông dân tiên phong...",
       date: "10/05/2026",

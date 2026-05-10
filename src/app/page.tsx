@@ -190,7 +190,7 @@ export default function Home() {
                 viewport={{ once: true }}
                 className="group cursor-pointer"
               >
-                 <Link href="/news/so-hoa-niem-tin-nong-san-viet">
+                 <Link href="/news/chien-dich-01">
                     <div className="space-y-8">
                        <div className="relative aspect-[16/9] overflow-hidden rounded-[3rem] shadow-2xl bg-slate-100">
                           <img 
