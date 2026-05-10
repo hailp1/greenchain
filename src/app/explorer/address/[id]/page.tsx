@@ -51,8 +51,35 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
     const entityRes = identResults[3].status === 'fulfilled' ? identResults[3].value : null;
 
     // Step 2: Transactions
-    let txData = [];
+    let txData: any[] = [];
+    let rpcTxns: any[] = [];
+
     try {
+      // 2a. Fetch from RPC (Latest 10 blocks)
+      const blockNum = await rpcProvider.getBlockNumber();
+      const blockPromises = [];
+      for (let i = 0; i < 10; i++) {
+        if (blockNum - i >= 0) {
+          blockPromises.push(rpcProvider.getBlock(blockNum - i, true).catch(() => null));
+        }
+      }
+      const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
+      rpcTxns = blocks.flatMap((b: any) => 
+        (b.transactions || []).filter((tx: any) => 
+          tx.from.toLowerCase() === addr || tx.to?.toLowerCase() === addr
+        ).map((tx: any) => ({
+          hash: tx.hash,
+          timestamp: new Date(b.timestamp * 1000).toLocaleString(),
+          age: Math.floor((Date.now() - b.timestamp * 1000) / 60000) + 'm ago',
+          from: tx.from,
+          to: tx.to,
+          value: ethers.formatEther(tx.value),
+          type: 'ON-CHAIN',
+          rawTimestamp: b.timestamp * 1000
+        }))
+      );
+
+      // 2b. Fetch from Supabase
       let txQuery = supabase
         .from('token_transactions')
         .select('*')
@@ -65,14 +92,7 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
         txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
       }
       const { data } = await txQuery;
-      txData = data || [];
-    } catch (e) {}
-
-    return {
-      nativeBalance: ethers.formatEther(nBal),
-      tokenBalance: ethers.formatEther(tBal),
-      isContract: code !== '0x' && code !== '0x0' && code !== '0x ',
-      transactions: txData.map((tx: any) => ({
+      txData = (data || []).map(tx => ({
         hash: tx.id.replace(/-/g, '').substring(0, 40),
         timestamp: new Date(tx.created_at).toLocaleString(),
         age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
@@ -80,7 +100,22 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
         to: tx.receiver_address || 'System',
         value: `${tx.amount}`,
         type: tx.type,
-      }))
+        rawTimestamp: new Date(tx.created_at).getTime()
+      }));
+    } catch (e) {
+      console.warn("[AddressPage] Tx fetch error:", e);
+    }
+
+    // Merge and sort by timestamp
+    const merged = [...rpcTxns, ...txData]
+      .sort((a, b) => b.rawTimestamp - a.rawTimestamp)
+      .slice(0, 50);
+
+    return {
+      nativeBalance: ethers.formatEther(nBal),
+      tokenBalance: ethers.formatEther(tBal),
+      isContract: code !== '0x' && code !== '0x0' && code !== '0x ',
+      transactions: merged
     };
   };
 
