@@ -192,6 +192,7 @@ export default function ProducerPortal() {
 
   useEffect(() => {
     const fetchEntityData = async () => {
+      // 1. Priority: Logged in user (Supabase Auth)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const { data } = await supabase
@@ -206,16 +207,36 @@ export default function ProducerPortal() {
         }
       }
 
+      // 2. Secondary: Connected Wallet (MetaMask/Guest)
       if (!walletAddress) return;
-      const { data } = await supabase
+      const { data: existingEntity } = await supabase
         .from('entities')
         .select('*')
         .ilike('wallet_address', walletAddress)
         .maybeSingle();
       
-      if (data) {
-        setCurrentEntity(data);
+      if (existingEntity) {
+        setCurrentEntity(existingEntity);
         fetchBalance();
+      } else {
+        // AUTO-CREATE Entity for new wallet connections (Guest Mode)
+        // This ensures transactions can be recorded
+        const { data: newEntity, error } = await supabase
+          .from('entities')
+          .insert([{
+            name: `Guest ${walletAddress.substring(0, 6)}`,
+            wallet_address: walletAddress,
+            role: 'FARM',
+            reputation_score: 50,
+            fwd_balance: 0
+          }])
+          .select()
+          .single();
+        
+        if (!error && newEntity) {
+          setCurrentEntity(newEntity);
+          fetchBalance();
+        }
       }
     };
     fetchEntityData();
@@ -341,16 +362,20 @@ export default function ProducerPortal() {
       const txHash = await web3.stakeTokens(amount.toString());
       if (txHash) {
         setLastTxHash(txHash);
-        const newStaked = (Number(currentEntity?.staked_balance) || 0) + amount;
-        await Promise.all([
-          supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
-          supabase.from('token_transactions').insert([{
-            sender_id: currentEntity.id,
-            amount: amount,
-            type: 'PAYMENT',
-            description: `Staked AGRI for node validation`
-          }])
-        ]);
+        
+        if (currentEntity) {
+          const newStaked = (Number(currentEntity.staked_balance) || 0) + amount;
+          await Promise.all([
+            supabase.from('entities').update({ staked_balance: newStaked }).eq('id', currentEntity.id),
+            supabase.from('token_transactions').insert([{
+              sender_id: currentEntity.id,
+              amount: amount,
+              type: 'STAKE',
+              description: `Staked AGRI for node validation`
+            }])
+          ]);
+        }
+        
         setIsSuccess(true);
         setStakeInput('');
         await refreshData();
@@ -374,12 +399,16 @@ export default function ProducerPortal() {
       if (txHash) {
         setLastTxHash(txHash);
         const rewardAmount = parseFloat(web3.pendingRewards);
-        await supabase.from('token_transactions').insert([{
-          receiver_id: currentEntity?.id,
-          amount: rewardAmount,
-          type: 'REWARD',
-          description: `Claimed validation rewards`
-        }]);
+        
+        if (currentEntity) {
+          await supabase.from('token_transactions').insert([{
+            receiver_id: currentEntity.id,
+            amount: rewardAmount,
+            type: 'REWARD',
+            description: `Claimed validation rewards`
+          }]);
+        }
+        
         setIsSuccess(true);
         await refreshData();
         setTimeout(() => {
