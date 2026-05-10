@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Globe, 
   ShieldCheck, 
@@ -532,9 +532,17 @@ export default function ProducerPortal() {
        }
     }
 
-    setClaimLoading(true);
+    // 3. Calculate Reward Amount (Dynamic)
+    // Formula: min(500, stake * 0.1%)
+    const rewardAmount = Math.min(500, Math.floor(stakeAmount * 0.001));
+    if (rewardAmount <= 0) {
+      alert("Số lượng Stake của bạn quá nhỏ để nhận thưởng. Hãy Stake thêm AGRI!");
+      setClaimLoading(false);
+      return;
+    }
+
     try {
-      // 3. Update last_daily_claim
+      // 4. Update last_daily_claim
       const { error: updateError } = await supabase
         .from('entities')
         .update({ last_daily_claim: new Date().toISOString() })
@@ -542,7 +550,7 @@ export default function ProducerPortal() {
 
       if (updateError) throw updateError;
 
-      // 4. Create Transaction
+      // 5. Create Transaction
       const { error: txError } = await supabase
         .from('token_transactions')
         .insert([{
@@ -550,14 +558,14 @@ export default function ProducerPortal() {
            receiver_id: currentEntity.id,
            sender_address: '0x0000000000000000000000000000000000000000',
            receiver_address: currentEntity.wallet_address,
-           amount: 500,
+           amount: rewardAmount,
            type: 'REWARD',
-           description: 'Daily Stake Loyalty Reward'
+           description: `Daily Stake Loyalty Reward (${rewardAmount} AGRI)`
         }]);
 
       if (txError) throw txError;
 
-      alert("Chúc mừng! Bạn đã nhận được 500 AGRI thưởng hàng ngày.");
+      alert(`Chúc mừng! Bạn đã nhận được ${rewardAmount} AGRI thưởng hàng ngày.`);
       fetchEntityData();
       fetchPortalData();
     } catch (err: any) {
