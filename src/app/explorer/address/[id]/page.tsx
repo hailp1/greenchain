@@ -50,84 +50,40 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
     const code = identResults[2].status === 'fulfilled' ? (identResults[2].value as string) : '0x';
     const entityRes = identResults[3].status === 'fulfilled' ? identResults[3].value : null;
 
-    // Step 2: Transactions
+    // Step 2: Transactions (Trust the DB for speed)
     let txData: any[] = [];
-    let rpcTxns: any[] = [];
-
     try {
-      // Parallel fetch to avoid blocking
-      const [sbRes, rpcRes] = await Promise.allSettled([
-        (async () => {
-          let txQuery = supabase
-            .from('token_transactions')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(30);
-            
-          if (entityRes?.data?.id) {
-            txQuery = txQuery.or(`sender_id.eq.${entityRes.data.id},receiver_id.eq.${entityRes.data.id},sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
-          } else {
-            txQuery = txQuery.or(`sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
-          }
-          return await txQuery;
-        })(),
-        (async () => {
-          const blockNum = await provider.getBlockNumber();
-          const blockPromises = [];
-          // Scan last 6 blocks (balance between speed and coverage)
-          for (let i = 0; i < 6; i++) {
-            if (blockNum - i >= 0) {
-              blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
-            }
-          }
-          const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
-          return blocks.flatMap((b: any) => 
-            (b.transactions || []).filter((tx: any) => 
-              tx.from.toLowerCase() === addr || tx.to?.toLowerCase() === addr
-            ).map((tx: any) => ({
-              hash: tx.hash,
-              timestamp: new Date(b.timestamp * 1000).toLocaleString(),
-              age: Math.floor((Date.now() - b.timestamp * 1000) / 60000) + 'm ago',
-              from: tx.from,
-              to: tx.to,
-              value: ethers.formatEther(tx.value),
-              type: 'ON-CHAIN',
-              rawTimestamp: b.timestamp * 1000
-            }))
-          );
-        })()
-      ]);
-
-      if (sbRes.status === 'fulfilled' && sbRes.value.data) {
-        txData = sbRes.value.data.map((tx: any) => ({
-          hash: tx.id.replace(/-/g, '').substring(0, 40),
-          timestamp: new Date(tx.created_at).toLocaleString(),
-          age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-          from: tx.sender_address || 'System',
-          to: tx.receiver_address || 'System',
-          value: `${tx.amount}`,
-          type: tx.type,
-          rawTimestamp: new Date(tx.created_at).getTime()
-        }));
+      let txQuery = supabase
+        .from('token_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(40);
+        
+      if (entityRes?.data?.id) {
+        txQuery = txQuery.or(`sender_id.eq.${entityRes.data.id},receiver_id.eq.${entityRes.data.id},sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
+      } else {
+        txQuery = txQuery.or(`sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
       }
-
-      if (rpcRes.status === 'fulfilled') {
-        rpcTxns = rpcRes.value;
-      }
+      const { data } = await txQuery;
+      txData = (data || []).map(tx => ({
+        hash: tx.id.replace(/-/g, '').substring(0, 40),
+        timestamp: new Date(tx.created_at).toLocaleString(),
+        age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+        from: tx.sender_address || 'System',
+        to: tx.receiver_address || 'System',
+        value: `${tx.amount}`,
+        type: tx.type,
+        rawTimestamp: new Date(tx.created_at).getTime()
+      }));
     } catch (e) {
-      console.warn("[AddressPage] Combined fetch error:", e);
+      console.warn("[AddressPage] DB fetch error:", e);
     }
-
-    // Merge and sort by timestamp
-    const merged = [...rpcTxns, ...txData]
-      .sort((a, b) => b.rawTimestamp - a.rawTimestamp)
-      .slice(0, 50);
 
     return {
       nativeBalance: ethers.formatEther(nBal),
       tokenBalance: ethers.formatEther(tBal),
       isContract: code !== '0x' && code !== '0x0' && code !== '0x ',
-      transactions: merged
+      transactions: txData
     };
   };
 

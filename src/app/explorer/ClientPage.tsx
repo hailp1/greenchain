@@ -93,13 +93,17 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
     return newData;
   };
 
+  const hasSynced = useRef(false);
   const { data, isLoading } = useSWR('explorer_home_data', fetcher, {
     fallbackData: initialData,
     refreshInterval: 15000,
     revalidateOnFocus: true,
     onSuccess: () => {
-      // Trigger background sync for missed blocks
-      fetch('/api/explorer/sync').catch(() => {});
+      // Trigger background sync ONLY ONCE on mount
+      if (!hasSynced.current) {
+        fetch('/api/explorer/sync').catch(() => {});
+        hasSynced.current = true;
+      }
     }
   });
 
