@@ -11,6 +11,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const RPC_URL = 'https://rpc.fwdlife.vn';
+const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
 function shortAddr(addr: string): string {
   if (!addr) return '—';
@@ -112,8 +113,7 @@ export default function TransactionsPage() {
       // ── Step 2: Fetch Blockchain ──
       try {
         console.log("[TxPage] Step 2: Querying RPC...");
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        const blockNum = await provider.getBlockNumber();
+        const blockNum = await rpcProvider.getBlockNumber();
         if (mounted) {
           setRpcOnline(true);
           setBlockHeight(blockNum);
@@ -123,7 +123,7 @@ export default function TransactionsPage() {
         const blockPromises = [];
         for (let i = 0; i < 15; i++) {
           if (blockNum - i >= 0) {
-            blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
+            blockPromises.push(rpcProvider.getBlock(blockNum - i, true).catch(() => null));
           }
         }
         const blocks = await Promise.all(blockPromises);
@@ -172,9 +172,13 @@ export default function TransactionsPage() {
 
       isFetching.current = false;
 
-      // Schedule next poll
+      // Schedule next poll with backoff
       if (mounted) {
-        timerRef.current = setTimeout(fetchData, 20000);
+        if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          timerRef.current = setTimeout(fetchData, 20000);
+        } else {
+          timerRef.current = setTimeout(fetchData, 60000);
+        }
       }
     };
 

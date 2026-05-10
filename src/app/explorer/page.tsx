@@ -11,6 +11,7 @@ import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 
 const RPC_URL = "https://rpc.fwdlife.vn";
+const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
 export default function ExplorerHome() {
   const [stats, setStats] = useState<any>({
@@ -38,15 +39,14 @@ export default function ExplorerHome() {
       const [rpcResult, sbResult] = await Promise.allSettled([
         // ── RPC: fetch blocks ──
         (async () => {
-          const provider = new ethers.JsonRpcProvider(RPC_URL);
           const [blockNum, feeData] = await Promise.all([
-            provider.getBlockNumber(),
-            provider.getFeeData()
+            rpcProvider.getBlockNumber(),
+            rpcProvider.getFeeData()
           ]);
           const blockPromises = [];
           for (let i = 0; i < 6; i++) {
             if (blockNum - i >= 0) {
-              blockPromises.push(provider.getBlock(blockNum - i).catch(() => null));
+              blockPromises.push(rpcProvider.getBlock(blockNum - i).catch(() => null));
             }
           }
           const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
