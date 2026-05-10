@@ -40,6 +40,8 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/explorer') ||
       request.nextUrl.pathname.startsWith('/verify') ||
       request.nextUrl.pathname.startsWith('/signin') ||
+      request.nextUrl.pathname.startsWith('/news') ||
+      request.nextUrl.pathname.startsWith('/public-test') ||
       request.nextUrl.pathname.startsWith('/api/') ||
       request.nextUrl.pathname.startsWith('/auth') ||
       request.nextUrl.pathname.startsWith('/portal') ||
