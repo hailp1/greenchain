@@ -104,13 +104,17 @@ export default function ProducerPortal() {
 
   // ─── Authentication Logic ────────────────────────────────────
   useEffect(() => {
+    setMounted(true);
+    
     // 1. Listen for Auth Changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[Portal] Auth Event:", event);
       if (session) {
+        console.log("[Portal] Session active:", session.user.email);
         setUser(session.user);
         setAuthLoading(false);
       } else if (event === 'SIGNED_OUT') {
+        console.log("[Portal] User signed out, redirecting...");
         window.location.href = '/signin';
       }
     });
@@ -120,19 +124,31 @@ export default function ProducerPortal() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
+          console.log("[Portal] Initial session found:", session.user.id);
           setUser(session.user);
           setAuthLoading(false);
           return;
         }
 
-        // Handle Google Redirect Hash
+        // Handle Google Redirect Hash - give more time
         if (window.location.hash.includes('access_token')) {
-          console.log("[Portal] Detected OAuth hash, waiting for session...");
-          return; // onAuthStateChange or retries will handle this
+          console.log("[Portal] Detected OAuth hash, suspending redirect for 10s...");
+          // Wait longer for Supabase to parse the hash
+          setTimeout(async () => {
+            const { data: { session: finalSession } } = await supabase.auth.getSession();
+            if (finalSession) {
+               console.log("[Portal] OAuth Success after wait");
+               setUser(finalSession.user);
+               setAuthLoading(false);
+            } else {
+               console.log("[Portal] OAuth failed after 10s, redirecting...");
+               window.location.href = '/signin';
+            }
+          }, 10000);
+          return;
         }
 
-        // If no session and no hash, wait for MetaMask or redirect
-        console.log("[Portal] No active session, checking MetaMask...");
+        console.log("[Portal] No Supabase session, waiting for wallet...");
       } catch (err) {
         console.error("[Portal] Auth check error:", err);
       }
@@ -146,30 +162,29 @@ export default function ProducerPortal() {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
 
-    if (authLoading) {
-      // If MetaMask connects, we can stop loading
+    // Only run timeout if we aren't in the middle of an OAuth redirect
+    if (authLoading && !window.location.hash.includes('access_token')) {
       if (web3.isConnected) {
-        console.log("[Portal] MetaMask connected, authorized.");
+        console.log("[Portal] Authorized via Wallet:", web3.address);
         setAuthLoading(false);
       } else {
-        // Safe Start: If after 3 seconds no Supabase session AND no MetaMask, 
-        // we check one last time then redirect or authorize.
+        // Wait 5 seconds for wallet to initialize before forcing signin
         timeoutId = setTimeout(async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session || web3.isConnected) {
             setAuthLoading(false);
-          } else if (!window.location.hash.includes('access_token')) {
-            console.log("[Portal] Auth timeout, redirecting to signin...");
+          } else {
+            console.log("[Portal] Total Auth Failure, forcing login...");
             window.location.href = '/signin';
           }
-        }, 3000);
+        }, 5000);
       }
     }
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [authLoading, web3.isConnected]);
+  }, [authLoading, web3.isConnected, web3.address]);
 
   useEffect(() => {
     console.log("[Portal] Auth State:", { authLoading, user: user?.id, isConnected: web3.isConnected });
