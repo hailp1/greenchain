@@ -119,6 +119,45 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     }
   }, [provider, state.address, contractsDeployed, getTokenContract, getStakingContract]);
 
+  // ─── Disconnect ─────────────────────────────────────────────
+  const disconnect = useCallback(() => {
+    setProvider(null);
+    setSigner(null);
+    setState(initialState);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('fwd_wallet_connected');
+    }
+  }, []);
+
+  // ─── Auto-connect on mount ──────────────────────────────────
+  useEffect(() => {
+    const checkConnection = async () => {
+      if (typeof window !== 'undefined' && window.ethereum && localStorage.getItem('fwd_wallet_connected') === 'true') {
+        try {
+          const browserProvider = new BrowserProvider(window.ethereum);
+          const accounts = await browserProvider.listAccounts();
+          if (accounts.length > 0) {
+            const network = await browserProvider.getNetwork();
+            const userSigner = await browserProvider.getSigner();
+            
+            setProvider(browserProvider);
+            setSigner(userSigner);
+            setState(prev => ({
+              ...prev,
+              isConnected: true,
+              address: accounts[0].address,
+              chainId: Number(network.chainId),
+            }));
+          }
+        } catch (err) {
+          console.error('Auto-connect error:', err);
+          localStorage.removeItem('fwd_wallet_connected');
+        }
+      }
+    };
+    checkConnection();
+  }, []);
+
   // ─── Connect Wallet ─────────────────────────────────────────
   const connect = useCallback(async () => {
     if (typeof window === 'undefined' || !window.ethereum) {
@@ -144,6 +183,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         address: accounts[0],
         chainId: Number(network.chainId),
       }));
+
+      localStorage.setItem('fwd_wallet_connected', 'true');
     } catch (err: any) {
       console.error('Connection error:', err);
       setState(prev => ({
@@ -152,13 +193,6 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         error: err.code === 4001 ? 'Connection rejected by user.' : 'Failed to connect wallet.',
       }));
     }
-  }, []);
-
-  // ─── Disconnect ─────────────────────────────────────────────
-  const disconnect = useCallback(() => {
-    setProvider(null);
-    setSigner(null);
-    setState(initialState);
   }, []);
 
   // ─── Helper: Ensure correct network ─────────────────────────

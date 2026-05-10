@@ -101,34 +101,59 @@ export default function ProducerPortal() {
     });
 
     const initAuth = async () => {
+      // 1. Check Supabase Session
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
         setUser(session.user);
         setAuthLoading(false);
-      } else {
-        if (window.location.hash.includes('access_token')) {
-          let retries = 0;
-          const interval = setInterval(async () => {
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (retrySession) {
-              setUser(retrySession.user);
+        return;
+      }
+
+      // 2. Check for Google OAuth Redirect Hash
+      if (window.location.hash.includes('access_token')) {
+        let retries = 0;
+        const interval = setInterval(async () => {
+          const { data: { session: retrySession } } = await supabase.auth.getSession();
+          if (retrySession) {
+            setUser(retrySession.user);
+            setAuthLoading(false);
+            clearInterval(interval);
+          }
+          if (retries++ > 15) { // Increased retries
+            clearInterval(interval);
+            if (!web3.isConnected) {
+              window.location.href = '/signin';
+            } else {
               setAuthLoading(false);
-              clearInterval(interval);
             }
-            if (retries++ > 10) {
-              clearInterval(interval);
+          }
+        }, 500);
+        return;
+      }
+
+      // 3. Allow MetaMask access
+      // Give it a short moment to initialize from localStorage
+      setTimeout(() => {
+        if (web3.isConnected) {
+          setAuthLoading(false);
+        } else {
+          // Final check for session again just in case
+          supabase.auth.getSession().then(({ data: { session: finalSession } }) => {
+            if (finalSession) {
+              setUser(finalSession.user);
+              setAuthLoading(false);
+            } else {
               window.location.href = '/signin';
             }
-          }, 500);
-        } else {
-          window.location.href = '/signin';
+          });
         }
-      }
+      }, 1500); 
     };
 
     initAuth();
     return () => subscription.unsubscribe();
-  }, []);
+  }, [web3.isConnected]);
 
   useEffect(() => {
     console.log("[Portal] Auth State:", { authLoading, user: user?.id, isConnected: web3.isConnected });

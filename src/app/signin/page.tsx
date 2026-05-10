@@ -14,23 +14,49 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check MetaMask connection
     if (isConnected && address) {
       router.push('/portal');
     }
+
+    // Check Supabase session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/portal');
+      }
+    };
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        router.push('/portal');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [isConnected, address, router]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    console.log("[Auth] Initiating Google Login...");
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/portal`,
+          skipBrowserRedirect: false
         },
       });
-      if (error) throw error;
+      if (error) {
+        console.error("[Auth] Google Login Error:", error);
+        throw error;
+      }
+      console.log("[Auth] Google Login Data:", data);
     } catch (error: any) {
-      alert('Lỗi đăng nhập: ' + error.message);
+      console.error("[Auth] Google Login Exception:", error);
+      alert('Lỗi đăng nhập Google: ' + error.message);
     } finally {
       setLoading(false);
     }
