@@ -33,17 +33,18 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
       try {
         setLoading(true);
         const addr = addressId.toLowerCase();
+        console.log("[AddressPage] Fetching data for:", addr);
         
-        // Parallel fetching with short timeouts for responsiveness
+        // Parallel fetching with individual error handling
         const results = await Promise.allSettled([
-          provider.getBalance(addr),
+          provider.getBalance(addr).catch(() => BigInt(0)),
           (async () => {
              const TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8"; 
              const erc20Abi = ["function balanceOf(address owner) view returns (uint256)"];
              const tokenContract = new ethers.Contract(TOKEN_ADDRESS, erc20Abi, provider);
              return await tokenContract.balanceOf(addr);
-          })(),
-          addr === '0x0000000000000000000000000000000000000000' ? Promise.resolve('0x') : provider.getCode(addr),
+          })().catch(() => BigInt(0)),
+          addr === '0x0000000000000000000000000000000000000000' ? Promise.resolve('0x') : provider.getCode(addr).catch(() => '0x'),
           supabase.from('entities').select('id, wallet_address').eq('wallet_address', addr).maybeSingle()
         ]);
 
@@ -58,41 +59,53 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
         setIsContract(code !== '0x' && code !== '0x0' && code !== '0x ');
 
         const entityData = entityRes?.data;
+        console.log("[AddressPage] Entity found:", !!entityData);
         
-        // Fetch transactions by both ID (entities) and raw address (system/guest)
-        let txQuery = supabase
-          .from('token_transactions')
-          .select(`
-            *,
-            sender:sender_id(wallet_address),
-            receiver:receiver_id(wallet_address)
-          `)
-          .order('created_at', { ascending: false })
-          .limit(50);
-          
-        if (entityData) {
-          txQuery = txQuery.or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
-        } else {
-          txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
-        }
-
-        const { data: txData } = await txQuery;
+        // Fetch transactions using simple flat query (no JOINs)
+        try {
+          let txQuery = supabase
+            .from('token_transactions')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50);
             
-        if (txData) {
-          setTransactions(txData.map(tx => ({
-            hash: tx.id.replace(/-/g, '').substring(0, 40),
-            timestamp: new Date(tx.created_at).toLocaleString(),
-            age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-            from: tx.sender?.wallet_address || tx.sender_address || 'System',
-            to: tx.receiver?.wallet_address || tx.receiver_address || 'System',
-            value: `${tx.amount}`,
-            type: tx.type,
-          })));
-        } else {
+          if (entityData) {
+            txQuery = txQuery.or(`sender_id.eq.${entityData.id},receiver_id.eq.${entityData.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
+          } else {
+            txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
+          }
+
+          const sbPromise = txQuery;
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Address tx timeout')), 20000)
+          );
+          const { data: txData, error: txError } = await Promise.race([sbPromise, timeoutPromise]) as any;
+              
+          if (txError) {
+            console.warn("[AddressPage] Tx query error:", txError.message);
+          }
+
+          if (txData && txData.length > 0) {
+            console.log("[AddressPage] Transactions found:", txData.length);
+            setTransactions(txData.map((tx: any) => ({
+              hash: tx.id.replace(/-/g, '').substring(0, 40),
+              timestamp: new Date(tx.created_at).toLocaleString(),
+              age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+              from: tx.sender_address || 'System',
+              to: tx.receiver_address || 'System',
+              value: `${tx.amount}`,
+              type: tx.type,
+            })));
+          } else {
+            console.log("[AddressPage] No transactions for this address");
+            setTransactions([]);
+          }
+        } catch (txErr: any) {
+          console.warn("[AddressPage] Tx fetch failed:", txErr.message);
           setTransactions([]);
         }
       } catch (err) {
-        console.error("Critical load error:", err);
+        console.error("[AddressPage] Critical load error:", err);
       } finally {
         setLoading(false);
       }

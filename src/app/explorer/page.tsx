@@ -32,77 +32,85 @@ export default function ExplorerHome() {
     let timer: NodeJS.Timeout;
 
     const fetchData = async () => {
-      try {
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        
-        const [blockNum, feeData] = await Promise.all([
-          provider.getBlockNumber(),
-          provider.getFeeData()
-        ]);
+      console.log("[Explorer] Starting parallel fetch...");
 
-        const blockPromises = [];
-        for (let i = 0; i < 6; i++) {
-          if (blockNum - i >= 0) {
-            blockPromises.push(provider.getBlock(blockNum - i));
+      // Run RPC and Supabase in PARALLEL — neither blocks the other
+      const [rpcResult, sbResult] = await Promise.allSettled([
+        // ── RPC: fetch blocks ──
+        (async () => {
+          const provider = new ethers.JsonRpcProvider(RPC_URL);
+          const [blockNum, feeData] = await Promise.all([
+            provider.getBlockNumber(),
+            provider.getFeeData()
+          ]);
+          const blockPromises = [];
+          for (let i = 0; i < 6; i++) {
+            if (blockNum - i >= 0) {
+              blockPromises.push(provider.getBlock(blockNum - i).catch(() => null));
+            }
           }
-        }
-        const blocks = await Promise.all(blockPromises);
-        const validBlocks = blocks.filter(b => b !== null);
+          const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
+          return { blockNum, feeData, blocks };
+        })(),
 
-        if (mounted) {
-          setLatestBlocks(validBlocks.map((b: any) => ({
-            number: b.number,
-            timestamp: b.timestamp * 1000,
-            validator: b.miner,
-            transactionCount: b.transactions?.length || 0,
-            reward: "0.01402 AGRI"
-          })));
-        }
-
-        // Supabase fetch with 20s timeout (Promise.race pattern)
-        try {
+        // ── Supabase: fetch latest transactions ──
+        (async () => {
           const sbPromise = supabase
             .from('token_transactions')
             .select('*', { count: 'exact' })
             .order('created_at', { ascending: false })
             .limit(6);
-
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Explorer Supabase timeout')), 20000)
+            setTimeout(() => reject(new Error('Supabase timeout')), 20000)
           );
+          return await Promise.race([sbPromise, timeoutPromise]) as any;
+        })()
+      ]);
 
-          const { data: sbTxData, count: txCount, error: sbError } = await Promise.race([sbPromise, timeoutPromise]) as any;
+      // Process RPC results
+      if (rpcResult.status === 'fulfilled' && mounted) {
+        const { blockNum, feeData, blocks } = rpcResult.value;
+        console.log("[Explorer] RPC OK: block", blockNum, "blocks:", blocks.length);
+        setLatestBlocks(blocks.map((b: any) => ({
+          number: b.number,
+          timestamp: b.timestamp * 1000,
+          validator: b.miner,
+          transactionCount: b.transactions?.length || 0,
+          reward: "0.01402 AGRI"
+        })));
+        setStats((prev: any) => ({
+          ...prev,
+          latestBlock: blockNum,
+          gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+        }));
+      } else if (rpcResult.status === 'rejected') {
+        console.warn("[Explorer] RPC failed:", rpcResult.reason?.message);
+      }
 
-          if (!sbError && sbTxData && mounted) {
-            const txs = sbTxData.map((tx: any) => ({
-              hash: tx.id.replace(/-/g, '').substring(0, 40),
-              timestamp: new Date(tx.created_at).getTime(),
-              from: tx.sender_address || '0x000...000',
-              to: tx.receiver_address || '0x000...000',
-              value: `${tx.amount}`
-            }));
-            setLatestTxns(prev => txs.length > 0 ? txs : prev);
-            setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
-          }
-        } catch (sbErr) {
-          console.warn("Explorer Supabase timeout:", sbErr);
-        }
-
-        if (mounted) {
-          setStats((prev: any) => ({
-            ...prev,
-            latestBlock: blockNum,
-            gas_price: feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1'
+      // Process Supabase results
+      if (sbResult.status === 'fulfilled' && mounted) {
+        const { data: sbTxData, count: txCount, error: sbError } = sbResult.value;
+        if (!sbError && sbTxData && sbTxData.length > 0) {
+          console.log("[Explorer] Supabase OK:", sbTxData.length, "txns, total:", txCount);
+          const txs = sbTxData.map((tx: any) => ({
+            hash: tx.id.replace(/-/g, '').substring(0, 40),
+            timestamp: new Date(tx.created_at).getTime(),
+            from: tx.sender_address || '0x000...000',
+            to: tx.receiver_address || '0x000...000',
+            value: `${tx.amount}`
           }));
+          setLatestTxns(prev => txs.length > 0 ? txs : prev);
+          setStats((prev: any) => ({ ...prev, totalTx: (txCount || 0).toLocaleString() }));
+        } else {
+          console.warn("[Explorer] Supabase empty or error:", sbError?.message);
         }
+      } else if (sbResult.status === 'rejected') {
+        console.warn("[Explorer] Supabase failed:", sbResult.reason?.message);
+      }
 
-      } catch (err) {
-        console.error("Explorer Home Fetch Error:", err);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          hasLoaded.current = true;
-        }
+      if (mounted) {
+        setLoading(false);
+        hasLoaded.current = true;
       }
 
       // Schedule next poll
