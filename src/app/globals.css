@@ -28,6 +28,14 @@
   .gradient-text {
     @apply bg-clip-text text-transparent bg-linear-to-r from-emerald-500 to-emerald-400;
   }
+
+  .text-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .tablet-padding {
+    @apply px-4 md:px-8 lg:px-12;
+  }
 }
 
 body {

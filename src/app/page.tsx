@@ -101,18 +101,18 @@ export default function Home() {
               <Star size={14} className="text-slate-400" />
               <span>fwd LIFEchain – Trust‑Engineered Agritech</span>
             </div>
-            <h1 className="text-4xl md:text-8xl font-black mb-6 md:mb-8 text-natural-950 tracking-tighter leading-[1.1]">
+            <h1 className="text-4xl md:text-6xl lg:text-8xl font-black mb-6 md:mb-8 text-natural-950 tracking-tighter leading-[1.1]">
               Transparent <span className="text-emerald-500 italic">Agriculture</span>
             </h1>
-            <p className="text-slate-500 text-sm md:text-xl max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12">
+            <p className="text-slate-500 text-xs md:text-base lg:text-xl max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12 px-4">
               A research‑grade blockchain platform that fuses advanced cryptography with rigorous academic theory to certify the provenance and quality of agricultural products.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 px-4">
-              <Link href="/verify" className="w-full sm:w-auto px-8 py-4 bg-natural-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl hover:-translate-y-1 active:scale-95 transition-all">
-                <QrCode size={20} /> Verify Origin
+            <div className="flex flex-col sm:flex-row justify-center gap-4 px-4 max-w-lg mx-auto">
+              <Link href="/verify" className="w-full sm:w-auto px-8 py-4 bg-natural-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl hover:-translate-y-1 active:scale-95 transition-all text-sm">
+                <QrCode size={18} /> Verify Origin
               </Link>
-              <Link href="/explorer" className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-all">
-                <Search size={20} /> Explorer Network
+              <Link href="/explorer" className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-all text-sm">
+                <Search size={18} /> Explorer Network
               </Link>
             </div>
           </motion.div>
@@ -120,17 +120,19 @@ export default function Home() {
 
         {/* Algorithm Highlights – showcase the technical edge */}
         <section className="mb-24 md:mb-40">
-          <h2 className="text-3xl md:text-5xl font-black text-natural-950 mb-12 text-center uppercase tracking-wider">Technical Pillars</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-natural-950 mb-12 text-center uppercase tracking-wider italic">Technical <span className="text-emerald-500">Pillars</span></h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {algorithmHighlights.map((alg, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -5 }}
-                className={`p-6 bg-white rounded-[2rem] border border-slate-100 shadow-lg flex flex-col justify-between`}
+                className={`p-6 bg-white rounded-[2rem] border border-slate-100 shadow-lg flex flex-col justify-between h-full`}
               >
-                <div className={`${alg.color} mb-4`}><alg.icon size={28} /></div>
-                <h3 className="text-xl font-black text-natural-900 mb-2">{alg.title}</h3>
-                <p className="text-slate-600 text-sm leading-relaxed">{alg.description}</p>
+                <div>
+                   <div className={`${alg.color} mb-4`}><alg.icon size={24} /></div>
+                   <h3 className="text-lg md:text-xl font-black text-natural-900 mb-2">{alg.title}</h3>
+                   <p className="text-slate-600 text-xs md:text-sm leading-relaxed">{alg.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>
@@ -139,25 +141,25 @@ export default function Home() {
         {/* Live Network Pulse */}
         <section className="mb-24 md:mb-40">
           <div className="flex items-center gap-3 mb-10 md:mb-16">
-            <div className="w-12 h-12 rounded-2xl bg-natural-900 text-white flex items-center justify-center shadow-xl">
-              <Activity size={24} />
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-natural-900 text-white flex items-center justify-center shadow-xl shrink-0">
+              <Activity size={20} md={24} />
             </div>
             <div>
-              <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">Network <span className="text-emerald-500">Pulse</span></h2>
-              <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest">Real‑time AGRI Lifechain Activity</p>
+              <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase italic">Network <span className="text-emerald-500">Pulse</span></h2>
+              <p className="text-slate-400 text-[8px] md:text-xs font-bold uppercase tracking-widest">Real‑time AGRI Lifechain Activity</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {networkStats.map((stat, i) => (
               <motion.div
                 key={i}
                 whileHover={{ y: -5 }}
                 className="p-6 md:p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl flex flex-col justify-between"
               >
-                <div className={`${stat.color} mb-6`}><stat.icon size={24} /></div>
+                <div className={`${stat.color} mb-6`}><stat.icon size={20} md={24} /></div>
                 <div>
-                  <p className="text-2xl md:text-4xl font-black text-natural-900 tracking-tighter mb-1">{stat.value}</p>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                  <p className="text-xl md:text-3xl lg:text-4xl font-black text-natural-900 tracking-tighter mb-1 truncate">{stat.value}</p>
+                  <p className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
                 </div>
               </motion.div>
             ))}

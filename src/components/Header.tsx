@@ -132,20 +132,23 @@ const Header = () => {
         {/* Action Area (Wallet & Profile) - Visible on all screens */}
         <div className="flex items-center gap-2 md:gap-4">
           {/* Wallet & Balance - Condensed on Mobile */}
-          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm">
-            <div className="hidden sm:flex flex-col items-end">
-                <span className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">AGRI Balance</span>
-                <span className="text-xs md:text-sm font-black text-emerald-600">
-                  {mounted ? (address ? balance : fwdBalance) : '0.00'} AGRI
+          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md">
+            <div className="flex flex-col items-end">
+                <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
+                <span className="text-[10px] md:text-xs font-black text-emerald-600">
+                  {mounted ? (address ? Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
                 </span>
+                {mounted && address && (
+                   <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(balance).toFixed(4)}</span>
+                )}
             </div>
             <button 
               onClick={connect}
               disabled={isConnecting}
-              className="flex items-center gap-2 px-3 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex items-center gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all shrink-0 active:scale-95"
             >
               <Wallet size={12} className="text-emerald-500" />
-              <span className="hidden xs:inline">
+              <span className="hidden sm:inline-block">
                 {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? '...' : 'CONNECT')) : '...'}
               </span>
             </button>

@@ -566,38 +566,38 @@ export default function ProducerPortal() {
         <div className="p-4 md:p-12 space-y-8 md:space-y-12 overflow-y-auto max-h-[calc(100vh-4rem)]">
            {activeTab === 'dashboard' && (
              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-12">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                    {stats.map((s, i) => (
                      <div key={i} className="bg-white p-5 md:p-8 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-emerald-500 mb-4 md:mb-6 bg-emerald-50 w-10 h-10 rounded-xl flex items-center justify-center"><s.icon size={20} /></div>
                         <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
-                        <p className="text-xl md:text-3xl font-black text-natural-950">{s.value}</p>
+                        <p className="text-lg md:text-2xl lg:text-3xl font-black text-natural-950 truncate">{s.value}</p>
                      </div>
                    ))}
                 </div>
 
                 {/* New Quick Action Card for Staking */}
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl shadow-emerald-900/20 relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700"></div>
-                   <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                      <div className="space-y-3">
-                         <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter">Start Staking <span className="text-emerald-200">& Earn Rewards</span></h3>
-                         <p className="text-emerald-100/70 text-sm font-medium max-w-md">Kích hoạt quyền xác thực của Node và bắt đầu nhận AGRI Token thưởng mỗi giây từ mạng lưới FWD Lifechain.</p>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          if (!web3.isConnected) {
-                            web3.connect();
-                          } else {
-                            setActiveTab('tokenomics');
-                          }
-                        }}
-                        className="px-10 py-5 bg-white text-emerald-700 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-black/10"
-                      >
-                         {web3.isConnected ? "GO TO STAKING CENTER" : "CONNECT WALLET TO START"}
-                      </button>
-                   </div>
-                </div>
+                 <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl shadow-emerald-900/20 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700"></div>
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
+                       <div className="space-y-3 text-center lg:text-left">
+                          <h3 className="text-2xl md:text-4xl font-black italic uppercase tracking-tighter">Start Staking <span className="text-emerald-200">& Earn Rewards</span></h3>
+                          <p className="text-emerald-100/70 text-xs md:text-sm font-medium max-w-md mx-auto lg:mx-0">Kích hoạt quyền xác thực của Node và bắt đầu nhận AGRI Token thưởng mỗi giây từ mạng lưới FWD Lifechain.</p>
+                       </div>
+                       <button 
+                         onClick={() => {
+                           if (!web3.isConnected) {
+                             web3.connect();
+                           } else {
+                             setActiveTab('tokenomics');
+                           }
+                         }}
+                         className="px-10 py-5 bg-white text-emerald-700 rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs hover:scale-105 transition-all shadow-xl shadow-black/10 shrink-0"
+                       >
+                          {web3.isConnected ? "GO TO STAKING CENTER" : "CONNECT WALLET TO START"}
+                       </button>
+                    </div>
+                 </div>
 
                 <section className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden">
                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
