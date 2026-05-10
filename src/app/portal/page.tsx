@@ -168,16 +168,17 @@ export default function ProducerPortal() {
         console.log("[Portal] Authorized via Wallet:", web3.address);
         setAuthLoading(false);
       } else {
-        // Wait 5 seconds for wallet to initialize before forcing signin
+        // Increased to 15 seconds for reliability
         timeoutId = setTimeout(async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session || web3.isConnected) {
+            console.log("[Portal] Final session check success");
             setAuthLoading(false);
           } else {
-            console.log("[Portal] Total Auth Failure, forcing login...");
+            console.log("[Portal] Total Auth Failure after 15s, forcing login...");
             window.location.href = '/signin';
           }
-        }, 5000);
+        }, 15000);
       }
     }
 
