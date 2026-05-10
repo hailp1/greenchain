@@ -55,55 +55,67 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
     let rpcTxns: any[] = [];
 
     try {
-      // 2a. Fetch from RPC (Latest 10 blocks)
-      const blockNum = await provider.getBlockNumber();
-      const blockPromises = [];
-      for (let i = 0; i < 10; i++) {
-        if (blockNum - i >= 0) {
-          blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
-        }
-      }
-      const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
-      rpcTxns = blocks.flatMap((b: any) => 
-        (b.transactions || []).filter((tx: any) => 
-          tx.from.toLowerCase() === addr || tx.to?.toLowerCase() === addr
-        ).map((tx: any) => ({
-          hash: tx.hash,
-          timestamp: new Date(b.timestamp * 1000).toLocaleString(),
-          age: Math.floor((Date.now() - b.timestamp * 1000) / 60000) + 'm ago',
-          from: tx.from,
-          to: tx.to,
-          value: ethers.formatEther(tx.value),
-          type: 'ON-CHAIN',
-          rawTimestamp: b.timestamp * 1000
-        }))
-      );
+      // Parallel fetch to avoid blocking
+      const [sbRes, rpcRes] = await Promise.allSettled([
+        (async () => {
+          let txQuery = supabase
+            .from('token_transactions')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(30);
+            
+          if (entityRes?.data?.id) {
+            txQuery = txQuery.or(`sender_id.eq.${entityRes.data.id},receiver_id.eq.${entityRes.data.id},sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
+          } else {
+            txQuery = txQuery.or(`sender_address.ilike.${addr},receiver_address.ilike.${addr}`);
+          }
+          return await txQuery;
+        })(),
+        (async () => {
+          const blockNum = await provider.getBlockNumber();
+          const blockPromises = [];
+          // Scan last 6 blocks (balance between speed and coverage)
+          for (let i = 0; i < 6; i++) {
+            if (blockNum - i >= 0) {
+              blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
+            }
+          }
+          const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
+          return blocks.flatMap((b: any) => 
+            (b.transactions || []).filter((tx: any) => 
+              tx.from.toLowerCase() === addr || tx.to?.toLowerCase() === addr
+            ).map((tx: any) => ({
+              hash: tx.hash,
+              timestamp: new Date(b.timestamp * 1000).toLocaleString(),
+              age: Math.floor((Date.now() - b.timestamp * 1000) / 60000) + 'm ago',
+              from: tx.from,
+              to: tx.to,
+              value: ethers.formatEther(tx.value),
+              type: 'ON-CHAIN',
+              rawTimestamp: b.timestamp * 1000
+            }))
+          );
+        })()
+      ]);
 
-      // 2b. Fetch from Supabase
-      let txQuery = supabase
-        .from('token_transactions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-        
-      if (entityRes?.data?.id) {
-        txQuery = txQuery.or(`sender_id.eq.${entityRes.data.id},receiver_id.eq.${entityRes.data.id},sender_address.eq.${addr},receiver_address.eq.${addr}`);
-      } else {
-        txQuery = txQuery.or(`sender_address.eq.${addr},receiver_address.eq.${addr}`);
+      if (sbRes.status === 'fulfilled' && sbRes.value.data) {
+        txData = sbRes.value.data.map((tx: any) => ({
+          hash: tx.id.replace(/-/g, '').substring(0, 40),
+          timestamp: new Date(tx.created_at).toLocaleString(),
+          age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
+          from: tx.sender_address || 'System',
+          to: tx.receiver_address || 'System',
+          value: `${tx.amount}`,
+          type: tx.type,
+          rawTimestamp: new Date(tx.created_at).getTime()
+        }));
       }
-      const { data } = await txQuery;
-      txData = (data || []).map(tx => ({
-        hash: tx.id.replace(/-/g, '').substring(0, 40),
-        timestamp: new Date(tx.created_at).toLocaleString(),
-        age: Math.floor((Date.now() - new Date(tx.created_at).getTime()) / 60000) + 'm ago',
-        from: tx.sender_address || 'System',
-        to: tx.receiver_address || 'System',
-        value: `${tx.amount}`,
-        type: tx.type,
-        rawTimestamp: new Date(tx.created_at).getTime()
-      }));
+
+      if (rpcRes.status === 'fulfilled') {
+        rpcTxns = rpcRes.value;
+      }
     } catch (e) {
-      console.warn("[AddressPage] Tx fetch error:", e);
+      console.warn("[AddressPage] Combined fetch error:", e);
     }
 
     // Merge and sort by timestamp
@@ -209,7 +221,7 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Token Holdings</p>
                  <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-slate-700">
-                       {Number(tokenBalance) > 0 ? `${Number(tokenBalance).toLocaleString()} FWD` : 'No assets found'}
+                       {Number(tokenBalance) > 0 ? `${Number(tokenBalance).toLocaleString()} AGRI Assets` : 'No assets found'}
                     </span>
                     {Number(tokenBalance) > 0 && (
                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
