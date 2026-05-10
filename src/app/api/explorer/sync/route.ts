@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       const block = await provider.getBlock(targetBlock, true);
       if (!block || !block.transactions) continue;
 
-      const txs = block.transactions.map(tx => ({
+      const txs = (block.transactions as any[]).map((tx: any) => ({
         id: tx.hash.toLowerCase(),
         sender_address: tx.from.toLowerCase(),
         receiver_address: tx.to ? tx.to.toLowerCase() : null,
