@@ -39,8 +39,10 @@ export default function ExplorerHome() {
           totalTx: '3,457.59 M'
         });
         
+        // Fetch more blocks to find transactions if necessary
         const blockPromises = [];
-        for (let i = 0; i < 6; i++) {
+        const SEARCH_RANGE = 50; 
+        for (let i = 0; i < SEARCH_RANGE; i++) {
           if (blockNum - i >= 0) {
             blockPromises.push(provider.getBlock(blockNum - i, true));
           }
@@ -49,7 +51,8 @@ export default function ExplorerHome() {
         const fetchedBlocks = await Promise.all(blockPromises);
         const validBlocks = fetchedBlocks.filter(b => b !== null);
 
-        setLatestBlocks(validBlocks.map((b: any) => ({
+        // Update latest blocks (just the top 6)
+        setLatestBlocks(validBlocks.slice(0, 6).map((b: any) => ({
           number: b.number,
           timestamp: b.timestamp * 1000,
           validator: b.miner,
@@ -57,6 +60,7 @@ export default function ExplorerHome() {
           reward: "0.01402 AGRI"
         })));
         
+        // Collect transactions from the larger search range
         let txns: any[] = [];
         for (const b of validBlocks) {
           const prefetchTxs = (b as any).prefetchedTransactions || [];
