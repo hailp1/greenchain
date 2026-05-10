@@ -42,46 +42,60 @@ export default function TransactionsPage() {
 
   const fetchTransactions = useCallback(async () => {
     try {
+      console.log("[TxPage] Starting fetch...");
       setLoading(true);
       const provider = new ethers.JsonRpcProvider(RPC_URL);
       
-      // 1. Fetch from Blockchain (Pattern from blocks/page.tsx)
-      const currentBlock = await provider.getBlockNumber();
-      setRpcOnline(true);
-
-      const blockPromises = [];
-      for (let i = 0; i < 5; i++) {
-        if (currentBlock - i >= 0) {
-          blockPromises.push(provider.getBlock(currentBlock - i, true));
-        }
+      // 1. Fetch from Blockchain
+      let blockNum = 0;
+      try {
+        blockNum = await provider.getBlockNumber();
+        console.log("[TxPage] Block height:", blockNum);
+        setRpcOnline(true);
+      } catch (e) {
+        console.warn("[TxPage] RPC Height fetch failed");
+        setRpcOnline(false);
       }
-      const blocks = await Promise.all(blockPromises);
-      
+
       let chainTxs: TxInfo[] = [];
-      for (const b of blocks) {
-        if (!b) continue;
-        for (const tx of (b.transactions || [])) {
-           const txObj = tx as any;
-           chainTxs.push({
-             hash: txObj.hash || txObj,
-             blockNumber: b.number,
-             timestamp: b.timestamp,
-             from: txObj.from || '0x...',
-             to: txObj.to || "Contract",
-             value: txObj.value ? ethers.formatEther(txObj.value) : '0',
-             type: txObj.to ? 'Transfer' : 'Contract'
-           });
-           if (chainTxs.length >= 20) break;
+      if (blockNum > 0) {
+        const blockPromises = [];
+        for (let i = 0; i < 5; i++) {
+          if (blockNum - i >= 0) {
+            blockPromises.push(provider.getBlock(blockNum - i, true).catch(() => null));
+          }
         }
-        if (chainTxs.length >= 20) break;
+        const blocks = await Promise.all(blockPromises);
+        console.log("[TxPage] Blocks fetched:", blocks.length);
+        
+        for (const b of blocks) {
+          if (!b) continue;
+          for (const tx of (b.transactions || [])) {
+             const txObj = tx as any;
+             chainTxs.push({
+               hash: txObj.hash || txObj,
+               blockNumber: b.number,
+               timestamp: b.timestamp || Math.floor(Date.now()/1000),
+               from: txObj.from || '0x...',
+               to: txObj.to || "Contract",
+               value: txObj.value ? ethers.formatEther(txObj.value) : '0',
+               type: txObj.to ? 'Transfer' : 'Contract'
+             });
+             if (chainTxs.length >= 20) break;
+          }
+          if (chainTxs.length >= 20) break;
+        }
       }
 
-      // 2. Fetch from Supabase (Institutional Ledger)
-      const { data: sbData } = await supabase
+      // 2. Fetch from Supabase
+      console.log("[TxPage] Fetching Supabase ledger...");
+      const { data: sbData, error: sbError } = await supabase
         .from('token_transactions')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(40);
+
+      if (sbError) console.error("[TxPage] Supabase error:", sbError);
 
       const platformTxs: TxInfo[] = (sbData || []).map(tx => ({
         hash: tx.id.replace(/-/g, '').substring(0, 40),
@@ -93,15 +107,18 @@ export default function TransactionsPage() {
         type: tx.type || 'Platform'
       }));
 
-      // Merge and sort
+      console.log("[TxPage] Total merged txs:", chainTxs.length + platformTxs.length);
+
+      // Merge and sort safely
       const merged = [...chainTxs, ...platformTxs]
-        .sort((a, b) => b.timestamp - a.timestamp)
+        .filter(tx => tx && tx.timestamp)
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
         .slice(0, 50);
       
       setTransactions(merged);
 
-    } catch (err) {
-      console.error("Transactions Fetch Error:", err);
+    } catch (err: any) {
+      console.error("[TxPage] Fatal Fetch Error:", err.message);
       setRpcOnline(false);
     } finally {
       setLoading(false);
