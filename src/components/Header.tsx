@@ -126,31 +126,33 @@ const Header = () => {
         {/* Action Area (Wallet & Profile) - Visible on all screens */}
         <div className="flex items-center gap-2 md:gap-4">
           {/* Wallet & Balance - Condensed on Mobile */}
-          <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md">
-            <div className="flex flex-col items-end">
-                <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
-                <span className="text-[10px] md:text-xs font-black text-emerald-600">
-                  {mounted ? (
-                    address && web3.fwdBalance !== "0.00" 
-                      ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) 
-                      : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})
-                  ) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
+          {user && (
+            <div className="flex items-center bg-slate-50 border border-slate-100 rounded-full p-1 pl-3 md:pl-4 gap-2 md:gap-3 shadow-sm transition-all hover:shadow-md animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="flex flex-col items-end">
+                  <span className="text-[7px] md:text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">AGRI Assets</span>
+                  <span className="text-[10px] md:text-xs font-black text-emerald-600">
+                    {mounted ? (
+                      address && web3.fwdBalance !== "0.00" 
+                        ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) 
+                        : Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})
+                    ) : '0.00'} <span className="text-[8px] opacity-60">AGRI</span>
+                  </span>
+                  {mounted && address && (
+                    <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(web3.balance).toFixed(4)}</span>
+                  )}
+              </div>
+              <button 
+                onClick={connect}
+                disabled={isConnecting}
+                className="flex items-center gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all shrink-0 active:scale-95"
+              >
+                <Wallet size={12} className="text-emerald-500" />
+                <span className="hidden sm:inline-block">
+                  {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? '...' : 'CONNECT')) : '...'}
                 </span>
-                {mounted && address && (
-                   <span className="text-[6px] md:text-[7px] font-bold text-slate-400 uppercase tracking-tighter leading-none mt-0.5">Gas: {Number(web3.balance).toFixed(4)}</span>
-                )}
+              </button>
             </div>
-            <button 
-              onClick={connect}
-              disabled={isConnecting}
-              className="flex items-center gap-2 px-2 md:px-4 py-1.5 md:py-2 bg-white border border-slate-100 rounded-full text-[9px] md:text-[10px] font-black text-slate-600 hover:bg-slate-50 transition-all shrink-0 active:scale-95"
-            >
-              <Wallet size={12} className="text-emerald-500" />
-              <span className="hidden sm:inline-block">
-                {mounted ? (address ? `${address.slice(0, 4)}...${address.slice(-4)}` : (isConnecting ? '...' : 'CONNECT')) : '...'}
-              </span>
-            </button>
-          </div>
+          )}
 
           {/* Profile/Auth Area */}
           {user ? (
