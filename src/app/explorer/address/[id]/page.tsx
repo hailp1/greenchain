@@ -155,7 +155,7 @@ export default function AddressPage({ params }: { params: Promise<{ id: string }
                          onClick={() => setIsTokenDropdownOpen(!isTokenDropdownOpen)}
                          className="w-full max-w-sm flex items-center justify-between p-2 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-colors text-left"
                        >
-                          <span className="truncate mr-2">${(Number(tokenBalance) * 1.5).toLocaleString()} <span className="text-slate-500 text-xs ml-1">(>1 Tokens)</span></span>
+                          <span className="truncate mr-2">${(Number(tokenBalance) * 1.5).toLocaleString()} <span className="text-slate-500 text-xs ml-1">(&gt;1 Tokens)</span></span>
                           <ChevronDown size={14} className="text-slate-500 shrink-0" />
                        </button>
                        {isTokenDropdownOpen && (
