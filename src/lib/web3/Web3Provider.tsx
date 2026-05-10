@@ -171,6 +171,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (state.isConnecting) return;
+
     try {
       setState(prev => ({ ...prev, isConnecting: true, error: null }));
 
