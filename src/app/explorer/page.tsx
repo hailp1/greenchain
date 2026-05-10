@@ -100,6 +100,25 @@ export default function ExplorerHome() {
           }
           if (txns.length >= 6) break;
         }
+
+        // 6. Fallback to Supabase for "Latest Platform Activity" if no recent chain txns
+        if (txns.length === 0) {
+           const { data: sbTxData } = await supabase
+             .from('token_transactions')
+             .select('*, sender:sender_id(wallet_address), receiver:receiver_id(wallet_address)')
+             .order('created_at', { ascending: false })
+             .limit(6);
+           
+           if (sbTxData) {
+             txns = sbTxData.map(tx => ({
+               hash: tx.id.replace(/-/g, '').substring(0, 40),
+               timestamp: new Date(tx.created_at).getTime(),
+               from: tx.sender?.wallet_address || tx.sender_address || '0x0000000000000000000000000000000000000000',
+               to: tx.receiver?.wallet_address || tx.receiver_address || '0x0000000000000000000000000000000000000000',
+               value: `${tx.amount}`
+             }));
+           }
+        }
         setLatestTxns(txns);
 
       } catch (err: any) {
