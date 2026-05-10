@@ -253,7 +253,7 @@ export default function TransactionDetail() {
                         Run this independent command to verify transaction <strong>{txHash.slice(0,8)}...</strong> directly on the blockchain node.
                      </p>
                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-[9px] text-emerald-500 break-all select-all leading-relaxed">
-                        curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["{txHash}"],"id":1}' https://rpc.fwdlife.vn
+                        curl -X POST --data '&#123;"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["{txHash}"],"id":1&#125;' https://rpc.fwdlife.vn
                      </div>
                      <div className="mt-6 flex items-center gap-2">
                         <ShieldCheck size={14} className="text-emerald-500" />

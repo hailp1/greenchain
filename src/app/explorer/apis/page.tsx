@@ -1,136 +1,161 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Globe, Code, Terminal, Zap, Book, 
-  Copy, CheckCircle2, Search, Menu, X, Cpu, Database
-} from 'lucide-react';
-import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { motion } from 'framer-motion';
+import { Terminal, Code2, Copy, Play, Database, Globe, Lock, ShieldCheck, Zap } from 'lucide-react';
 
-export default function APIsPage() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
-
+export default function APIDocsPage() {
   const endpoints = [
-    { method: "GET", path: "/api/v3/block/{height}", desc: "Truy vấn thông tin chi tiết của một khối theo chiều cao." },
-    { method: "GET", path: "/api/v3/tx/{hash}", desc: "Lấy dữ liệu giao dịch đã được giải mã và trạng thái xác thực." },
-    { method: "GET", path: "/api/v3/product/{id}", desc: "Truy xuất toàn bộ hành trình sản phẩm (Product Journey) và mã Hash." },
-    { method: "POST", path: "/api/v3/nodes/status", desc: "Cập nhật và kiểm tra trạng thái hoạt động của Validator Node." }
+    {
+      method: "GET",
+      path: "/v1/explorer/latest-blocks",
+      desc: "Retrieve the sequence of the most recently validated blocks in the LIFEchain network.",
+      params: ["limit: number", "offset: number"],
+      response: `{ "success": true, "blocks": [...] }`
+    },
+    {
+      method: "POST",
+      path: "/v1/supply-chain/anchor",
+      desc: "Anchor a cryptographic hash of agricultural product metadata directly onto the blockchain.",
+      params: ["hash: string", "metadata: object", "signature: string"],
+      response: `{ "txHash": "0x...", "confirmed": true }`
+    },
+    {
+      method: "GET",
+      path: "/v1/reputation/score/:address",
+      desc: "Calculate the real-time reputation score of a specific producer based on on-chain data points.",
+      params: ["address: string"],
+      response: `{ "score": 98.4, "rank": "Emerald" }`
+    }
   ];
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(text);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <header className="bg-[#111b11] text-white border-b border-white/5 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
-               <Globe size={18} />
-            </div>
-            <span className="font-black tracking-tighter text-xl">AgriChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-             <Link href="/explorer" className="hover:text-white transition-colors">Home</Link>
-             <Link href="/explorer/apis" className="text-emerald-400">APIs</Link>
-             <Link href="/explorer/resources" className="hover:text-white transition-colors">Resources</Link>
-          </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 text-slate-400 hover:text-white">
-             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-12">
-        <div className="mb-16">
-           <h1 className="text-4xl font-black tracking-tighter mb-4 uppercase italic">Developer <span className="text-emerald-500">APIs</span></h1>
-           <p className="text-slate-500 text-sm max-w-2xl">Tích hợp dữ liệu blockchain AgriChain trực tiếp vào ứng dụng của bạn thông qua hệ thống API RESTful hiệu suất cao.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-           <div className="lg:col-span-2 space-y-8">
-              <section className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl overflow-hidden">
-                 <div className="p-8 border-b border-slate-50 bg-slate-50/50 flex justify-between items-center">
-                    <h2 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Terminal size={16} className="text-emerald-500" /> REST API Endpoints</h2>
-                    <span className="text-[10px] font-bold text-slate-400">v3.0.0-stable</span>
-                 </div>
-                 <div className="p-8 space-y-6">
-                    {endpoints.map((api, i) => (
-                      <div key={i} className="group p-6 rounded-2xl border border-slate-100 hover:border-emerald-500/20 transition-all">
-                         <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                            <div className="flex items-center gap-3">
-                               <span className={`px-3 py-1 rounded-lg text-[9px] font-black ${api.method === 'GET' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'}`}>{api.method}</span>
-                               <code className="text-xs font-mono font-bold text-natural-900">{api.path}</code>
-                            </div>
-                            <button onClick={() => handleCopy(api.path)} className="text-slate-300 hover:text-emerald-500 transition-colors">
-                               {copied === api.path ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                            </button>
-                         </div>
-                         <p className="text-xs text-slate-500 leading-relaxed">{api.desc}</p>
-                      </div>
-                    ))}
-                 </div>
-              </section>
-
-              <section className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
-                 <div className="absolute top-0 right-0 p-8 opacity-10"><Code size={80} /></div>
-                 <h2 className="text-xl font-black mb-6 uppercase italic">Quick Start Code</h2>
-                 <pre className="text-xs font-mono text-emerald-400/80 leading-relaxed overflow-x-auto p-6 bg-black/40 rounded-2xl border border-white/5">
-{`// Example Fetch using Javascript
-const getProductJourney = async (id) => {
-  const response = await fetch(\`https://api.agrichain.com/v3/product/\${id}\`);
-  const data = await response.json();
-  console.log("Verified Journey:", data.nodes);
-};
-
-// Response Object
-{
-  "status": "success",
-  "data": {
-    "id": "TEA-001",
-    "hash": "0x5e1b...b8e0",
-    "verified": true
-  }
-}`}
-                 </pre>
-              </section>
+    <div className="min-h-screen bg-[#0f172a] text-slate-300 font-sans">
+      <Header />
+      
+      <main className="pt-32 pb-24 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Left: Content */}
+        <div className="lg:col-span-7 space-y-16">
+           <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 text-blue-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+                 Developer Gateway
+              </div>
+              <h1 className="text-5xl md:text-6xl font-black text-white leading-tight">
+                 Build the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Future</span> of Ag-Tech
+              </h1>
+              <p className="text-lg text-slate-400 font-light leading-relaxed max-w-2xl">
+                 Integrate fwd LIFEchain's cryptographic truth into your own applications. Our robust API suite allows you to verify provenance, 
+                 query reputation, and anchor data with institutional-grade reliability.
+              </p>
            </div>
 
-           <div className="space-y-8">
-              <div className="p-8 bg-emerald-500 rounded-[2.5rem] text-white shadow-2xl shadow-emerald-500/20">
-                 <Zap size={32} className="mb-6" />
-                 <h3 className="text-xl font-black mb-2 tracking-tighter uppercase italic">Websocket Support</h3>
-                 <p className="text-sm text-emerald-50/80 leading-relaxed mb-8">Lắng nghe các sự kiện mint block và xác nhận giao dịch trong thời gian thực thông qua kết nối WSS.</p>
-                 <button className="w-full py-4 bg-white text-emerald-600 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-emerald-50 transition-all">
-                    GET API KEY
-                 </button>
+           <div className="space-y-12">
+              <div className="flex items-center gap-4 text-white">
+                 <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center border border-slate-700">
+                    <Database size={20} />
+                 </div>
+                 <h2 className="text-2xl font-black uppercase tracking-tight">Core Endpoints</h2>
               </div>
 
-              <div className="p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-xl">
-                 <h3 className="text-xs font-black uppercase tracking-widest mb-6">Rate Limits</h3>
-                 <div className="space-y-6">
-                    <div className="flex justify-between items-center pb-4 border-b border-slate-50">
-                       <span className="text-xs font-bold text-slate-500">Free Tier</span>
-                       <span className="text-xs font-black">10k req/day</span>
+              <div className="space-y-8">
+                 {endpoints.map((endpoint, i) => (
+                    <div key={i} className="group p-8 rounded-3xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 transition-all space-y-6">
+                       <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                             <span className={`px-2 py-1 rounded text-[10px] font-black ${endpoint.method === 'GET' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                                {endpoint.method}
+                             </span>
+                             <code className="text-sm font-mono text-white font-bold">{endpoint.path}</code>
+                          </div>
+                          <button className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-500">
+                             <Copy size={14} />
+                          </button>
+                       </div>
+                       <p className="text-sm text-slate-400 leading-relaxed italic">
+                          "{endpoint.desc}"
+                       </p>
+                       <div className="space-y-3">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Parameters</p>
+                          <div className="flex flex-wrap gap-2">
+                             {endpoint.params.map((p, idx) => (
+                                <span key={idx} className="px-2 py-1 bg-slate-950 rounded-md text-[10px] font-mono text-slate-400 border border-slate-800">{p}</span>
+                             ))}
+                          </div>
+                       </div>
                     </div>
-                    <div className="flex justify-between items-center pb-4 border-b border-slate-50">
-                       <span className="text-xs font-bold text-slate-500">Validator</span>
-                       <span className="text-xs font-black">Unlimited</span>
+                 ))}
+              </div>
+           </div>
+        </div>
+
+        {/* Right: Code Samples & Sandbox */}
+        <div className="lg:col-span-5 relative">
+           <div className="sticky top-32 space-y-8">
+              {/* SDK Card */}
+              <div className="p-8 rounded-[2rem] bg-gradient-to-br from-slate-900 to-black border border-slate-800 shadow-2xl space-y-8 overflow-hidden relative">
+                 <div className="absolute top-0 right-0 p-8 opacity-5">
+                    <Terminal size={120} className="text-blue-500" />
+                 </div>
+                 
+                 <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white">
+                       <Play size={16} fill="white" />
                     </div>
-                    <div className="flex justify-between items-center">
-                       <span className="text-xs font-bold text-slate-500">Response Time</span>
-                       <span className="text-xs font-black text-emerald-500">&lt; 50ms</span>
+                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Live Sandbox</span>
+                 </div>
+
+                 <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-black text-slate-500 uppercase">JavaScript SDK</span>
+                       <span className="text-[9px] text-emerald-400 font-bold">Stable v2.0.1</span>
+                    </div>
+                    <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 font-mono text-xs leading-relaxed overflow-x-auto">
+                       <p className="text-slate-500">{'// Initialize SDK'}</p>
+                       <p className="text-emerald-400"><span className="text-blue-400">const</span> chain = <span className="text-purple-400">new</span> LIFEchain(<span className="text-yellow-400">'API_KEY_001'</span>);</p>
+                       <br />
+                       <p className="text-slate-500">{'// Anchor harvest data'}</p>
+                       <p className="text-white">await chain.anchor({'{'}</p>
+                       <p className="text-white pl-4">productId: <span className="text-yellow-400">'VN-DALT-001'</span>,</p>
+                       <p className="text-white pl-4">qualityHash: <span className="text-yellow-400">'0x7f2a...'</span></p>
+                       <p className="text-white">{'}'});</p>
                     </div>
                  </div>
+
+                 <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                          <Globe size={16} className="text-blue-400" />
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Latency</p>
+                          <p className="text-xs font-bold text-white uppercase">42ms</p>
+                       </div>
+                       <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                          <ShieldCheck size={16} className="text-emerald-400" />
+                          <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Security</p>
+                          <p className="text-xs font-bold text-white uppercase">AES-256</p>
+                       </div>
+                    </div>
+                    <button className="w-full py-4 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-white/5 hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                       Generate API Key
+                       <Zap size={14} fill="currentColor" />
+                    </button>
+                 </div>
+              </div>
+
+              {/* Status Section */}
+              <div className="p-6 bg-slate-900/50 rounded-2xl border border-slate-800 flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">API Status: Operational</span>
+                 </div>
+                 <span className="text-[9px] font-bold text-slate-500 uppercase underline cursor-pointer">View Incident History</span>
               </div>
            </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }
