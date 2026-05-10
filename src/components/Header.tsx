@@ -32,27 +32,33 @@ const Header = () => {
 
   useEffect(() => {
     const fetchTokenBalance = async (walletAddress: string) => {
+      if (!walletAddress || walletAddress.startsWith('pending_')) return;
       try {
         const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        const tokenAddress = process.env.NEXT_PUBLIC_FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
-        const abi = ["function balanceOf(address) view returns (uint256)"];
-        const contract = new ethers.Contract(tokenAddress, abi, provider);
-        const bal = await contract.balanceOf(walletAddress);
+        // Using the native balance for AGRI display to match portal's main indicator
+        const bal = await provider.getBalance(walletAddress);
         setFwdBalance(ethers.formatEther(bal));
       } catch (e) {
         console.error("Error fetching header token balance:", e);
       }
     };
 
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
-        if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
-      }
-    };
-    checkUser();
+    // 1. Priority: Web3 Wallet Address
+    if (web3.isConnected && web3.address) {
+      fetchTokenBalance(web3.address);
+    } 
+    // 2. Secondary: Supabase User linked wallet
+    else {
+      const checkUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
+          if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
+        }
+      };
+      checkUser();
+    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
@@ -61,12 +67,12 @@ const Header = () => {
         if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
       } else {
         setUser(null);
-        setFwdBalance("0.00");
+        if (!web3.isConnected) setFwdBalance("0.00");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [web3.isConnected, web3.address]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
