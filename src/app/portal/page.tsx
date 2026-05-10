@@ -155,22 +155,26 @@ export default function ProducerPortal() {
     // Only run timeout if we aren't in the middle of an OAuth redirect
     const hasOAuthHash = typeof window !== 'undefined' && window.location.hash.includes('access_token');
     
-    if (authLoading && !hasOAuthHash) {
-      if (web3.isConnected) {
-        console.log("[Portal] Authorized via Wallet:", web3.address);
+    if (authLoading) {
+      if (web3.isConnected || user) {
         setAuthLoading(false);
       } else {
-        // Wait 20s before giving up — wallet extensions can be slow to inject
+        // Intelligent Timeout:
+        // 1. If we have an OAuth hash, wait the full 20s (Google redirect is in progress)
+        // 2. If no hash and no wallet, wait only 3s (unauthorized direct access)
+        const hasOAuthHash = typeof window !== 'undefined' && window.location.hash.includes('access_token');
+        const timeoutDuration = hasOAuthHash ? 20000 : 3000;
+
         timeoutId = setTimeout(async () => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session || web3.isConnected) {
             console.log("[Portal] Final session check success");
             setAuthLoading(false);
           } else {
-            console.log("[Portal] Total Auth Failure after 20s, forcing login...");
+            console.log(`[Portal] Auth Failure after ${timeoutDuration/1000}s, forcing login...`);
             window.location.href = '/signin';
           }
-        }, 20000);
+        }, timeoutDuration);
       }
     }
 
@@ -232,6 +236,26 @@ export default function ProducerPortal() {
         }
         fetchBalance();
         return;
+      } else {
+        // AUTO-CREATE Entity for Social User
+        console.log("[Portal] No entity found for social user, creating...");
+        const { data: newEntity } = await supabase
+          .from('entities')
+          .insert([{
+            id: session.user.id,
+            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Researcher',
+            role: 'ADMIN', // Default role for PhD researchers
+            reputation_score: 100,
+            fwd_balance: 1000, // Welcome bonus
+            wallet_address: `pending_${session.user.id.substring(0, 8)}`
+          }])
+          .select()
+          .single();
+        
+        if (newEntity) {
+          setCurrentEntity(newEntity);
+          return;
+        }
       }
     }
 
