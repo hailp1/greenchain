@@ -45,7 +45,7 @@ export default function ExplorerHome() {
           })));
         }
         
-        setStats(prev => ({ ...prev, totalTx: (supabaseTxCount || 0).toLocaleString() }));
+        setStats((prev: any) => ({ ...prev, totalTx: (supabaseTxCount || 0).toLocaleString() }));
       } catch (e) {
         console.warn("Supabase initial fetch error:", e);
       }
@@ -76,7 +76,7 @@ export default function ExplorerHome() {
           const validBlocks = (await Promise.all(blockPromises)).filter(b => b !== null);
 
           // Update stats and blocks
-          setStats(prev => ({
+          setStats((prev: any) => ({
             ...prev,
             latestBlock: blockNum,
             gas_price: gasPriceStr,

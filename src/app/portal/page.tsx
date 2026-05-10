@@ -210,44 +210,73 @@ export default function ProducerPortal() {
       // 1. Priority: Logged in user (Supabase Auth)
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data } = await supabase
+        const { data: entity } = await supabase
           .from('entities')
           .select('*')
           .eq('id', session.user.id)
           .maybeSingle();
-        if (data) {
-          setCurrentEntity(data);
+        
+        if (entity) {
+          // AUTO-LINK Wallet: If logged in but wallet is 'pending', link current MetaMask address
+          if (entity.wallet_address?.startsWith('pending_') && web3.isConnected && web3.address) {
+             console.log("[Portal] Activating wallet for user:", web3.address);
+             const { data: updated } = await supabase
+               .from('entities')
+               .update({ wallet_address: web3.address.toLowerCase() })
+               .eq('id', entity.id)
+               .select()
+               .single();
+             if (updated) {
+                setCurrentEntity(updated);
+                setWalletAddress(web3.address);
+                fetchBalance();
+                return;
+             }
+          }
+          
+          setCurrentEntity(entity);
+          if (entity.wallet_address && !entity.wallet_address.startsWith('pending_')) {
+            setWalletAddress(entity.wallet_address);
+          }
           fetchBalance();
           return;
         }
       }
 
       // 2. Secondary: Connected Wallet (MetaMask/Guest)
-      if (!walletAddress) return;
+      if (!web3.isConnected || !web3.address) return;
+      const addr = web3.address.toLowerCase();
+      
       const { data: existingEntity } = await supabase
         .from('entities')
         .select('*')
-        .ilike('wallet_address', walletAddress)
+        .ilike('wallet_address', addr)
         .maybeSingle();
       
       if (existingEntity) {
         setCurrentEntity(existingEntity);
+        setWalletAddress(addr);
         fetchBalance();
       } else {
         // AUTO-CREATE Entity for new wallet connections (Guest Mode)
-        // This ensures transactions can be recorded
-        const { data: newEntity, error } = await supabase
+        const { data: newEntity } = await supabase
           .from('entities')
           .insert([{
-            name: `Guest ${walletAddress.substring(0, 6)}`,
-            wallet_address: walletAddress,
+            name: `Guest ${addr.substring(0, 6)}`,
+            wallet_address: addr,
             role: 'FARM',
             reputation_score: 50,
             fwd_balance: 0
           }])
           .select()
-          .single();
+          .maybeSingle();
         
+        if (newEntity) {
+          setCurrentEntity(newEntity);
+          setWalletAddress(addr);
+        }
+      }
+    };
         if (!error && newEntity) {
           setCurrentEntity(newEntity);
           fetchBalance();
