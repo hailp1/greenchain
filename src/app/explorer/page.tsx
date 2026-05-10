@@ -1,16 +1,11 @@
 import { ethers } from 'ethers';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import ExplorerClient from './ClientPage';
 
 export const dynamic = 'force-dynamic';
 
 const RPC_URL = "https://rpc.fwdlife.vn";
 const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default async function ExplorerPage() {
   const [rpcResult, sbResult] = await Promise.allSettled([
