@@ -4,7 +4,7 @@ import React from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
-import { BookOpen, Cpu, Shield, Zap, Database, Share2, Layers, Binary, Workflow } from 'lucide-react';
+import { BookOpen, Cpu, Shield, Zap, Database, Share2, Layers, Binary, Workflow, ArrowRight } from 'lucide-react';
 
 export default function TechnicalDocsPage() {
   return (
