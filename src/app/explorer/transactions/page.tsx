@@ -88,32 +88,38 @@ export default function TransactionsPage() {
 
     // 2. Fetch from Supabase (Always include as fallback or augmentation)
     try {
-      const { data: sbData } = await supabase
+      const { data: sbData, error: sbError } = await supabase
         .from('token_transactions')
-        .select('*, sender:sender_id(wallet_address), receiver:receiver_id(wallet_address)')
+        .select('*')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(50);
+
+      if (sbError) throw sbError;
 
       if (sbData && sbData.length > 0) {
         const platformTxs: TxInfo[] = sbData.map(tx => ({
           hash: tx.id.replace(/-/g, '').substring(0, 40),
-          blockNumber: 0, // Virtual block for platform txs
-          timestamp: Math.floor(new Date(tx.created_at).getTime() / 1000),
-          from: tx.sender?.wallet_address || tx.sender_address || '0x0000000000000000000000000000000000000000',
-          to: tx.receiver?.wallet_address || tx.receiver_address || '0x0000000000000000000000000000000000000000',
+          blockNumber: 0, 
+          timestamp: tx.created_at ? Math.floor(new Date(tx.created_at).getTime() / 1000) : Math.floor(Date.now()/1000),
+          from: tx.sender_address || '0x0000000000000000000000000000000000000000',
+          to: tx.receiver_address || '0x0000000000000000000000000000000000000000',
           value: `${tx.amount}`,
-          type: tx.type,
+          type: tx.type || 'Platform',
           status: 'success'
         }));
 
-        // Merge and sort
-        const merged = [...chainTxs, ...platformTxs].sort((a, b) => b.timestamp - a.timestamp).slice(0, 40);
+        // Merge and sort safely
+        const merged = [...chainTxs, ...platformTxs]
+          .filter(tx => tx && tx.timestamp)
+          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+          .slice(0, 50);
+        
         setTransactions(merged);
       } else if (chainTxs.length > 0) {
         setTransactions(chainTxs);
       }
-    } catch (e) {
-      console.error("Supabase fetch error:", e);
+    } catch (e: any) {
+      console.error("Supabase fetch error:", e.message);
       if (chainTxs.length > 0) setTransactions(chainTxs);
     } finally {
       setLoading(false);
