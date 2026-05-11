@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sprout, Menu, X, Globe, ArrowRight, User, ShieldCheck, Terminal, HardDrive, Info, Wallet } from 'lucide-react';
+import { Sprout, Menu, X, Globe, ArrowRight, User, ShieldCheck, Terminal, HardDrive, Info, Wallet, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useWeb3 } from '@/lib/web3';
-import { ethers } from 'ethers';
+import { TOKEN_SYMBOL } from '@/lib/contracts/config';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,57 +27,11 @@ const Header = () => {
   }, []);
 
   const [user, setUser] = useState<any>(null);
-  const [fwdBalance, setFwdBalance] = useState("0.00");
   const [showNetworkModal, setShowNetworkModal] = useState(false);
-
-  useEffect(() => {
-    const fetchTokenBalance = async (walletAddress: string) => {
-      if (!walletAddress || walletAddress.startsWith('pending_')) return;
-      try {
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
-        const tokenAddress = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
-        const abi = ["function balanceOf(address) view returns (uint256)"];
-        const contract = new ethers.Contract(tokenAddress, abi, provider);
-        const bal = await contract.balanceOf(walletAddress);
-        setFwdBalance(ethers.formatEther(bal));
-      } catch (e) {
-        console.error("Error fetching header token balance:", e);
-      }
-    };
-
-    // 1. Priority: Web3 Wallet Address
-    if (web3.isConnected && web3.address) {
-      fetchTokenBalance(web3.address);
-    } 
-    // 2. Secondary: Supabase User linked wallet
-    else {
-      const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          setUser(session.user);
-          const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
-          if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
-        }
-      };
-      checkUser();
-    }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        const { data } = await supabase.from('entities').select('wallet_address').eq('id', session.user.id).maybeSingle();
-        if (data?.wallet_address) fetchTokenBalance(data.wallet_address);
-      } else {
-        setUser(null);
-        if (!web3.isConnected) setFwdBalance("0.00");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [web3.isConnected, web3.address]);
+  // Balance is now handled by Web3Provider automatically
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // In Web3 only mode, "Sign Out" usually means disconnect or just clear local state
     window.location.href = '/';
   };
 
@@ -95,12 +49,11 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-emerald-600/20 transition-transform group-hover:scale-110">
-              AGRI
+              GREEN
             </div>
             <div className="flex flex-col">
               <div className="flex items-baseline gap-1">
-                 <span className="font-serif text-lg font-light text-emerald-600 italic lowercase">fwd</span>
-                 <span className="font-sans text-xl font-black text-slate-900 uppercase tracking-tighter">LIFE</span>
+                 <span className="font-sans text-xl font-black text-slate-900 uppercase tracking-tighter">Green</span>
                  <span className="font-serif text-sm font-light text-slate-400 lowercase">chain</span>
               </div>
             </div>
@@ -121,45 +74,32 @@ const Header = () => {
           </nav>
 
           <div className="flex items-center gap-4">
-            {mounted && user && (
+            {mounted && web3.isConnected && (
               <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] font-black text-emerald-600">
-                  {Number(fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} <span className="text-[8px] opacity-60">AGRI</span>
+                <span className="text-[10px] font-black text-natural-900 flex items-center gap-1">
+                  <Zap size={10} className="text-emerald-500" />
+                  {Number(web3.greenBalance).toLocaleString(undefined, {minimumFractionDigits: 2})} <span className="text-[8px] opacity-60">{TOKEN_SYMBOL}</span>
                 </span>
               </div>
             )}
 
-            {user ? (
-              <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
-                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
-                   {user?.user_metadata?.avatar_url ? (
-                     <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                   ) : (
-                     <User size={16} className="text-emerald-600" />
-                   )}
-                </div>
-                <div className="hidden lg:flex flex-col">
-                   <span className="text-[10px] font-black text-slate-900 uppercase leading-none">
-                      {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Researcher'}
-                   </span>
-                   <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Control Panel</span>
-                </div>
-              </Link>
-            ) : mounted && web3.isConnected ? (
+            {mounted && web3.isConnected ? (
               <Link href="/portal" className="flex items-center gap-2 group/profile shrink-0">
                 <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-white shadow-sm overflow-hidden group-hover:scale-110 transition-transform">
                    <Wallet size={16} className="text-emerald-600" />
                 </div>
                 <div className="hidden lg:flex flex-col">
-                  <span className="text-[10px] font-black text-slate-900 uppercase leading-none">Portal</span>
-                  <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Connected</span>
+                   <span className="text-[10px] font-black text-slate-900 uppercase leading-none">
+                      {web3.address?.slice(0, 6)}...{web3.address?.slice(-4)}
+                   </span>
+                   <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">Control Panel</span>
                 </div>
               </Link>
             ) : (
               <Link href="/signin" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20">
                 <User size={14} />
-                Sign In
+                Connect Wallet
               </Link>
             )}
 
@@ -201,13 +141,13 @@ const Header = () => {
                   {link.name}
                 </Link>
               ))}
-              <div className="pt-4 border-t border-slate-50 flex flex-col gap-4">
-                 {user ? (
-                   <button onClick={handleSignOut} className="w-full py-4 bg-red-50 text-red-500 text-[10px] font-black rounded-xl uppercase tracking-widest">Sign Out</button>
-                 ) : (
-                   <Link href="/signin" onClick={() => setIsOpen(false)} className="w-full py-4 bg-emerald-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest text-center">Sign In</Link>
-                 )}
-              </div>
+               <div className="pt-4 border-t border-slate-50 flex flex-col gap-4">
+                  {mounted && web3.isConnected ? (
+                    <button onClick={handleSignOut} className="w-full py-4 bg-red-50 text-red-500 text-[10px] font-black rounded-xl uppercase tracking-widest">Disconnect</button>
+                  ) : (
+                    <Link href="/signin" onClick={() => setIsOpen(false)} className="w-full py-4 bg-emerald-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest text-center">Connect Wallet</Link>
+                  )}
+               </div>
             </div>
           </motion.div>
         )}
@@ -248,7 +188,7 @@ const Header = () => {
 
                    <div className="space-y-4">
                       <p className="text-xs text-slate-500 leading-relaxed">
-                         To ensure absolute transparency, you can independently verify all blockchain data by adding the fwd LIFEchain network to your wallet.
+                         To ensure absolute transparency, you can independently verify all blockchain data by adding the Green Chain network to your wallet.
                       </p>
                       
                       <div className="space-y-3">

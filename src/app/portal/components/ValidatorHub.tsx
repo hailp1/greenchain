@@ -63,7 +63,7 @@ export default function ValidatorHub({
           <p className="text-xl md:text-2xl font-black text-natural-950">
             {mounted && web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
           </p>
-          <button onClick={() => setStakeInput(web3.fwdBalance)} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mt-2 hover:underline">Stake Max Assets</button>
+          <button onClick={() => setStakeInput(web3.greenBalance)} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mt-2 hover:underline">Stake Max Assets</button>
         </div>
       </div>
 

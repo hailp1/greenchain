@@ -58,29 +58,6 @@ export default function LoginPage() {
     };
   }, [isConnected, address, router]);
 
-  // ─── Google Login Handler ──────────────────────────────────
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          skipBrowserRedirect: false,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          }
-        },
-      });
-      if (error) throw error;
-    } catch (error: any) {
-      console.error("[Auth] Google Login Error:", error);
-      alert('Google login failed: ' + error.message);
-      setLoading(false);
-    }
-  };
-
   // ─── Web3 Login Handler ────────────────────────────────────
   const handleWalletLogin = async () => {
     await connect();
@@ -129,7 +106,7 @@ export default function LoginPage() {
             </Link>
             <div className="space-y-2">
                <h2 className="text-3xl font-black tracking-tight uppercase italic">Welcome <span className="text-emerald-500">Back</span></h2>
-               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Access the blockchain-powered agricultural portal</p>
+               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Connect your Web3 identity to access the portal</p>
             </div>
           </div>
 
@@ -142,31 +119,11 @@ export default function LoginPage() {
 
           {/* Login Buttons */}
           <div className="space-y-4">
-             {/* Google Login */}
-             <button 
-               onClick={handleGoogleLogin}
-               disabled={loading}
-               className="w-full py-5 bg-white text-black rounded-2xl font-black text-sm flex items-center justify-center gap-4 hover:bg-slate-100 transition-all active:scale-[0.98] shadow-xl shadow-white/5"
-             >
-               {loading ? (
-                 <div className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin"></div>
-               ) : (
-                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
-               )}
-               CONTINUE WITH GOOGLE
-             </button>
-             
-             <div className="relative flex items-center py-4">
-                <div className="flex-grow border-t border-white/5"></div>
-                <span className="flex-shrink mx-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Or connect a wallet</span>
-                <div className="flex-grow border-t border-white/5"></div>
-             </div>
-
              {/* MetaMask / Trust Wallet */}
              <button 
                onClick={handleWalletLogin}
                disabled={isConnecting}
-               className="w-full py-5 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
+               className="w-full py-6 bg-emerald-600 text-white rounded-2xl text-[10px] font-black hover:bg-emerald-500 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-600/20 active:scale-95"
              >
                 {isConnecting ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -175,6 +132,10 @@ export default function LoginPage() {
                 )}
                 CONNECT METAMASK / TRUST WALLET
              </button>
+
+             <p className="text-center text-[8px] font-bold text-slate-500 uppercase tracking-widest">
+               Secure Web3 Authentication Required
+             </p>
           </div>
 
           {/* Features Info */}

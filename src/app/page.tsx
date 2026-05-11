@@ -51,7 +51,7 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  // Highlight the core cryptographic innovations that power fwd LIFEchain
+  // Highlight the core cryptographic innovations that power Green Chain
   const algorithmHighlights = [
     {
       title: "Zero‑Knowledge Rollups",
@@ -83,7 +83,7 @@ export default function Home() {
     { label: "Current Block", value: stats?.blocksVerified?.toLocaleString() || "#19,450,300", icon: Layers, color: "text-emerald-500" },
     { label: "Network TPS", value: "12.3 / 1.5k", icon: Zap, color: "text-blue-500" },
     { label: "Active Nodes", value: "1,204", icon: Globe, color: "text-amber-500" },
-    { label: "Total Value Locked", value: "84.2M AGRI", icon: ShieldCheck, color: "text-purple-500" }
+    { label: "Total Value Locked", value: "84.2M GRE", icon: ShieldCheck, color: "text-purple-500" }
   ];
 
   return (
@@ -99,13 +99,13 @@ export default function Home() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-xs font-bold mb-6 md:mb-8 uppercase tracking-widest">
               <Star size={14} className="text-slate-400" />
-              <span>fwd LIFEchain – Trust‑Engineered Agritech</span>
+              <span>Green Chain – Trust‑Engineered Agritech</span>
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-8xl font-black mb-6 md:mb-8 text-natural-950 tracking-tighter leading-[1.1]">
-              Transparent <span className="text-emerald-500 italic">Agriculture</span>
+            <h1 className="text-5xl md:text-8xl font-black mb-6 md:mb-10 text-[#0c240c] uppercase italic tracking-tighter leading-tight font-serif">
+              GREEN <span className="text-emerald-500">CHAIN</span>
             </h1>
-            <p className="text-slate-500 text-xs md:text-base lg:text-xl max-w-3xl mx-auto font-light leading-relaxed mb-8 md:mb-12 px-4">
-              A research‑grade blockchain platform that fuses advanced cryptography with rigorous academic theory to certify the provenance and quality of agricultural products.
+            <p className="max-w-2xl mx-auto text-base md:text-xl text-slate-600 font-medium leading-relaxed italic mb-8 md:mb-12">
+              A high-performance Core Blockchain infrastructure for Material Sourcing, Green Tourism, and Social Responsibility. 
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4 px-4 max-w-lg mx-auto">
               <Link href="/verify" className="w-full sm:w-auto px-8 py-4 bg-natural-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl hover:-translate-y-1 active:scale-95 transition-all text-sm">
@@ -145,8 +145,8 @@ export default function Home() {
               <Activity size={20} />
             </div>
             <div>
-              <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase italic">Network <span className="text-emerald-500">Pulse</span></h2>
-              <p className="text-slate-400 text-[8px] md:text-xs font-bold uppercase tracking-widest">Real‑time AGRI Lifechain Activity</p>
+              <h2 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tighter leading-tight italic">BUILD ON <span className="text-emerald-400">GREEN CORE</span></h2>
+              <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium">Join the ecosystem of sustainable projects leveraging the power of Green Chain infrastructure.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">

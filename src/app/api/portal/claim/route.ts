@@ -9,18 +9,10 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
-    const authClient = await createServerClient();
-    const { data: { session } } = await authClient.auth.getSession();
-
     const { entity_id, wallet_address } = await request.json();
 
     if (!entity_id && !wallet_address) {
       return NextResponse.json({ error: 'Missing identity' }, { status: 400 });
-    }
-
-    // 1. Validation
-    if (session && entity_id && entity_id !== session.user.id) {
-       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     // 2. Fetch Entity

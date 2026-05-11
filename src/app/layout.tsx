@@ -17,10 +17,10 @@ const ebGaramond = EB_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "fwd LIFEchain | Blockchain Verified Agriculture",
-  description: "fwd LIFEchain is a transparent ecosystem for verifying the Vietnamese agricultural supply chain using Blockchain & AI.",
-  keywords: ["fwd LIFEchain", "fwdlife.vn", "Blockchain Agriculture", "Lê Phúc Hải", "Traceability"],
-  authors: [{ name: "Lê Phúc Hải" }],
+  title: "Green Chain | Core Blockchain Infrastructure",
+  description: "Green Chain is a high-performance Core Blockchain for Material Sourcing, Green Tourism, and Social Responsibility using GRE native token.",
+  keywords: ["Green Chain", "GreenChain", "Blockchain Infrastructure", "GRE Token", "Sustainability", "Traceability"],
+  authors: [{ name: "Green Chain Core Team" }],
 };
 
 export default function RootLayout({

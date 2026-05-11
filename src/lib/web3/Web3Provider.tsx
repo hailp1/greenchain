@@ -2,11 +2,21 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { BrowserProvider, JsonRpcSigner, Contract, formatEther, parseEther } from 'ethers';
-import { FWD_TOKEN_ADDRESS, FWD_STAKING_ADDRESS, FWD_ANCHOR_ADDRESS } from '@/lib/contracts/config';
+import { 
+  GREEN_TOKEN_ADDRESS, 
+  GREEN_STAKING_ADDRESS, 
+  GREEN_ANCHOR_ADDRESS,
+  CHAIN_ID_HEX,
+  RPC_URL,
+  TOKEN_SYMBOL,
+  TOKEN_NAME,
+  EXPLORER_URL
+} from '@/lib/contracts/config';
 
 // Import ABI from compiled artifacts
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
 import FWDStakingArtifact from '@/artifacts/contracts/FWDStaking.sol/FWDStaking.json';
+import FWDAnchorArtifact from '@/artifacts/contracts/FWDAnchor.sol/FWDAnchor.json';
 
 // ─── Types ────────────────────────────────────────────────────
 interface Web3State {
@@ -15,7 +25,7 @@ interface Web3State {
   address: string | null;
   chainId: number | null;
   balance: string;
-  fwdBalance: string;
+  greenBalance: string;
   stakedBalance: string;
   pendingRewards: string;
   error: string | null;
@@ -38,7 +48,7 @@ const initialState: Web3State = {
   address: null,
   chainId: null,
   balance: '0',
-  fwdBalance: '0',
+  greenBalance: '0',
   stakedBalance: '0',
   pendingRewards: '0',
   error: null,
@@ -65,17 +75,17 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null);
 
   // Check if contracts are deployed
-  const contractsDeployed = FWD_TOKEN_ADDRESS.length > 0 && FWD_STAKING_ADDRESS.length > 0;
+  const contractsDeployed = GREEN_TOKEN_ADDRESS.length > 0 && GREEN_STAKING_ADDRESS.length > 0;
 
   // ─── Helper: get contract instances ─────────────────────────
   const getTokenContract = useCallback((signerOrProvider: JsonRpcSigner | BrowserProvider) => {
     if (!contractsDeployed) return null;
-    return new Contract(FWD_TOKEN_ADDRESS, FWDTokenArtifact.abi, signerOrProvider);
+    return new Contract(GREEN_TOKEN_ADDRESS, FWDTokenArtifact.abi, signerOrProvider);
   }, [contractsDeployed]);
 
   const getStakingContract = useCallback((signerOrProvider: JsonRpcSigner | BrowserProvider) => {
     if (!contractsDeployed) return null;
-    return new Contract(FWD_STAKING_ADDRESS, FWDStakingArtifact.abi, signerOrProvider);
+    return new Contract(GREEN_STAKING_ADDRESS, FWDStakingArtifact.abi, signerOrProvider);
   }, [contractsDeployed]);
 
   // ─── Refresh Balances ───────────────────────────────────────
@@ -87,7 +97,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       const ethBalance = await provider.getBalance(state.address);
       const balanceStr = formatEther(ethBalance);
 
-      let fwdBal = '0';
+      let greenBal = '0';
       let stakedBal = '0';
       let rewards = '0';
 
@@ -96,8 +106,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         const stakingContract = getStakingContract(provider);
 
         if (tokenContract) {
-          const rawFwd = await tokenContract.balanceOf(state.address);
-          fwdBal = formatEther(rawFwd);
+          const rawGre = await tokenContract.balanceOf(state.address);
+          greenBal = formatEther(rawGre);
         }
 
         if (stakingContract) {
@@ -110,7 +120,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
       setState(prev => ({
         ...prev,
         balance: balanceStr,
-        fwdBalance: fwdBal,
+        greenBalance: greenBal,
         stakedBalance: stakedBal,
         pendingRewards: rewards,
       }));
@@ -125,7 +135,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
     setSigner(null);
     setState(initialState);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('fwd_wallet_connected');
+      localStorage.removeItem('green_wallet_connected');
     }
   }, []);
 
@@ -133,7 +143,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkConnection = async () => {
       console.log("[Web3] Checking for persistent connection...");
-      if (typeof window !== 'undefined' && window.ethereum && localStorage.getItem('fwd_wallet_connected') === 'true') {
+      if (typeof window !== 'undefined' && window.ethereum && localStorage.getItem('green_wallet_connected') === 'true') {
         try {
           const browserProvider = new BrowserProvider(window.ethereum);
           console.log("[Web3] Requesting accounts...");
@@ -155,7 +165,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
           }
         } catch (err) {
           console.error('[Web3] Auto-connect error:', err);
-          localStorage.removeItem('fwd_wallet_connected');
+          localStorage.removeItem('green_wallet_connected');
         }
       } else {
         console.log("[Web3] No persistent connection found or provider missing.");
@@ -192,7 +202,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
         chainId: Number(network.chainId),
       }));
 
-      localStorage.setItem('fwd_wallet_connected', 'true');
+      localStorage.setItem('green_wallet_connected', 'true');
     } catch (err: any) {
       console.error('Connection error:', err);
       setState(prev => ({
@@ -206,7 +216,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   // ─── Helper: Ensure correct network ─────────────────────────
   const ensureCorrectNetwork = useCallback(async () => {
     if (!window.ethereum) return false;
-    const targetChainId = "0x495C9"; // 300489 in hex
+    const targetChainId = CHAIN_ID_HEX;
     
     try {
       await window.ethereum.request({
@@ -223,14 +233,14 @@ export function Web3Provider({ children }: { children: ReactNode }) {
             params: [
               {
                 chainId: targetChainId,
-                chainName: 'fwd LIFEchain',
-                rpcUrls: ['https://rpc.fwdlife.vn'],
+                chainName: 'Green Chain',
+                rpcUrls: [RPC_URL],
                 nativeCurrency: {
-                  name: 'fwd AGRI',
-                  symbol: 'AGRI',
+                  name: TOKEN_NAME,
+                  symbol: TOKEN_SYMBOL,
                   decimals: 18,
                 },
-                blockExplorerUrls: ['https://chain.fwdlife.vn/explorer'],
+                blockExplorerUrls: [EXPLORER_URL],
               },
             ],
           });
@@ -262,8 +272,8 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
       const parsedAmount = parseEther(amount);
 
-      console.log("[Web3] Step 1: Approving AGRI tokens for staking...");
-      const approveTx = await tokenContract.approve(FWD_STAKING_ADDRESS, parsedAmount);
+      console.log(`[Web3] Step 1: Approving ${TOKEN_SYMBOL} tokens for staking...`);
+      const approveTx = await tokenContract.approve(GREEN_STAKING_ADDRESS, parsedAmount);
       console.log("[Web3] Approval TX sent:", approveTx.hash);
       await approveTx.wait();
       console.log("[Web3] Approval confirmed.");
@@ -347,7 +357,7 @@ export function Web3Provider({ children }: { children: ReactNode }) {
 
     try {
       await ensureCorrectNetwork();
-      console.log(`[Web3] Transferring ${amount} AGRI to ${to}...`);
+      console.log(`[Web3] Transferring ${amount} ${TOKEN_SYMBOL} to ${to}...`);
       const tokenContract = getTokenContract(signer);
       if (!tokenContract) return null;
 

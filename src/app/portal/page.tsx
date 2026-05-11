@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useWeb3 } from '@/lib/web3/Web3Provider';
 import { ethers } from 'ethers';
+import { RPC_URL, TOKEN_SYMBOL } from '@/lib/contracts/config';
 
 export default function ProducerPortal() {
   const web3 = useWeb3();
@@ -53,11 +54,10 @@ export default function ProducerPortal() {
     gps: ''
   });
 
-  const [user, setUser] = useState<any>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [balance, setBalance] = useState("0.00");
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const isCreatingGuest = useRef(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -74,7 +74,7 @@ export default function ProducerPortal() {
       }
       
       if (targetAddr && !targetAddr.startsWith('pending_')) {
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
         const bal = await provider.getBalance(targetAddr);
         setBalance(ethers.formatEther(bal));
       }
@@ -83,109 +83,32 @@ export default function ProducerPortal() {
     }
   }, [walletAddress]);
 
-  // ─── Authentication Logic ────────────────────────────────────
+  // ─── Authentication Logic (Web3 Only) ──────────────────────
   useEffect(() => {
     setMounted(true);
     
-    // 1. Listen for Auth Changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[Portal] Auth Event:", event);
-      if (session) {
-        console.log("[Portal] Session active:", session.user.email);
-        setUser(session.user);
-        setAuthLoading(false);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("[Portal] User signed out, redirecting...");
-        window.location.href = '/signin';
-      }
-    });
-
-    // 2. Initial Session Check with OAuth hash retry
-    const checkInitialAuth = async () => {
-      try {
-        // First quick check
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          console.log("[Portal] Initial session found:", session.user.id);
-          setUser(session.user);
-          setAuthLoading(false);
-          return;
-        }
-
-        // Handle Google OAuth redirect hash
-        const hasOAuthHash = typeof window !== 'undefined' && (
-          window.location.hash.includes('access_token') || 
-          window.location.hash.includes('error')
-        );
-
-        if (hasOAuthHash) {
-          console.log("[Portal] Detected OAuth hash, waiting for Supabase to parse...");
-          // Retry every 2s for up to 20s
-          for (let i = 0; i < 10; i++) {
-            await new Promise(r => setTimeout(r, 2000));
-            const { data: { session: retrySession } } = await supabase.auth.getSession();
-            if (retrySession) {
-              console.log("[Portal] OAuth success on retry", i + 1);
-              setUser(retrySession.user);
-              setAuthLoading(false);
-              // Clean up the URL hash
-              window.history.replaceState(null, '', window.location.pathname);
-              return;
-            }
-          }
-          console.log("[Portal] OAuth hash parse failed after retries");
+    // Safety check for wallet connection
+    if (web3.isConnected && web3.address) {
+      setAuthLoading(false);
+    } else {
+      // Small delay to allow wallet to initialize
+      const timeout = setTimeout(() => {
+        if (!web3.isConnected) {
           window.location.href = '/signin';
-          return;
+        } else {
+          setAuthLoading(false);
         }
-
-        console.log("[Portal] No Supabase session, waiting for wallet...");
-      } catch (err) {
-        console.error("[Portal] Auth check error:", err);
-      }
-    };
-
-    checkInitialAuth();
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // 3. Monitor for MetaMask Connection or Timeout
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    // Only run timeout if we aren't in the middle of an OAuth redirect
-    const hasOAuthHash = typeof window !== 'undefined' && window.location.hash.includes('access_token');
-    
-    if (authLoading) {
-      if (web3.isConnected || user) {
-        setAuthLoading(false);
-      } else {
-        // Intelligent Timeout:
-        // 1. If we have an OAuth hash, wait the full 20s (Google redirect is in progress)
-        // 2. If no hash and no wallet, wait only 3s (unauthorized direct access)
-        const hasOAuthHash = typeof window !== 'undefined' && window.location.hash.includes('access_token');
-        const timeoutDuration = hasOAuthHash ? 20000 : 3000;
-
-        timeoutId = setTimeout(async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session || web3.isConnected) {
-            console.log("[Portal] Final session check success");
-            setAuthLoading(false);
-          } else {
-            console.log(`[Portal] Auth Failure after ${timeoutDuration/1000}s, forcing login...`);
-            window.location.href = '/signin';
-          }
-        }, timeoutDuration);
-      }
+      }, 2000);
+      return () => clearTimeout(timeout);
     }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [authLoading, web3.isConnected, web3.address]);
+  }, [web3.isConnected, web3.address]);
 
   useEffect(() => {
-    console.log("[Portal] Auth State:", { authLoading, user: user?.id, isConnected: web3.isConnected });
-  }, [authLoading, user, web3.isConnected]);
+    if (web3.isConnected && web3.address) {
+      setWalletAddress(web3.address);
+      fetchBalance();
+    }
+  }, [web3.isConnected, web3.address, fetchBalance]);
 
   useEffect(() => {
     if (web3.isConnected && web3.address) {
@@ -195,7 +118,7 @@ export default function ProducerPortal() {
 
   useEffect(() => {
     fetchBalance();
-  }, [walletAddress, user, fetchBalance]);
+  }, [walletAddress, fetchBalance]);
 
   useEffect(() => {
     if (!authLoading) setMounted(true);
@@ -203,69 +126,10 @@ export default function ProducerPortal() {
 
   // ─── Data Fetching Functions ──────────────────────────────────
   const fetchEntityData = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    // 1. Priority: Logged in user (Supabase Auth)
-    if (session?.user) {
-      const { data: entity } = await supabase
-        .from('entities')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      
-      if (entity) {
-        // AUTO-LINK Wallet logic...
-        if (entity.wallet_address?.startsWith('pending_') && web3.isConnected && web3.address) {
-           const { data: updated } = await supabase
-             .from('entities')
-             .update({ wallet_address: web3.address.toLowerCase() })
-             .eq('id', entity.id)
-             .select()
-             .single();
-           if (updated) {
-              setCurrentEntity(updated);
-              setWalletAddress(web3.address);
-              fetchBalance();
-              return;
-           }
-        }
-        
-        setCurrentEntity(entity);
-        if (entity.wallet_address && !entity.wallet_address.startsWith('pending_')) {
-          setWalletAddress(entity.wallet_address);
-        }
-        fetchBalance();
-        return;
-      } else {
-        // AUTO-CREATE Entity for Social User
-        console.log("[Portal] No entity found for social user, creating...");
-        const { data: newEntity } = await supabase
-          .from('entities')
-          .insert([{
-            id: session.user.id,
-            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Researcher',
-            role: 'ADMIN', // Default role for PhD researchers
-            reputation_score: 100,
-            fwd_balance: 1000, // Welcome bonus
-            wallet_address: `pending_${session.user.id.substring(0, 8)}`
-          }])
-          .select()
-          .single();
-        
-        if (newEntity) {
-          setCurrentEntity(newEntity);
-          return;
-        }
-      }
-    }
+    if (!web3.isConnected || !web3.address) return;
+    const addr = web3.address.toLowerCase();
 
-    // 2. Secondary: Connected Wallet (Guest Mode)
-    // ONLY trigger guest mode if we are NOT loading auth and NO session exists
-    if (authLoading) return; 
-    if (session?.user) return; // redundant but safe
-
-    if (web3.isConnected && web3.address) {
-      const addr = web3.address.toLowerCase();
+    try {
       const { data: existingEntity } = await supabase
         .from('entities')
         .select('*')
@@ -282,11 +146,11 @@ export default function ProducerPortal() {
         isCreatingGuest.current = true;
 
         try {
-          // AUTO-CREATE Guest Entity...
+          // AUTO-CREATE Entity for Wallet User
           const { data: newEntity } = await supabase
             .from('entities')
             .insert([{
-              name: `Guest ${addr.substring(0, 6)}`,
+              name: `Researcher ${addr.substring(0, 6)}`,
               wallet_address: addr,
               role: 'FARM',
               reputation_score: 50,
@@ -303,8 +167,10 @@ export default function ProducerPortal() {
           isCreatingGuest.current = false;
         }
       }
+    } catch (err) {
+      console.error("[Portal] Entity fetch error:", err);
     }
-  }, [web3.isConnected, web3.address, fetchBalance, authLoading]);
+  }, [web3.isConnected, web3.address, fetchBalance]);
 
   const fetchPortalData = useCallback(async () => {
     if (!currentEntity) return;
@@ -354,7 +220,7 @@ export default function ProducerPortal() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            sender_id: user ? user.id : currentEntity?.id,
+            sender_id: currentEntity?.id,
             sender_address: web3.address,
             receiver_address: recipientWallet,
             amount: transferAmount,
@@ -423,9 +289,9 @@ export default function ProducerPortal() {
         return;
       }
 
-      // Validation: Check Token Balance (fwdBalance) instead of Native Balance (gas)
-      if (parseFloat(web3.fwdBalance) < amount) {
-        alert(`Insufficient AGRI balance (${web3.fwdBalance}). Please use CLAIM to receive more.`);
+      // Validation: Check Token Balance (greenBalance) instead of Native Balance (gas)
+      if (parseFloat(web3.greenBalance) < amount) {
+        alert(`Insufficient ${TOKEN_SYMBOL} balance (${web3.greenBalance}). Please use CLAIM to receive more.`);
         setIsSigning(false);
         return;
       }
@@ -446,7 +312,7 @@ export default function ProducerPortal() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            entity_id: user ? user.id : currentEntity?.id,
+            entity_id: currentEntity?.id,
             wallet_address: web3.address,
             amount: amount,
             tx_hash: txHash
@@ -582,7 +448,7 @@ export default function ProducerPortal() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          entity_id: user ? user.id : currentEntity?.id,
+          entity_id: currentEntity?.id,
           wallet_address: web3.address
         })
       });
@@ -655,14 +521,13 @@ export default function ProducerPortal() {
         <div className="p-4 border-t border-white/5">
            <button 
              onClick={async () => {
-               await supabase.auth.signOut();
-               window.localStorage.clear(); // Clear all local storage to be safe
+               window.localStorage.clear();
                window.location.href = '/';
              }} 
              className="w-full flex items-center gap-4 p-4 text-slate-500 hover:text-red-400 transition-colors"
            >
               <LogOut size={20} />
-              <span className="hidden md:block font-bold text-sm uppercase tracking-widest">Logout System</span>
+              <span className="hidden md:block font-bold text-sm uppercase tracking-widest">Disconnect Wallet</span>
            </button>
         </div>
       </aside>
@@ -671,7 +536,7 @@ export default function ProducerPortal() {
         <header className="h-16 md:h-20 bg-white border-b border-slate-100 px-4 md:px-8 flex items-center justify-between sticky top-0 z-50">
            <div className="flex items-center gap-4 md:gap-8 min-w-0 flex-1">
               <h2 className="text-xs md:text-lg font-black tracking-tight uppercase italic truncate">
-                {currentEntity?.name || user?.user_metadata?.full_name || (authLoading ? 'Verifying...' : 'Guest Node')} 
+                {currentEntity?.name || (authLoading ? 'Verifying...' : 'Guest Node')} 
               </h2>
               
               {/* Network Pulse - NEW */}
@@ -696,10 +561,10 @@ export default function ProducerPortal() {
               <div className="flex flex-col items-end">
                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] md:text-[10px] font-black text-emerald-700 uppercase tracking-widest shrink-0">
                     <Zap size={10} className="animate-pulse text-emerald-500" />
-                    {mounted ? Number(web3.fwdBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span className="opacity-50">AGRI</span>
+                    {mounted ? Number(web3.greenBalance).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0.00'} <span className="opacity-50">{TOKEN_SYMBOL}</span>
                  </div>
                  {mounted && web3.isConnected && (
-                    <span className="text-[8px] text-slate-400 font-bold uppercase mt-1">Gas: {Number(web3.balance).toFixed(4)} AGRI</span>
+                    <span className="text-[8px] text-slate-400 font-bold uppercase mt-1">Gas: {Number(web3.balance).toFixed(4)} {TOKEN_SYMBOL}</span>
                  )}
               </div>
 
@@ -712,13 +577,9 @@ export default function ProducerPortal() {
                 </button>
               )}
 
-               <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
-                  {user?.user_metadata?.avatar_url ? (
-                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={20} className="text-emerald-600" />
-                  )}
-               </div>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-emerald-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm shrink-0">
+                   <User size={20} className="text-emerald-600" />
+                </div>
            </div>
         </header>
 
@@ -765,7 +626,7 @@ export default function ProducerPortal() {
                     <div className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                         <div className="text-amber-500 mb-4 bg-amber-50 w-10 h-10 rounded-xl flex items-center justify-center"><Globe size={18} /></div>
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Value Locked</p>
-                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">84.2M <span className="text-[10px] opacity-40">AGRI</span></p>
+                        <p className="text-xl md:text-2xl font-black text-natural-950 truncate">84.2M <span className="text-[10px] opacity-40">{TOKEN_SYMBOL}</span></p>
                     </div>
                  </div>
 
@@ -784,23 +645,23 @@ export default function ProducerPortal() {
                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Available</p>
-                             <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.fwdBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                             <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.greenBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">{TOKEN_SYMBOL}</span></p>
                           </div>
                           <div className="p-6 bg-white/5 rounded-3xl border border-white/10">
                              <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2">Staked</p>
-                             <p className="text-2xl font-black">{mounted ? Number(web3.stakedBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                             <p className="text-2xl font-black">{mounted ? Number(web3.stakedBalance).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">{TOKEN_SYMBOL}</span></p>
                           </div>
                           <div className="p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20">
                              <p className="text-[8px] font-black text-emerald-400 uppercase tracking-widest mb-2">Unclaimed Rewards</p>
                              <div className="flex flex-col gap-3">
-                                <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.pendingRewards).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">AGRI</span></p>
+                                <p className="text-2xl font-black text-emerald-400">{mounted ? Number(web3.pendingRewards).toLocaleString() : '0'} <span className="text-xs opacity-50 font-normal">{TOKEN_SYMBOL}</span></p>
                                 <button 
                                   onClick={handleClaimReward}
                                   disabled={claimLoading}
                                   className="w-full py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
                                 >
                                   {claimLoading ? <RefreshCw size={12} className="animate-spin" /> : <Zap size={12} />}
-                                  Claim Daily (500 AGRI)
+                                  Claim Daily (500 {TOKEN_SYMBOL})
                                 </button>
                               </div>
                           </div>
@@ -825,7 +686,7 @@ export default function ProducerPortal() {
                                      <p className="text-[8px] text-slate-400 font-bold uppercase">By Node: 0x{Math.random().toString(16).slice(2, 8)}...{Math.random().toString(16).slice(2, 6)}</p>
                                   </div>
                                </div>
-                               <div className="text-[8px] font-black text-emerald-600 uppercase">+1.2 AGRI Reward</div>
+                               <div className="text-[8px] font-black text-emerald-600 uppercase">+1.2 {TOKEN_SYMBOL} Reward</div>
                             </div>
                           ))}
                        </div>
@@ -965,7 +826,7 @@ export default function ProducerPortal() {
                        <p className="text-xl md:text-2xl font-black text-natural-950">
                          {mounted && web3.isConnected ? Number(web3.stakedBalance).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '0.00'}
                        </p>
-                       <button onClick={() => setStakeInput(web3.fwdBalance)} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mt-2 hover:underline">Stake Max Assets</button>
+                       <button onClick={() => setStakeInput(web3.greenBalance)} className="text-[8px] font-black text-emerald-600 uppercase tracking-widest mt-2 hover:underline">Stake Max Assets</button>
                     </div>
                  </div>
 

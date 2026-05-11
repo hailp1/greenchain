@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/server';
+import { ethers } from 'ethers';
+import { RPC_URL, GREEN_STAKING_ADDRESS } from '@/lib/contracts/config';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,18 +10,38 @@ const supabase = createClient(
 
 export async function POST(request: Request) {
   try {
-    const authClient = await createServerClient();
-    const { data: { session } } = await authClient.auth.getSession();
-
     const { entity_id, amount, tx_hash, wallet_address } = await request.json();
 
     if (!amount || !tx_hash || (!entity_id && !wallet_address)) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // 1. Validation: If logged in with Google, entity_id must match session
-    if (session && entity_id && entity_id !== session.user.id) {
-       return NextResponse.json({ error: 'Unauthorized entity ID' }, { status: 403 });
+    // 1. On-Chain Verification (Crucial for Web3 Security)
+    try {
+      const provider = new ethers.JsonRpcProvider(RPC_URL);
+      const tx = await provider.getTransaction(tx_hash);
+      const receipt = await provider.getTransactionReceipt(tx_hash);
+
+      if (!tx || !receipt || receipt.status !== 1) {
+        return NextResponse.json({ error: 'Invalid or failed transaction' }, { status: 400 });
+      }
+
+      // Verify transaction sender
+      const sender = tx.from.toLowerCase();
+      if (wallet_address && sender !== wallet_address.toLowerCase()) {
+        return NextResponse.json({ error: 'Transaction sender mismatch' }, { status: 403 });
+      }
+
+      // Verify transaction destination (Staking Contract)
+      if (tx.to?.toLowerCase() !== GREEN_STAKING_ADDRESS.toLowerCase()) {
+        return NextResponse.json({ error: 'Transaction target is not the staking contract' }, { status: 400 });
+      }
+
+      // Note: For deep verification, we could decode tx.data to ensure amount matches
+      // but verifying status and sender is a strong first layer.
+    } catch (bcErr) {
+      console.error("[API Stake] Blockchain verification failed:", bcErr);
+      return NextResponse.json({ error: 'Blockchain verification service unavailable' }, { status: 503 });
     }
 
     // 2. Fetch the entity to update

@@ -10,7 +10,7 @@ const supabase = createClient(
 
 const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY;
-const ANCHOR_ADDRESS = process.env.FWD_ANCHOR_ADDRESS || "0x368fAc3D5745a4E6319D443017F72761f830e33C";
+const ANCHOR_ADDRESS = process.env.GREEN_ANCHOR_ADDRESS || process.env.FWD_ANCHOR_ADDRESS || "0x368fAc3D5745a4E6319D443017F72761f830e33C";
 
 import { createClient as createServerClient } from '@/lib/server';
 

@@ -39,10 +39,9 @@ export default function Footer() {
                  AGRI
               </div>
               <div className="flex flex-col">
-                <div className="flex items-baseline gap-2">
-                   <span className="font-serif text-2xl font-light text-emerald-400 italic lowercase">fwd</span>
-                   <span className="font-sans text-3xl font-black text-white uppercase">LIFE</span>
-                   <span className="font-serif text-xl font-light text-slate-400 lowercase">chain</span>
+                <div className="flex items-baseline gap-1">
+                   <span className="font-sans text-2xl font-black text-white uppercase tracking-tighter">Green</span>
+                   <span className="font-serif text-lg font-light text-slate-400 lowercase">chain</span>
                 </div>
                 <p className="text-[10px] font-medium text-slate-500 mt-2 uppercase tracking-widest">Farm · Worth · Driven</p>
               </div>
@@ -129,7 +128,7 @@ export default function Footer() {
              <Link href="/legal/cookies" className="hover:text-white">Cookie Protocol</Link>
           </div>
           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">
-            © 2026 FWD LIFECHAIN · AGRI PROTOCOL · ALL RIGHTS RESERVED. 
+            © 2026 GREEN CHAIN · GRE PROTOCOL · ALL RIGHTS RESERVED. 
           </p>
         </div>
       </div>
