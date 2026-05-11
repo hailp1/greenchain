@@ -12,16 +12,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 import useSWR from 'swr';
-import { RPC_URL, TOKEN_SYMBOL } from '@/lib/contracts/config';
+import { RPC_URL, RPC_PROXY_URL, TOKEN_SYMBOL } from '@/lib/contracts/config';
 
-const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
+// Use proxy URL for client-side to bypass CORS
+const getRpcProvider = () => {
+  if (typeof window === 'undefined') return new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
+  // In the browser, we use our local proxy route
+  return new ethers.JsonRpcProvider(window.location.origin + RPC_PROXY_URL, undefined, { staticNetwork: true });
+};
 
 export default function ExplorerClient({ initialData }: { initialData: any }) {
+  const rpcProviderRef = useRef<ethers.JsonRpcProvider | null>(null);
   const [mounted, setMounted] = useState(false);
   const [searchVal, setSearchVal] = useState('');
 
   useEffect(() => {
     setMounted(true);
+    rpcProviderRef.current = getRpcProvider();
   }, []);
 
   const handleSearch = () => {
@@ -41,17 +48,20 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
   };
 
   const fetcher = async () => {
+    const provider = rpcProviderRef.current;
+    if (!provider) return initialData;
+
     const [rpcResult, sbResult] = await Promise.allSettled([
       (async () => {
         try {
           const [blockNum, feeData] = await Promise.all([
-            rpcProvider.getBlockNumber(),
-            rpcProvider.getFeeData()
+            provider.getBlockNumber(),
+            provider.getFeeData()
           ]);
           const blockPromises = [];
           for (let i = 0; i < 6; i++) {
             if (blockNum - i >= 0) {
-              blockPromises.push(rpcProvider.getBlock(blockNum - i).catch(() => null));
+              blockPromises.push(provider.getBlock(blockNum - i).catch(() => null));
             }
           }
           const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);

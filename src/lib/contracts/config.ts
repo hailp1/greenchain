@@ -1,8 +1,9 @@
 // Blockchain Network Configuration
 export const CHAIN_ID = 1186;
 export const CHAIN_ID_HEX = "0x4A2";
-export const RPC_URL = "https://rpc.fwdlife.vn"; // Keep original URL for now, but update display text
-export const EXPLORER_URL = "https://chain.fwdlife.vn/explorer";
+export const RPC_URL = "https://rpc.fwdlife.vn"; 
+export const RPC_PROXY_URL = "/api/rpc"; // Used by client-side to bypass CORS
+export const EXPLORER_URL = "https://greenchain.lephuchai.com/explorer";
 
 // Contract Addresses
 export const GREEN_TOKEN_ADDRESS = "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
