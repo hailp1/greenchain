@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
 import { createClient } from '@supabase/supabase-js';
 
-const RPC_URL = "https://rpc.fwdlife.vn";
+const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
 const TOKEN_ADDRESS = process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
 

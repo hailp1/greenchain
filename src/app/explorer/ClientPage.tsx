@@ -15,7 +15,12 @@ const RPC_URL = "https://rpc.fwdlife.vn";
 const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
 export default function ExplorerClient({ initialData }: { initialData: any }) {
+  const [mounted, setMounted] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSearch = () => {
     if (!searchVal) return;
@@ -37,18 +42,23 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
     // Run RPC and Supabase in PARALLEL
     const [rpcResult, sbResult] = await Promise.allSettled([
       (async () => {
-        const [blockNum, feeData] = await Promise.all([
-          rpcProvider.getBlockNumber(),
-          rpcProvider.getFeeData()
-        ]);
-        const blockPromises = [];
-        for (let i = 0; i < 6; i++) {
-          if (blockNum - i >= 0) {
-            blockPromises.push(rpcProvider.getBlock(blockNum - i).catch(() => null));
+        try {
+          const [blockNum, feeData] = await Promise.all([
+            rpcProvider.getBlockNumber(),
+            rpcProvider.getFeeData()
+          ]);
+          const blockPromises = [];
+          for (let i = 0; i < 6; i++) {
+            if (blockNum - i >= 0) {
+              blockPromises.push(rpcProvider.getBlock(blockNum - i).catch(() => null));
+            }
           }
+          const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
+          return { blockNum, feeData, blocks };
+        } catch (e) {
+          console.warn('RPC Fetch failed (CORS or Network):', e);
+          return initialData.stats;
         }
-        const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
-        return { blockNum, feeData, blocks };
       })(),
       (async () => {
         const sbPromise = supabase
@@ -110,7 +120,12 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
   const stats = data?.stats || initialData.stats;
   const latestBlocks = data?.latestBlocks || initialData.latestBlocks;
   const latestTxns = data?.latestTxns || initialData.latestTxns;
-  const loading = false; // Never show full loading since we have SSR data
+
+  if (!mounted) return (
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+       <div className="animate-pulse text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Initializing Institutional Ledger...</div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans selection:bg-blue-100">

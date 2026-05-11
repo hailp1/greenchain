@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { createClient } from '@supabase/supabase-js';
 
-const RPC_URL = "https://rpc.fwdlife.vn";
+const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
