@@ -10,8 +10,8 @@ import Footer from '@/components/Footer';
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 import useSWR from 'swr';
+import { RPC_URL, TOKEN_SYMBOL } from '@/lib/contracts/config';
 
-const RPC_URL = "https://rpc.fwdlife.vn";
 const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
 export default function ExplorerClient({ initialData }: { initialData: any }) {
@@ -73,16 +73,16 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
 
     const newData = { ...initialData };
 
-    if (rpcResult.status === 'fulfilled') {
+    if (rpcResult.status === 'fulfilled' && rpcResult.value?.blockNum) {
       const { blockNum, feeData, blocks } = rpcResult.value;
       newData.stats.latestBlock = blockNum;
       newData.stats.gas_price = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
-      newData.latestBlocks = blocks.map((b: any) => ({
+      newData.latestBlocks = (blocks || []).map((b: any) => ({
         number: b.number,
         timestamp: b.timestamp * 1000,
         validator: b.miner || '0x...',
         transactionCount: b.transactions?.length || 0,
-        reward: "0.01402 AGRI"
+        reward: `0.01402 ${TOKEN_SYMBOL}`
       }));
     }
 
@@ -142,7 +142,7 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
                 <Globe size={12} className="text-blue-400" />
                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-400">Institutional Ledger v2.1</span>
              </div>
-             <h1 className="text-4xl md:text-7xl font-black tracking-tighter uppercase italic leading-none">fwd <span className="text-blue-500">LIFE</span>chain Explorer</h1>
+             <h1 className="text-4xl md:text-7xl font-black tracking-tighter uppercase italic leading-none">Green Chain Explorer</h1>
           </div>
 
           <div className="relative max-w-3xl">
@@ -166,7 +166,7 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
           {/* Core Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 pt-8">
              {[
-               { label: 'AGRI Price', val: `$${stats.price}`, icon: Zap, color: 'text-amber-400' },
+               { label: `${TOKEN_SYMBOL} Price`, val: `$${stats.price}`, icon: Zap, color: 'text-amber-400' },
                { label: 'Latest Block', val: `#${stats.latestBlock.toLocaleString()}`, icon: Box, color: 'text-blue-400' },
                { label: 'Total Transactions', val: stats.totalTx, icon: FileText, color: 'text-emerald-400' },
                { label: 'Gas Price', val: `${stats.gas_price} Gwei`, icon: Server, color: 'text-purple-400' }
@@ -233,7 +233,7 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
                           </div>
                        </div>
                        <div className="text-right">
-                          <p className="text-[10px] font-black text-slate-900 uppercase italic">{tx.value} AGRI</p>
+                          <p className="text-[10px] font-black text-slate-900 uppercase italic">{tx.value} {TOKEN_SYMBOL}</p>
                           <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">From: {tx.from.slice(0, 8)}...</p>
                        </div>
                     </div>

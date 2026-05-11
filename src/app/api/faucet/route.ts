@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import FWDTokenArtifact from '@/artifacts/contracts/FWDToken.sol/FWDToken.json';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseService as supabase } from '@/lib/supabase-service';
+import { RPC_URL, GREEN_TOKEN_ADDRESS } from '@/lib/contracts/config';
 
-const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY || process.env.OPERATOR_PRIVATE_KEY;
-const TOKEN_ADDRESS = process.env.GREEN_TOKEN_ADDRESS || process.env.FWD_TOKEN_ADDRESS || "0xbE85Cf9DDB93d9ea677e95599779B400437899E8";
-
+const TOKEN_ADDRESS = process.env.GREEN_TOKEN_ADDRESS || process.env.FWD_TOKEN_ADDRESS || GREEN_TOKEN_ADDRESS;
 const COOLDOWN_HOURS = 1;
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: Request) {
   try {

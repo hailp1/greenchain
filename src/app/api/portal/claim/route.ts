@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createClient as createServerClient } from '@/lib/server';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseService as supabase } from '@/lib/supabase-service';
+import { TOKEN_SYMBOL } from '@/lib/contracts/config';
 
 export async function POST(request: Request) {
   try {
@@ -58,7 +53,7 @@ export async function POST(request: Request) {
        sender_address: '0x0000000000000000000000000000000000000000',
        amount: rewardAmount,
        type: 'REWARD',
-       description: `Daily Stake Loyalty Reward (${rewardAmount} AGRI)`
+       description: `Daily Stake Loyalty Reward (${rewardAmount} ${TOKEN_SYMBOL})`
     }]);
 
     if (txError) throw txError;

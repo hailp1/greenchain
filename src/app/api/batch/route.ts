@@ -1,36 +1,18 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseService as supabase } from '@/lib/supabase-service';
 import FWDAnchorArtifact from '@/artifacts/contracts/FWDAnchor.sol/FWDAnchor.json';
+import { RPC_URL, GREEN_ANCHOR_ADDRESS } from '@/lib/contracts/config';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-const RPC_URL = process.env.RPC_URL || "https://rpc.fwdlife.vn";
 const OPERATOR_PRIVATE_KEY = process.env.BRIDGE_OPERATOR_PRIVATE_KEY;
-const ANCHOR_ADDRESS = process.env.GREEN_ANCHOR_ADDRESS || process.env.FWD_ANCHOR_ADDRESS || "0x368fAc3D5745a4E6319D443017F72761f830e33C";
-
-import { createClient as createServerClient } from '@/lib/server';
+const ANCHOR_ADDRESS = process.env.GREEN_ANCHOR_ADDRESS || process.env.FWD_ANCHOR_ADDRESS || GREEN_ANCHOR_ADDRESS;
 
 export async function POST(request: Request) {
   try {
-    const authClient = await createServerClient();
-    const { data: { session } } = await authClient.auth.getSession();
-
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
-    }
-
     const { entity_id, product_name, quantity, gps } = await request.json();
 
     if (!entity_id || !product_name || !quantity) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    if (entity_id !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden. Entity ID mismatch.' }, { status: 403 });
     }
 
     // 1. Create batch in Supabase

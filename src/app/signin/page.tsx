@@ -94,19 +94,18 @@ export default function LoginPage() {
           <div className="text-center space-y-6">
             <Link href="/" className="inline-flex items-center gap-3 group">
               <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-xs border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
-                AGRI
+                GREEN
               </div>
               <div className="text-left">
                  <div className="flex items-baseline gap-1">
-                    <span className="font-serif text-base font-light text-emerald-400 italic lowercase">fwd</span>
-                    <span className="font-sans text-xl font-black text-white uppercase ml-1">LIFE</span>
-                    <span className="font-serif text-base font-light text-slate-400 lowercase">chain</span>
+                    <span className="font-sans text-xl font-black text-white uppercase tracking-tighter">Green</span>
+                    <span className="font-serif text-base font-light text-slate-400 lowercase ml-1">chain</span>
                  </div>
               </div>
             </Link>
             <div className="space-y-2">
-               <h2 className="text-3xl font-black tracking-tight uppercase italic">Welcome <span className="text-emerald-500">Back</span></h2>
-               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Connect your Web3 identity to access the portal</p>
+               <h2 className="text-3xl font-black tracking-tight uppercase italic">Access <span className="text-emerald-500">Core</span></h2>
+               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Connect your Web3 identity to access the Green Chain portal</p>
             </div>
           </div>
 
@@ -162,14 +161,14 @@ export default function LoginPage() {
                    <span className="text-[10px] font-mono font-bold text-blue-500">1,204</span>
                 </div>
                 <div className="flex flex-col">
-                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">TVL (AGRI)</span>
+                   <span className="text-[7px] font-black text-slate-500 uppercase tracking-widest">TVL (GRE)</span>
                    <span className="text-[10px] font-mono font-bold text-amber-500">84.2M</span>
                 </div>
              </div>
           </div>
 
           <p className="text-center text-[9px] font-bold text-slate-500 uppercase tracking-[0.2em]">
-            By continuing, you agree to fwd LIFEchain's Terms of Service
+            By continuing, you agree to Green Chain's Terms of Service
           </p>
         </motion.div>
       </div>

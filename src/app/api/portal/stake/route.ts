@@ -1,12 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { ethers } from 'ethers';
+import { supabaseService as supabase } from '@/lib/supabase-service';
 import { RPC_URL, GREEN_STAKING_ADDRESS } from '@/lib/contracts/config';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 export async function POST(request: Request) {
   try {

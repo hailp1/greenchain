@@ -1,53 +1,55 @@
 import { ethers } from 'ethers';
 import { supabase } from '@/lib/supabase';
 import ExplorerClient from './ClientPage';
+import { RPC_URL, TOKEN_SYMBOL } from '@/lib/contracts/config';
 
 export const dynamic = 'force-dynamic';
 
-const RPC_URL = "https://rpc.fwdlife.vn";
-const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
+// Use a shorter timeout for server-side RPC calls to prevent hanging
+const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { 
+  staticNetwork: true,
+});
 
 export default async function ExplorerPage() {
   const [rpcResult, sbResult] = await Promise.allSettled([
-    // ── RPC: fetch blocks ──
+    // ── RPC: fetch blocks (Minimal data for fast load) ──
     (async () => {
-      const [blockNum, feeData] = await Promise.all([
-        rpcProvider.getBlockNumber(),
-        rpcProvider.getFeeData()
-      ]);
-      
-      const blockPromises = [];
-      // Fetch last 10 blocks to find transactions
-      for (let i = 0; i < 10; i++) {
-        if (blockNum - i >= 0) {
-          blockPromises.push(rpcProvider.getBlock(blockNum - i, true).catch(() => null));
+      try {
+        const [blockNum, feeData] = await Promise.all([
+          rpcProvider.getBlockNumber(),
+          rpcProvider.getFeeData()
+        ]);
+        
+        const blockPromises = [];
+        // Fetch last 5 blocks (reduced from 10) WITHOUT full transactions (false)
+        for (let i = 0; i < 5; i++) {
+          if (blockNum - i >= 0) {
+            blockPromises.push(rpcProvider.getBlock(blockNum - i, false).catch(() => null));
+          }
         }
+        const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
+        
+        return { blockNum, feeData, blocks };
+      } catch (e) {
+        console.error("Explorer RPC Error:", e);
+        return null;
       }
-      const blocks = (await Promise.all(blockPromises)).filter(b => b !== null);
-      
-      // Extract transactions from blocks
-      const rpcTxns = blocks.flatMap((b: any) => 
-        (b.transactions || []).map((tx: any) => ({
-          hash: tx.hash,
-          timestamp: b.timestamp * 1000,
-          from: tx.from,
-          to: tx.to,
-          value: ethers.formatEther(tx.value)
-        }))
-      ).slice(0, 10);
-
-      return { blockNum, feeData, blocks, rpcTxns };
     })(),
 
     // ── Supabase: fetch latest transactions ──
     (async () => {
-      const { data, count, error } = await supabase
-        .from('token_transactions')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return { data, count };
+      try {
+        const { data, count, error } = await supabase
+          .from('token_transactions')
+          .select('*', { count: 'exact' })
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (error) throw error;
+        return { data, count };
+      } catch (e) {
+        console.error("Explorer Supabase Error:", e);
+        return null;
+      }
     })()
   ]);
 
@@ -57,38 +59,29 @@ export default async function ExplorerPage() {
     latestTxns: [] as any[]
   };
 
-  const rpcTxns = rpcResult.status === 'fulfilled' ? rpcResult.value.rpcTxns : [];
-  const sbTxns = sbResult.status === 'fulfilled' ? sbResult.value.data : [];
-
-  if (rpcResult.status === 'fulfilled') {
+  if (rpcResult.status === 'fulfilled' && rpcResult.value) {
     const { blockNum, feeData, blocks } = rpcResult.value;
     initialData.stats.latestBlock = blockNum;
     initialData.stats.gas_price = feeData?.gasPrice ? ethers.formatUnits(feeData.gasPrice, 'gwei') : '0.1';
-    initialData.latestBlocks = blocks.slice(0, 6).map((b: any) => ({
+    initialData.latestBlocks = blocks.map((b: any) => ({
       number: b.number,
       timestamp: b.timestamp * 1000,
       validator: b.miner || '0x...',
       transactionCount: b.transactions?.length || 0,
-      reward: "0.01402 AGRI"
+      reward: `0.01402 ${TOKEN_SYMBOL}`
     }));
   }
 
-  // Merge and sort transactions by timestamp
-  const mergedTxns = [
-    ...rpcTxns,
-    ...(sbTxns || []).map((tx: any) => ({
+  if (sbResult.status === 'fulfilled' && sbResult.value) {
+    const { data, count } = sbResult.value;
+    initialData.stats.totalTx = (count || 0).toLocaleString();
+    initialData.latestTxns = (data || []).map((tx: any) => ({
       hash: tx.id.replace(/-/g, '').substring(0, 40),
       timestamp: new Date(tx.created_at).getTime(),
       from: tx.sender_address || '0x000...000',
       to: tx.receiver_address || '0x000...000',
       value: `${tx.amount}`
-    }))
-  ].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
-
-  initialData.latestTxns = mergedTxns;
-  
-  if (sbResult.status === 'fulfilled') {
-    initialData.stats.totalTx = (sbResult.value.count || 0).toLocaleString();
+    }));
   }
 
   return <ExplorerClient initialData={initialData} />;
