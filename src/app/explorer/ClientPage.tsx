@@ -193,7 +193,7 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
                   <Link href="/explorer/blocks" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View All</Link>
                </div>
                <div className="divide-y divide-slate-100">
-                  {loading && latestBlocks.length === 0 ? (
+                  {isLoading && latestBlocks.length === 0 ? (
                     <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Syncing Chain State...</div>
                   ) : latestBlocks.map((b: any) => (
                     <div key={b.number} className="p-6 hover:bg-slate-50 transition-colors flex items-center justify-between group">
@@ -220,7 +220,7 @@ export default function ExplorerClient({ initialData }: { initialData: any }) {
                   <Link href="/explorer/transactions" className="text-[10px] font-black text-blue-600 uppercase hover:underline">View All</Link>
                </div>
                <div className="divide-y divide-slate-100">
-                  {loading && latestTxns.length === 0 ? (
+                  {isLoading && latestTxns.length === 0 ? (
                     <div className="p-12 text-center text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Scanning Ledger...</div>
                   ) : latestTxns.length > 0 ? (
                     latestTxns.map((tx: any) => (
