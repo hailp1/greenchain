@@ -36,10 +36,10 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: 'Philosophy', href: '/about' },
+    { name: 'Core', href: '/about' },
     { name: 'Insights', href: '/news' },
-    { name: 'Blockchain Explorer', href: '/explorer' },
-    { name: 'Network Validators', href: '/explorer/nodes' },
+    { name: 'Explorer', href: '/explorer' },
+    { name: 'Validators', href: '/explorer/nodes' },
     { name: 'Leaderboard', href: '/reputation' },
   ];
 
@@ -48,13 +48,13 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 md:px-12">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-emerald-600/20 transition-transform group-hover:scale-110">
-              GREEN
+            <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-[11px] shadow-lg shadow-emerald-600/20 transition-transform group-hover:scale-110">
+              GC
             </div>
             <div className="flex flex-col">
               <div className="flex items-baseline gap-1">
                  <span className="font-sans text-xl font-black text-slate-900 uppercase tracking-tighter">Green</span>
-                 <span className="font-serif text-sm font-light text-slate-400 lowercase">chain</span>
+                 <span className="font-serif text-sm font-light text-slate-400 italic lowercase">chain</span>
               </div>
             </div>
           </Link>
@@ -203,7 +203,7 @@ const Header = () => {
                             </div>
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">Symbol</p>
-                               <p className="text-xs font-mono text-slate-900">AGRI</p>
+                               <p className="text-xs font-mono text-slate-900">{TOKEN_SYMBOL}</p>
                             </div>
                          </div>
                       </div>

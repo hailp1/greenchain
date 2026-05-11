@@ -97,22 +97,23 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-xs font-bold mb-6 md:mb-8 uppercase tracking-widest">
-              <Star size={14} className="text-slate-400" />
-              <span>Green Chain – Trust‑Engineered Agritech</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-xs font-black mb-6 md:mb-8 uppercase tracking-[0.3em]">
+              <Star size={14} className="text-emerald-500" />
+              <span>The Next Evolution of Distributed Ledger Technology</span>
             </div>
-            <h1 className="text-5xl md:text-8xl font-black mb-6 md:mb-10 text-[#0c240c] uppercase italic tracking-tighter leading-tight font-serif">
-              GREEN <span className="text-emerald-500">CHAIN</span>
+            <h1 className="text-6xl md:text-9xl font-black mb-6 md:mb-10 text-[#0c240c] uppercase italic tracking-tighter leading-[0.85] font-sans">
+              Green <span className="text-emerald-500">Chain</span>
             </h1>
-            <p className="max-w-2xl mx-auto text-base md:text-xl text-slate-600 font-medium leading-relaxed italic mb-8 md:mb-12">
-              A high-performance Core Blockchain infrastructure for Material Sourcing, Green Tourism, and Social Responsibility. 
+            <p className="max-w-3xl mx-auto text-lg md:text-2xl text-slate-600 font-medium leading-relaxed italic mb-10 md:mb-14">
+               Powering the global sustainable economy through high-performance <br className="hidden md:block" />
+               core blockchain infrastructure and institutional‑grade verification.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 px-4 max-w-lg mx-auto">
-              <Link href="/verify" className="w-full sm:w-auto px-8 py-4 bg-natural-900 text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl hover:-translate-y-1 active:scale-95 transition-all text-sm">
-                <QrCode size={18} /> Verify Origin
+            <div className="flex flex-col sm:flex-row justify-center gap-6 px-4 max-w-2xl mx-auto">
+              <Link href="/verify" className="w-full sm:w-auto px-10 py-5 bg-emerald-600 text-white rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-emerald-600/30 hover:bg-emerald-500 hover:-translate-y-1 active:scale-95 transition-all text-xs">
+                <QrCode size={20} /> Verify Origin
               </Link>
-              <Link href="/explorer" className="w-full sm:w-auto px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-all text-sm">
-                <Search size={18} /> Explorer Network
+              <Link href="/explorer" className="w-full sm:w-auto px-10 py-5 bg-white border-2 border-slate-900 text-slate-900 rounded-[2rem] font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-900 hover:text-white transition-all text-xs">
+                <Search size={20} /> Network Explorer
               </Link>
             </div>
           </motion.div>

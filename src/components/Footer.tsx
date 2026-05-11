@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Globe, ShieldCheck, Cpu, Github, Twitter, Linkedin, ArrowRight, Sprout, Database, Terminal, FileCode, Landmark } from 'lucide-react';
 import { ethers } from 'ethers';
+import { RPC_URL } from '@/lib/contracts/config';
 
 export default function Footer() {
   const [latestBlock, setLatestBlock] = useState<number | string>("Loading...");
@@ -12,7 +13,7 @@ export default function Footer() {
   useEffect(() => {
     const fetchBlock = async () => {
       try {
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
         const block = await provider.getBlockNumber();
         setLatestBlock(block);
       } catch (e) {
@@ -35,19 +36,19 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-5 space-y-8">
             <Link href="/" className="flex items-center gap-4 group">
-              <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-110">
-                 AGRI
+              <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-black text-[12px] transition-transform group-hover:scale-110 shadow-lg shadow-emerald-500/20">
+                 GC
               </div>
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-1">
                    <span className="font-sans text-2xl font-black text-white uppercase tracking-tighter">Green</span>
-                   <span className="font-serif text-lg font-light text-slate-400 lowercase">chain</span>
+                   <span className="font-serif text-lg font-light text-slate-400 italic lowercase">chain</span>
                 </div>
-                <p className="text-[10px] font-medium text-slate-500 mt-2 uppercase tracking-widest">Farm · Worth · Driven</p>
+                <p className="text-[10px] font-bold text-slate-500 mt-2 uppercase tracking-[0.3em]">Global · Sustainable · Core</p>
               </div>
             </Link>
             <p className="text-slate-400 text-sm md:text-lg font-light leading-relaxed max-w-md italic">
-              "Ensuring transparency through cryptographic truth."
+              "Ensuring absolute transparency through the Green Chain protocol."
               <br />
               <span className="text-[10px] not-italic text-slate-500 uppercase tracking-widest">Ph.D Research Protocol by NCS Le Phuc Hai</span>
             </p>
@@ -110,7 +111,7 @@ export default function Footer() {
                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Latest Synced Block</p>
                    <div className="flex items-baseline gap-1">
                       <span className="text-xs font-mono text-white">#</span>
-                      <span className="text-lg font-mono font-black text-white">{latestBlock.toLocaleString()}</span>
+                      <span className="text-lg font-mono font-black text-white">{typeof latestBlock === 'number' ? latestBlock.toLocaleString() : latestBlock}</span>
                    </div>
                 </div>
                 <div className="pt-2 border-t border-white/5">
