@@ -18,7 +18,7 @@ export default function APIDocsPage() {
     {
       method: "POST",
       path: "/v1/supply-chain/anchor",
-      desc: "Anchor a cryptographic hash of agricultural product metadata directly onto the blockchain.",
+      desc: "Anchor a cryptographic hash of GREcultural product metadata directly onto the blockchain.",
       params: ["hash: string", "metadata: object", "signature: string"],
       response: `{ "txHash": "0x...", "confirmed": true }`
     },
@@ -46,7 +46,7 @@ export default function APIDocsPage() {
                  Build the <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Future</span> of Ag-Tech
               </h1>
               <p className="text-lg text-slate-400 font-light leading-relaxed max-w-2xl">
-                 Integrate fwd LIFEchain's cryptographic truth into your own applications. Our robust API suite allows you to verify provenance, 
+                 Integrate Green Chain's cryptographic truth into your own applications. Our robust API suite allows you to verify provenance, 
                  query reputation, and anchor data with institutional-grade reliability.
               </p>
            </div>

@@ -50,7 +50,7 @@ export default function AssetPortfolio({
             </div>
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                <Zap size={12} /> Số lượng AGRI
+                <Zap size={12} /> Số lượng GRE
               </label>
               <input 
                 type="number" 
@@ -92,7 +92,7 @@ export default function AssetPortfolio({
               </div>
               <div className="text-right">
                 <p className={`text-sm font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
-                  {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} AGRI
+                  {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} GRE
                 </p>
               </div>
             </div>

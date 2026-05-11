@@ -9,17 +9,17 @@ import { ShieldCheck, Code2, Lock, GitBranch, ExternalLink, Cpu, Database, Eye }
 export default function SmartContractsPage() {
   const contracts = [
     {
-      name: "AGRI Asset Token",
+      name: "GRE Asset Token",
       address: "0xbE85Cf9DDB93d9ea677e95599779B400437899E8",
       version: "v2.1.4 (Audited)",
-      description: "The core utility and governance token of the fwd LIFEchain ecosystem. Implements ERC-20 with specialized burn and reputation-staking logic.",
+      description: "The core utility and governance token of the Green Chain ecosystem. Implements ERC-20 with specialized burn and reputation-staking logic.",
       features: ["Reputation Burning", "Validator Staking", "Governance Voting"]
     },
     {
       name: "Supply Chain Provenance",
       address: "0x7a916D6493B8eB5C98f6A7B13F390518B928423a",
       version: "v1.0.2",
-      description: "Handles the immutable anchoring of agricultural data. Connects batch IDs to IoT-verified metadata for end-to-end traceability.",
+      description: "Handles the immutable anchoring of GREcultural data. Connects batch IDs to IoT-verified metadata for end-to-end traceability.",
       features: ["Batch Identity", "Metadata Anchoring", "IoT Integration"]
     },
     {
@@ -45,8 +45,8 @@ export default function SmartContractsPage() {
                  Core <span className="text-blue-600">Smart Contracts</span>
               </h1>
               <p className="text-slate-500 font-medium max-w-2xl leading-relaxed">
-                 The fwd LIFEchain protocol is powered by a suite of immutable, audited smart contracts that enforce 
-                 transparency and integrity across the entire agricultural value chain.
+                 The Green Chain protocol is powered by a suite of immutable, audited smart contracts that enforce 
+                 transparency and integrity across the entire GREcultural value chain.
               </p>
            </div>
            <div className="flex items-center gap-4">

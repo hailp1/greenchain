@@ -194,7 +194,7 @@ const Header = () => {
                       <div className="space-y-3">
                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                             <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em]">RPC URL</p>
-                            <p className="text-xs font-mono text-slate-900 break-all select-all">https://rpc.fwdlife.vn</p>
+                            <p className="text-xs font-mono text-slate-900 break-all select-all">https://rpc.greenchain.vn</p>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
                             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
@@ -215,7 +215,7 @@ const Header = () => {
                          <span className="text-[10px] font-black text-white uppercase tracking-widest">Independent Test</span>
                       </div>
                       <div className="bg-black/40 p-4 rounded-xl border border-white/5 font-mono text-[9px] text-emerald-500 break-all select-all">
-                         curl -X POST --data '&#123;"jsonrpc":"2.0","method":"eth_blockNumber","id":1&#125;' https://rpc.fwdlife.vn
+                         curl -X POST --data '&#123;"jsonrpc":"2.0","method":"eth_blockNumber","id":1&#125;' https://rpc.greenchain.vn
                       </div>
                       <p className="text-[9px] text-slate-400 italic">Run this command in your terminal to verify current block height directly.</p>
                    </div>

@@ -9,18 +9,18 @@ import { Landmark, Users, Vote, PieChart, ShieldCheck, Scale, Gavel, Globe } fro
 export default function GovernancePage() {
   const proposals = [
     {
-      id: "FWD-GP-001",
+      id: "GC-GP-001",
       title: "Transition to Research Validator Consensus",
       status: "ACTIVE",
-      votes: "4.2M AGRI",
+      votes: "4.2M GRE",
       ends: "2d 14h",
       desc: "Proposal to transition the consensus mechanism from static validator sets to a dynamic set based on academic research contributions and reputation scores."
     },
     {
-      id: "FWD-GP-002",
-      title: "Update AGRI Token Burn Mechanism",
+      id: "GC-GP-002",
+      title: "Update GRE Token Burn Mechanism",
       status: "PASSED",
-      votes: "12.8M AGRI",
+      votes: "12.8M GRE",
       ends: "Ended 4 days ago",
       desc: "Implement a dynamic burn rate for transactions initiated by large-scale agricultural exporters to maintain token scarcity and utility."
     }
@@ -41,7 +41,7 @@ export default function GovernancePage() {
                  Shaping the <span className="text-purple-600">Protocol</span> Together
               </h1>
               <p className="text-lg text-slate-600 font-light leading-relaxed">
-                 fwd LIFEchain is governed by its community of producers, researchers, and validators. Our decentralized 
+                 Green Chain is governed by its community of producers, researchers, and validators. Our decentralized 
                  governance framework ensures that the protocol evolves to meet the actual needs of the global agricultural market.
               </p>
               <div className="flex gap-4">

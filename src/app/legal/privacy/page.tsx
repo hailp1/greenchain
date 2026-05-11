@@ -34,7 +34,7 @@ export default function PrivacyPage() {
                 Thu thập Thông tin
               </h2>
               <p>
-                fwd LIFEchain chỉ thu thập các thông tin cần thiết để định danh thực thể trên mạng lưới Blockchain, bao gồm: Địa chỉ ví (MetaMask), tên doanh nghiệp/hộ sản xuất, và các chứng chỉ chất lượng liên quan. Chúng tôi không thu thập thông tin cá nhân nhạy cảm ngoài phạm vi xác thực chuỗi cung ứng.
+                Green Chain chỉ thu thập các thông tin cần thiết để định danh thực thể trên mạng lưới Blockchain, bao gồm: Địa chỉ ví (MetaMask), tên doanh nghiệp/hộ sản xuất, và các chứng chỉ chất lượng liên quan. Chúng tôi không thu thập thông tin cá nhân nhạy cảm ngoài phạm vi xác thực chuỗi cung ứng.
               </p>
             </section>
 
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
                 Bảo mật Tài khoản
               </h2>
               <p>
-                Chúng tôi sử dụng cơ chế xác thực Web3 và Supabase Auth để đảm bảo an toàn tài khoản. Người dùng tự chịu trách nhiệm bảo quản khóa bí mật (Private Key) của ví cá nhân. fwd LIFEchain không bao giờ yêu cầu bạn cung cấp khóa bí mật.
+                Chúng tôi sử dụng cơ chế xác thực Web3 và Supabase Auth để đảm bảo an toàn tài khoản. Người dùng tự chịu trách nhiệm bảo quản khóa bí mật (Private Key) của ví cá nhân. Green Chain không bao giờ yêu cầu bạn cung cấp khóa bí mật.
               </p>
             </section>
 

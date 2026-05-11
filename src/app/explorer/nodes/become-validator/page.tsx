@@ -15,7 +15,7 @@ export default function BecomeValidatorPage() {
 
   const steps = [
     { id: 1, title: "Hardware Requirements", icon: Cpu },
-    { id: 2, title: "Staking AGRI", icon: Wallet },
+    { id: 2, title: "Staking GRE", icon: Wallet },
     { id: 3, title: "Node Configuration", icon: Terminal },
     { id: 4, title: "Final Activation", icon: Zap }
   ];
@@ -38,7 +38,7 @@ export default function BecomeValidatorPage() {
             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
                <Globe size={18} />
             </div>
-            <span className="font-black tracking-tighter text-xl">AgriChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
+            <span className="font-black tracking-tighter text-xl">GREChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-[11px] font-bold uppercase tracking-widest text-slate-400">
              <Link href="/explorer" className="hover:text-white transition-colors">Home</Link>
@@ -59,7 +59,7 @@ export default function BecomeValidatorPage() {
            </motion.div>
            <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-6">Trở thành Validator</h1>
            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed font-light">
-             Tham gia vận hành mạng lưới AgriChain để bảo mật dữ liệu chuỗi cung ứng và nhận phần thưởng khối từ hệ sinh thái.
+             Tham gia vận hành mạng lưới GREChain để bảo mật dữ liệu chuỗi cung ứng và nhận phần thưởng khối từ hệ sinh thái.
            </p>
         </div>
 
@@ -100,7 +100,7 @@ export default function BecomeValidatorPage() {
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full mb-8"
                       ></motion.div>
-                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Authenticating with AgriChain Core...</p>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Authenticating with GREChain Core...</p>
                    </motion.div>
                  ) : (
                    <motion.div
@@ -138,7 +138,7 @@ export default function BecomeValidatorPage() {
                               <h4 className="text-emerald-400 font-black text-xs uppercase tracking-widest mb-6">Cloud Providers</h4>
                               <p className="text-sm font-light opacity-80 mb-8 leading-relaxed">Chúng tôi khuyến khích sử dụng các dịch vụ hạ tầng chuyên nghiệp để đạt uptime 99.99%.</p>
                               <div className="space-y-3">
-                                 {["AWS AgriInstance", "Google Cloud Node", "Azure Blockchain VM"].map((p, i) => (
+                                 {["AWS GREInstance", "Google Cloud Node", "Azure Blockchain VM"].map((p, i) => (
                                    <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 text-xs font-bold">
                                       <Check size={14} className="text-emerald-400" /> {p}
                                    </div>
@@ -151,16 +151,16 @@ export default function BecomeValidatorPage() {
                       {step === 2 && (
                         <div className="max-w-2xl mx-auto space-y-8">
                            <div className="text-center">
-                              <h3 className="text-2xl font-bold mb-4">Ký quỹ (Staking) AGRI</h3>
+                              <h3 className="text-2xl font-bold mb-4">Ký quỹ (Staking) GRE</h3>
                               <p className="text-slate-500 font-light leading-relaxed">
-                                Validator cần ký quỹ tối thiểu 32,000 AGRI để cam kết vận hành mạng lưới trung thực.
+                                Validator cần ký quỹ tối thiểu 32,000 GRE để cam kết vận hành mạng lưới trung thực.
                               </p>
                            </div>
                            
                            <div className="p-10 rounded-[2.5rem] bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-2xl text-center relative overflow-hidden group">
                               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                               <p className="text-[10px] font-black uppercase tracking-widest mb-4 opacity-80">Minimum Required Stake</p>
-                              <h2 className="text-5xl font-black mb-2">32,000 AGRI</h2>
+                              <h2 className="text-5xl font-black mb-2">32,000 GRE</h2>
                               <p className="text-sm opacity-80 font-bold tracking-widest">≈ $79,408.00 USD</p>
                               
                               <div className="mt-10 pt-10 border-t border-white/20 grid grid-cols-2 gap-4">
@@ -198,14 +198,14 @@ export default function BecomeValidatorPage() {
                                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
                               </div>
                               <div className="space-y-2">
-                                 <p className="text-slate-500"># 1. Tải về bộ cài đặt AgriChain Core</p>
-                                 <p>curl -sSL https://get.agrichain.io | bash</p>
+                                 <p className="text-slate-500"># 1. Tải về bộ cài đặt GREChain Core</p>
+                                 <p>curl -sSL https://get.GREchain.io | bash</p>
                                  <p className="pt-4 text-slate-500"># 2. Khởi tạo danh tính Validator</p>
-                                 <p>agrichain-cli init --name="Lâm_Đồng_Core_02" --network=mainnet</p>
+                                 <p>GREchain-cli init --name="Lâm_Đồng_Core_02" --network=mainnet</p>
                                  <p className="pt-4 text-slate-500"># 3. Kết nối ví staking</p>
-                                 <p>agrichain-cli wallet connect 0x72d...a9e4</p>
+                                 <p>GREchain-cli wallet connect 0x72d...a9e4</p>
                                  <p className="pt-4 text-slate-500"># 4. Bắt đầu quá trình đồng bộ</p>
-                                 <p>agrichain-cli node start --sync=full</p>
+                                 <p>GREchain-cli node start --sync=full</p>
                               </div>
                            </div>
 
@@ -234,7 +234,7 @@ export default function BecomeValidatorPage() {
                            </div>
                            <h3 className="text-3xl font-black">Mạng lưới đã sẵn sàng kích hoạt!</h3>
                            <p className="text-slate-500 max-w-lg mx-auto font-light leading-relaxed">
-                             Node của bạn đã được cấu hình và lượng AGRI đã được khóa vào Smart Contract. Nhấn kích hoạt để bắt đầu tham gia đồng thuận.
+                             Node của bạn đã được cấu hình và lượng GRE đã được khóa vào Smart Contract. Nhấn kích hoạt để bắt đầu tham gia đồng thuận.
                            </p>
                            
                            <div className="max-w-md mx-auto p-8 rounded-[2.5rem] bg-white border border-slate-200 shadow-xl text-left space-y-4">
@@ -280,7 +280,7 @@ export default function BecomeValidatorPage() {
       </main>
 
       <footer className="py-12 border-t border-slate-100 text-center">
-         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">AgriChain Validator Onboarding v3.0</p>
+         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">GREChain Validator Onboarding v3.0</p>
       </footer>
     </div>
   );

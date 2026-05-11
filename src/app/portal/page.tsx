@@ -298,7 +298,7 @@ export default function ProducerPortal() {
 
       // Ensure user has at least some native balance for gas
       if (parseFloat(web3.balance) < 0.001) {
-        alert("Gas balance (Native AGRI) too low. Please receive more from Faucet.");
+        alert("Gas balance (Native GRE) too low. Please receive more from Faucet.");
         setIsSigning(false);
         return;
       }
@@ -392,7 +392,7 @@ export default function ProducerPortal() {
           description: `Audit reward for batch ${batchId.slice(0,8)}`
         }])
       ]);
-      alert(`Verification successful! +${rewardAmount} AGRI & +1 reputation score.`);
+      alert(`Verification successful! +${rewardAmount} GRE & +1 reputation score.`);
       await refreshData();
     } catch (err) {
       console.error('Approve error:', err);
@@ -418,7 +418,7 @@ export default function ProducerPortal() {
     // 1. Check if user has stake
     const stakeAmount = Number(currentEntity.staked_balance || 0);
     if (stakeAmount <= 0) {
-      alert("You need at least 1 AGRI staked to receive daily rewards!");
+      alert("You need at least 1 GRE staked to receive daily rewards!");
       return;
     }
 
@@ -436,7 +436,7 @@ export default function ProducerPortal() {
     // Formula: min(500, stake * 0.1%)
     const rewardAmount = Math.min(500, Math.floor(stakeAmount * 0.001));
     if (rewardAmount <= 0) {
-      alert("Stake amount too small for rewards. Please stake more AGRI!");
+      alert("Stake amount too small for rewards. Please stake more GRE!");
       setClaimLoading(false);
       return;
     }
@@ -456,7 +456,7 @@ export default function ProducerPortal() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Claim failed');
 
-      alert(`Success! You have received ${result.reward} AGRI daily reward.`);
+      alert(`Success! You have received ${result.reward} GRE daily reward.`);
       fetchEntityData();
       fetchPortalData();
     } catch (err: any) {
@@ -721,7 +721,7 @@ export default function ProducerPortal() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12">
                  <div className="text-center space-y-4">
                     <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Supply Chain <span className="text-emerald-500">Ops</span></h2>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Blockchain Ledger for Agricultural Verification</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Blockchain Ledger for GREcultural Verification</p>
                  </div>
 
                  <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
@@ -803,7 +803,7 @@ export default function ProducerPortal() {
                             {mounted && Number(web3.stakedBalance) >= 500 ? 'ACTIVE NODE' : 'INACTIVE'}
                           </p>
                        </div>
-                       <p className="text-[7px] font-bold text-slate-400 uppercase mt-2">{mounted && Number(web3.stakedBalance) >= 500 ? 'Syncing with fwd LIFEchain...' : 'Requires 500 AGRI minimum'}</p>
+                       <p className="text-[7px] font-bold text-slate-400 uppercase mt-2">{mounted && Number(web3.stakedBalance) >= 500 ? 'Syncing with Green Chain...' : 'Requires 500 GRE minimum'}</p>
                     </div>
                     <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Voting Power</p>
@@ -817,7 +817,7 @@ export default function ProducerPortal() {
                     <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards (APR 12%)</p>
                        <p className="text-xl md:text-2xl font-black text-emerald-500">
-                         +{mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(4) : '0.0000'} <span className="text-xs opacity-50">AGRI</span>
+                         +{mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(4) : '0.0000'} <span className="text-xs opacity-50">GRE</span>
                        </p>
                        <p className="text-[7px] font-bold text-emerald-600 uppercase mt-2">Next payout in ~12 sec</p>
                     </div>
@@ -885,7 +885,7 @@ export default function ProducerPortal() {
                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Available to Claim</p>
                              <p className="text-4xl font-black text-natural-950">
                                {mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(2) : '0.00'} 
-                               <span className="text-xs text-slate-400 ml-1">AGRI</span>
+                               <span className="text-xs text-slate-400 ml-1">GRE</span>
                              </p>
                           </div>
                        </div>
@@ -902,9 +902,9 @@ export default function ProducerPortal() {
                                  type: 'ERC20',
                                  options: {
                                    address: '0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9',
-                                   symbol: 'AGRI',
+                                   symbol: 'GRE',
                                    decimals: 18,
-                                   image: 'https://chain.fwdlife.vn/ico.png?v=2'
+                                   image: 'https://chain.greenchain.vn/ico.png?v=2'
                                  }
                                }
                              }).catch((e: any) => alert("Thông báo: " + e.message));
@@ -914,8 +914,8 @@ export default function ProducerPortal() {
                          }}
                          className="w-full py-4 bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all mt-3 flex items-center justify-center gap-3"
                        >
-                          <img src="/favicon.ico" alt="AGRI" className="w-4 h-4 rounded-full shadow-sm" />
-                          Add AGRI Logo to MetaMask
+                          <img src="/favicon.ico" alt="GRE" className="w-4 h-4 rounded-full shadow-sm" />
+                          Add GRE Logo to MetaMask
                        </button>
                     </div>
                  </section>
@@ -941,7 +941,7 @@ export default function ProducerPortal() {
                           </div>
                           <div className="space-y-3">
                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 flex items-center gap-2">
-                                <Zap size={12} /> Số lượng AGRI
+                                <Zap size={12} /> Số lượng GRE
                              </label>
                              <input 
                                type="number" 
@@ -983,7 +983,7 @@ export default function ProducerPortal() {
                              </div>
                              <div className="text-right">
                                 <p className={`text-sm font-black ${tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? 'text-red-500' : 'text-emerald-500'}`}>
-                                   {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} AGRI
+                                   {tx.type === 'GAS_FEE' || tx.type === 'STAKE' ? '-' : '+'}{tx.amount} GRE
                                 </p>
                              </div>
                           </div>
@@ -999,7 +999,7 @@ export default function ProducerPortal() {
                     <div className="bg-white p-12 rounded-[3rem] border border-slate-100 shadow-2xl space-y-8">
                        <div className="space-y-2">
                           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Asset Transfer</h3>
-                          <p className="text-3xl font-black italic uppercase tracking-tighter">Send <span className="text-emerald-500">AGRI</span></p>
+                          <p className="text-3xl font-black italic uppercase tracking-tighter">Send <span className="text-emerald-500">GRE</span></p>
                        </div>
                        <div className="space-y-4">
                           <input 
@@ -1032,7 +1032,7 @@ export default function ProducerPortal() {
                              <Globe size={32} className="text-emerald-500" />
                           </div>
                           <h3 className="text-xl font-black uppercase tracking-widest">Digital Passport</h3>
-                          <p className="text-slate-500 text-sm font-medium">Your wallet is your identity on fwd LIFEchain. Use it to verify agricultural origins and manage network assets.</p>
+                          <p className="text-slate-500 text-sm font-medium">Your wallet is your identity on Green Chain. Use it to verify GREcultural origins and manage network assets.</p>
                        </div>
                        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 font-mono text-[10px] break-all text-center text-slate-400">
                           {web3.address}
@@ -1059,7 +1059,7 @@ export default function ProducerPortal() {
                                 </div>
                              </div>
                              <p className={`text-sm font-black ${tx.type === 'REWARD' ? 'text-emerald-600' : 'text-natural-900'}`}>
-                                {tx.type === 'REWARD' ? '+' : '-'}{tx.amount} AGRI
+                                {tx.type === 'REWARD' ? '+' : '-'}{tx.amount} GRE
                              </p>
                           </div>
                        ))}
@@ -1072,7 +1072,7 @@ export default function ProducerPortal() {
               <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12">
                  <div className="text-center space-y-4">
                     <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Network <span className="text-emerald-500">Governance</span></h2>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Decentralized Decision Making for fwd LIFEchain</p>
+                    <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Decentralized Decision Making for Green Chain</p>
                  </div>
 
                  <div className="grid grid-cols-1 gap-8">

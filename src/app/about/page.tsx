@@ -32,7 +32,7 @@ export default function AboutPage() {
             </h1>
             <div className="max-w-3xl space-y-6">
               <p className="text-xl md:text-3xl font-light text-slate-600 leading-tight border-l-8 border-emerald-500 pl-8 py-4">
-                "fwd LIFEchain is an institutional ecosystem engineered to eliminate information asymmetry in global agricultural trade through the convergence of Blockchain architecture and AI-driven telemetry."
+                "Green Chain is an institutional ecosystem engineered to eliminate information asymmetry in global trade through the convergence of Blockchain architecture and AI-driven telemetry."
               </p>
             </div>
           </motion.div>
@@ -49,7 +49,7 @@ export default function AboutPage() {
               <div className="aspect-video lg:aspect-[4/5] rounded-[4rem] overflow-hidden shadow-2xl relative z-10 border-8 border-white group">
                  <img 
                    src="/fwd_global_reach_supply_chain_1778393933803.png" 
-                   alt="Agricultural Supply Chain" 
+                   alt="Supply Chain Infrastructure" 
                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                  />
                  <div className="absolute inset-0 bg-emerald-950/20 group-hover:bg-transparent transition-all"></div>
@@ -69,7 +69,7 @@ export default function AboutPage() {
                  </div>
                  <h2 className="text-4xl font-black text-natural-950 tracking-tight uppercase italic">Global Reach</h2>
                  <p className="text-slate-600 leading-relaxed text-lg font-light">
-                    The platform bridges local production expertise with international supply chain standards. By implementing a decentralized ledger, fwd LIFEchain ensures that premium Vietnamese agricultural products meet the rigorous transparency requirements of global markets.
+                    The platform bridges local production expertise with international supply chain standards. By implementing a decentralized ledger, Green Chain ensures that premium products meet the rigorous transparency requirements of global markets.
                  </p>
               </div>
 
@@ -96,7 +96,7 @@ export default function AboutPage() {
               <div className="aspect-[21/9] rounded-[3rem] overflow-hidden border border-slate-100 relative">
                  <img 
                    src="/fwd_research_model_diagram_1778393563507.png" 
-                   alt="FWD LIFEchain Research Model" 
+                   alt="Green Chain Research Model" 
                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                  />
                  <div className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent pointer-events-none"></div>
@@ -116,7 +116,7 @@ export default function AboutPage() {
                  </p>
                  <div className="pt-8 flex gap-8">
                     <div className="flex flex-col">
-                       <span className="text-3xl font-black text-white">99%</span>
+                       <span className="text-3xl font-black text-white">99.9%</span>
                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Data Integrity</span>
                     </div>
                     <div className="flex flex-col">
@@ -140,7 +140,7 @@ export default function AboutPage() {
                        <span className="w-8 h-[1px] bg-emerald-500"></span> S-O-R Model
                     </h3>
                     <p className="text-sm text-slate-300 font-light leading-relaxed italic">
-                       Digital stimuli (Stimulus) processed through the blockchain influence the psychological state of the user (Organism), fostering the cognitive trust necessary for the adoption of green agricultural products (Response).
+                       Digital stimuli (Stimulus) processed through the blockchain influence the psychological state of the user (Organism), fostering the cognitive trust necessary for the adoption of premium verified products (Response).
                     </p>
                  </div>
               </div>
@@ -151,7 +151,7 @@ export default function AboutPage() {
         <section className="space-y-24">
            <div className="text-center space-y-6">
               <h2 className="text-5xl font-black text-natural-950 tracking-tighter uppercase italic">Strategic Pillars</h2>
-              <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">Driving value across the agricultural value chain</p>
+              <p className="text-slate-500 font-bold uppercase tracking-[0.3em] text-xs">Driving value across the global value chain</p>
               <div className="w-32 h-1.5 bg-emerald-500 mx-auto rounded-full"></div>
            </div>
 
@@ -179,8 +179,8 @@ export default function AboutPage() {
            </div>
            <div className="max-w-2xl mx-auto">
               <p className="text-slate-400 text-xs uppercase font-bold tracking-widest leading-loose">
-                PhD Dissertation Focus: "Application of Blockchain Technology in the Vietnamese Agricultural Supply Chain" <br />
-                Academic Liaison: PhD Candidate Le Phuc Hai · Research Artifact v2.1
+                PhD Dissertation Focus: "Application of Blockchain Technology in Global Supply Chain Transparency" <br />
+                Academic Liaison: PhD Candidate Le Phuc Hai · Green Chain Research v3.0
               </p>
            </div>
         </footer>

@@ -44,12 +44,12 @@ export async function POST(request: Request) {
 
     const amount = ethers.parseUnits("1000", 18);
     
-    // 1. Send Native Gas (AGRI)
+    // 1. Send Native Gas (GRE)
     console.log(`[Faucet] Sending native gas to ${address}...`);
     try {
       const gasTx = await wallet.sendTransaction({
         to: address,
-        value: ethers.parseEther("0.1") // 0.1 AGRI is enough for many transactions
+        value: ethers.parseEther("0.1") // 0.1 GRE is enough for many transactions
       });
       await gasTx.wait();
     } catch (gasErr) {

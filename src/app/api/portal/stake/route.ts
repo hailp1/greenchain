@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       receiver_address: '0x0000000000000000000000000000000000000000', // Stake Lock
       amount: amount,
       type: 'STAKE',
-      description: `Staked AGRI for node validation (TX: ${tx_hash.slice(0,10)}...)`
+      description: `Staked GRE for network validation (TX: ${tx_hash.slice(0,10)}...)`
     }]);
 
     if (txError) throw txError;

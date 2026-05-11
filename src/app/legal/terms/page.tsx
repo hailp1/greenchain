@@ -34,7 +34,7 @@ export default function TermsPage() {
                 Chấp nhận Điều khoản
               </h2>
               <p>
-                Bằng việc truy cập và sử dụng nền tảng fwd LIFEchain, bạn đồng ý tuân thủ các điều khoản và điều kiện được quy định tại đây. Nền tảng này được vận hành như một phần của dự án nghiên cứu khoa học, nhằm mục đích minh bạch hóa chuỗi cung ứng nông sản.
+                Bằng việc truy cập và sử dụng nền tảng Green Chain, bạn đồng ý tuân thủ các điều khoản và điều kiện được quy định tại đây. Nền tảng này được vận hành như một phần của dự án nghiên cứu khoa học, nhằm mục đích minh bạch hóa chuỗi cung ứng nông sản.
               </p>
             </section>
 
@@ -44,7 +44,7 @@ export default function TermsPage() {
                 Quyền Sở hữu Trí tuệ
               </h2>
               <p>
-                Toàn bộ nội dung, thuật toán mã hóa, và cấu trúc dữ liệu trên fwd LIFEchain thuộc sở hữu của NCS Lê Phúc Hải và dự án nghiên cứu. Việc sao chép hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý bằng văn bản là vi phạm bản quyền.
+                Toàn bộ nội dung, thuật toán mã hóa, và cấu trúc dữ liệu trên Green Chain thuộc sở hữu của NCS Lê Phúc Hải và dự án nghiên cứu. Việc sao chép hoặc sử dụng cho mục đích thương mại mà không có sự đồng ý bằng văn bản là vi phạm bản quyền.
               </p>
             </section>
 

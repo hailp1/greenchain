@@ -55,13 +55,13 @@ export default function Home() {
   const algorithmHighlights = [
     {
       title: "Zero‑Knowledge Rollups",
-      description: "Batch‑execute transactions off‑chain while preserving full public verifiability, boosting Ethereum TPS by an order of magnitude.",
+      description: "Batch‑execute transactions off‑chain while preserving full public verifiability, boosting network throughput by an order of magnitude.",
       icon: ShieldCheck,
       color: "text-blue-600"
     },
     {
       title: "BLS Multi‑Signature Aggregation",
-      description: "Compress thousands of signatures into a single constant‑size proof, reducing bandwidth for both Ethereum and BSC.",
+      description: "Compress thousands of signatures into a single constant‑size proof, reducing bandwidth for decentralized verification.",
       icon: Globe,
       color: "text-emerald-600"
     },
@@ -73,7 +73,7 @@ export default function Home() {
     },
     {
       title: "AI‑Driven Anomaly Detection",
-      description: "Machine‑learning models flag suspicious patterns in real‑time, strengthening security across chains.",
+      description: "Machine‑learning models flag suspicious patterns in real‑time, strengthening security across the entire ecosystem.",
       icon: Zap,
       color: "text-purple-600"
     }
@@ -147,7 +147,7 @@ export default function Home() {
             </div>
             <div>
               <h2 className="text-4xl md:text-6xl font-black mb-6 uppercase tracking-tighter leading-tight italic">BUILD ON <span className="text-emerald-400">GREEN CORE</span></h2>
-              <p className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto font-medium">Join the ecosystem of sustainable projects leveraging the power of Green Chain infrastructure.</p>
+              <p className="text-lg md:text-xl text-slate-500 mb-12 font-medium">Join the ecosystem of sustainable projects leveraging the power of Green Chain infrastructure.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -191,7 +191,7 @@ export default function Home() {
                 viewport={{ once: true }}
                 className="group cursor-pointer"
               >
-                 <Link href="/news/chien-dich-01">
+                 <Link href="/news/campaign-01">
                     <div className="space-y-8">
                        <div className="relative aspect-[16/9] overflow-hidden rounded-[3rem] shadow-2xl bg-slate-100">
                           <img 
@@ -206,10 +206,10 @@ export default function Home() {
                              <Zap size={12} fill="currentColor" /> Trending Now
                           </div>
                           <h3 className="text-3xl md:text-4xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">
-                             Số hóa niềm tin: Miễn phí 100% giải pháp Blockchain cho nông dân Việt Nam
+                             Digitalizing Trust: Scaling Blockchain Solutions for Global Producers
                           </h3>
                           <p className="text-slate-500 font-light text-lg leading-relaxed line-clamp-2">
-                             Chiến dịch 'Nâng tầm nông sản Việt' chính thức khởi động, mang công nghệ ST-PoO đến với các HTX và hộ nông dân tiên phong...
+                             The 'Global Sustainable Trade' campaign officially launches, bringing high-fidelity verification technology to pioneering export markets...
                           </p>
                        </div>
                     </div>
@@ -229,8 +229,8 @@ export default function Home() {
                     </div>
                     <div className="space-y-3 pt-2">
                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">May 08, 2026</span>
-                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">Giao thức ST-PoO: Bước đột phá trong xác thực nguồn gốc nông sản</h4>
-                       <p className="text-slate-500 text-sm font-light line-clamp-2">Nghiên cứu mới về sự kết hợp giữa IoT và Blockchain giúp giải quyết bài toán minh bạch.</p>
+                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">ST-PoO Protocol: A Breakthrough in Supply Chain Transparency</h4>
+                       <p className="text-slate-500 text-sm font-light line-clamp-2">New research into the combination of AI and Blockchain solves the problem of absolute provenance.</p>
                     </div>
                  </motion.div>
 
@@ -248,8 +248,8 @@ export default function Home() {
                     </div>
                     <div className="space-y-3 pt-2">
                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">April 24, 2026</span>
-                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">Blockchain vs Truy xuất truyền thống: Sự khác biệt nằm ở đâu?</h4>
-                       <p className="text-slate-500 text-sm font-light line-clamp-2">Phân tích chuyên sâu về tính bất biến và khả năng chống gian lận của hệ thống phi tập trung.</p>
+                       <h4 className="text-xl font-black text-natural-950 group-hover:text-emerald-500 transition-colors leading-tight">Blockchain vs Traditional Logistics: The Immutable Advantage</h4>
+                       <p className="text-slate-500 text-sm font-light line-clamp-2">In-depth analysis of anti-fraud capabilities and real-time auditing in decentralized systems.</p>
                     </div>
                  </motion.div>
               </div>

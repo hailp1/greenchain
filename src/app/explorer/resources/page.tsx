@@ -21,9 +21,9 @@ export default function TechnicalDocsPage() {
               Technical <span className="text-emerald-600">Architecture</span> & Research Foundation
            </h1>
            <p className="text-lg text-slate-600 max-w-3xl font-light leading-relaxed">
-              fwd LIFEchain is not just a blockchain; it is a specialized research artifact designed to validate the intersection of 
+              Green Chain is not just a blockchain; it is a specialized research artifact designed to validate the intersection of 
               <strong> Signaling Theory</strong>, <strong>Information Asymmetry</strong>, and <strong>Decentralized Trust</strong> 
-              within the global agricultural supply chain.
+              within the global GREcultural supply chain.
            </p>
         </div>
 
@@ -64,8 +64,8 @@ export default function TechnicalDocsPage() {
                  
                  <div className="prose prose-slate max-w-none space-y-6 text-slate-600 leading-relaxed font-light">
                     <p>
-                       The development of fwd LIFEchain is rooted in the <strong>Stimulus-Organism-Response (S-O-R)</strong> model. 
-                       In the context of agricultural transparency, the <strong>Stimulus</strong> consists of blockchain-verified quality signals 
+                       The development of Green Chain is rooted in the <strong>Stimulus-Organism-Response (S-O-R)</strong> model. 
+                       In the context of GREcultural transparency, the <strong>Stimulus</strong> consists of blockchain-verified quality signals 
                        (Origin, Harvest Date, Fertilizer use). The <strong>Organism</strong> represents the internal psychological state of the consumer 
                        (Trust, Perceived Value), and the <strong>Response</strong> is the resulting purchase behavior.
                     </p>
@@ -98,7 +98,7 @@ export default function TechnicalDocsPage() {
                        <h3 className="font-black text-sm uppercase">Consensus Mechanism</h3>
                        <p className="text-xs text-slate-500 leading-relaxed">
                           Utilizing a <strong>Proof of Authority (PoA)</strong> consensus, ensuring high throughput and near-zero 
-                          environmental impact. Validator nodes are hosted by verified research institutions and agricultural cooperatives.
+                          environmental impact. Validator nodes are hosted by verified research institutions and GREcultural cooperatives.
                        </p>
                     </div>
                     <div className="p-6 bg-white border border-slate-200 rounded-2xl space-y-4">
@@ -108,7 +108,7 @@ export default function TechnicalDocsPage() {
                        <h3 className="font-black text-sm uppercase">Cryptographic Integrity</h3>
                        <p className="text-xs text-slate-500 leading-relaxed">
                           All supply chain events are hashed using <strong>KECCAK-256</strong>. Blocks are linked via 
-                          merkle trees, providing immutable proof of provenance for every agricultural unit tracked.
+                          merkle trees, providing immutable proof of provenance for every GREcultural unit tracked.
                        </p>
                     </div>
                  </div>
@@ -150,7 +150,7 @@ export default function TechnicalDocsPage() {
                     <p>
                        We implement a <strong>Hybrid Privacy Model</strong>. While transaction hashes and product identities 
                        are public for verification, sensitive producer data (revenue, exact coordinates) is protected using 
-                       private channels. This balance ensures compliance with global agricultural standards while maintaining 
+                       private channels. This balance ensures compliance with global GREcultural standards while maintaining 
                        the "Trustless" nature of the blockchain.
                     </p>
                  </div>

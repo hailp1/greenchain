@@ -65,7 +65,7 @@ export default function Reputation() {
          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
             {[
               { label: "Top Rated", value: entities.filter(e => e.reputation_score > 90).length + " Farms", icon: Star, color: "text-amber-500" },
-              { label: "Total Staked", value: entities.reduce((acc, curr) => acc + (Number(curr.staked_balance) || 0), 0).toLocaleString() + " AGRI", icon: ShieldCheck, color: "text-emerald-500" },
+              { label: "Total Staked", value: entities.reduce((acc, curr) => acc + (Number(curr.staked_balance) || 0), 0).toLocaleString() + " GRE", icon: ShieldCheck, color: "text-emerald-500" },
               { label: "Network Health", value: "99.9%", icon: TrendingUp, color: "text-blue-500" },
               { label: "Active Nodes", value: (entities.length + 12).toString(), icon: Users, color: "text-purple-500" }
             ].map((stat, i) => (

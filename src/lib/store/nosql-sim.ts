@@ -1,6 +1,6 @@
 /**
  * NoSQL-style Storage Simulation
- * This module provides a simple interface to manage dynamic agricultural product data.
+ * This module provides a simple interface to manage dynamic GREcultural product data.
  */
 
 export interface BlockchainNode {
@@ -88,7 +88,7 @@ class NoSQLSim {
         total_txns: "500,214,882",
         validators: "128 Active",
         nodes_online: "1,024",
-        daily_volume: "45,000 AGRI"
+        daily_volume: "45,000 GRE"
       }
     ],
     latest_blocks: [
@@ -99,17 +99,17 @@ class NoSQLSim {
       { height: 19482155, timestamp: "2d ago", txns: 215, validator: "Node_Gamma_05", reward: "3.5 ETH", size: "2.1 MB" }
     ],
     transactions: [
-      { hash: "0x7d2a8b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a", blockNumber: 19482041, from: "0xFarmer_NH_442", to: "0xAgri_V3", value: "0 ETH", timestamp: "2026-04-10T08:30:00Z", status: "Success", gasUsed: "21,000", gasPrice: "12.5 Gwei", nonce: 142, inputData: "0x48656c6c6f2041677269436861696e" },
-      { hash: "0x3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4", blockNumber: 19482155, from: "0xLab_HCM_881", to: "0xAgri_V3", value: "0 ETH", timestamp: "2026-04-12T14:20:00Z", status: "Success", gasUsed: "45,210", gasPrice: "15.8 Gwei", nonce: 88, inputData: "0x50726f7465696e20436f6e74656e74" },
-      { hash: "0x9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0", blockNumber: 19482289, from: "0xLog_CL_55", to: "0xAgri_V3", value: "0 ETH", timestamp: "2026-04-13T09:00:00Z", status: "Success", gasUsed: "32,840", gasPrice: "10.2 Gwei", nonce: 21, inputData: "0x54656d70657261747572653a203132" },
-      { hash: "0x5e1bd9c4a6f2b8e0d4c6a2f8b0e4d6c8a2f0b4e6d8c0a2f4b6e8d0c2a4f6b8e0", blockNumber: 19482412, from: "0xRetail_Q3_01", to: "0xAgri_V3", value: "0 ETH", timestamp: "2026-04-15T09:00:00Z", status: "Success", gasUsed: "18,900", gasPrice: "12.5 Gwei", nonce: 12, inputData: "0x417272697665642061742053686f77726f6f6d" },
-      { hash: "0x1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2", blockNumber: 19482415, from: "0xOracle_Weather_01", to: "0xAgri_V3", value: "0 ETH", timestamp: "2026-04-15T09:05:00Z", status: "Success", gasUsed: "12,400", gasPrice: "13.2 Gwei", nonce: 5, inputData: "0x576561746865723a20436c656172" }
+      { hash: "0x7d2a8b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a", blockNumber: 19482041, from: "0xFarmer_NH_442", to: "0xGRE_V3", value: "0 ETH", timestamp: "2026-04-10T08:30:00Z", status: "Success", gasUsed: "21,000", gasPrice: "12.5 Gwei", nonce: 142, inputData: "0x48656c6c6f2041677269436861696e" },
+      { hash: "0x3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4", blockNumber: 19482155, from: "0xLab_HCM_881", to: "0xGRE_V3", value: "0 ETH", timestamp: "2026-04-12T14:20:00Z", status: "Success", gasUsed: "45,210", gasPrice: "15.8 Gwei", nonce: 88, inputData: "0x50726f7465696e20436f6e74656e74" },
+      { hash: "0x9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0", blockNumber: 19482289, from: "0xLog_CL_55", to: "0xGRE_V3", value: "0 ETH", timestamp: "2026-04-13T09:00:00Z", status: "Success", gasUsed: "32,840", gasPrice: "10.2 Gwei", nonce: 21, inputData: "0x54656d70657261747572653a203132" },
+      { hash: "0x5e1bd9c4a6f2b8e0d4c6a2f8b0e4d6c8a2f0b4e6d8c0a2f4b6e8d0c2a4f6b8e0", blockNumber: 19482412, from: "0xRetail_Q3_01", to: "0xGRE_V3", value: "0 ETH", timestamp: "2026-04-15T09:00:00Z", status: "Success", gasUsed: "18,900", gasPrice: "12.5 Gwei", nonce: 12, inputData: "0x417272697665642061742053686f77726f6f6d" },
+      { hash: "0x1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2", blockNumber: 19482415, from: "0xOracle_Weather_01", to: "0xGRE_V3", value: "0 ETH", timestamp: "2026-04-15T09:05:00Z", status: "Success", gasUsed: "12,400", gasPrice: "13.2 Gwei", nonce: 5, inputData: "0x576561746865723a20436c656172" }
     ],
     latest_transactions: [
-      { hash: "0x1f2a...f2", timestamp: "5s ago", from: "0xOracle_W", to: "0xAgri_V3", value: "0 ETH", fee: "0.0002 ETH" },
-      { hash: "0x5e1b...e0", timestamp: "1m ago", from: "0xRetail_3", to: "0xAgri_V3", value: "0 ETH", fee: "0.0003 ETH" },
-      { hash: "0x9c0d...c0", timestamp: "1d ago", from: "0xLog_CL", to: "0xAgri_V3", value: "0 ETH", fee: "0.0006 ETH" },
-      { hash: "0x3a4b...a4", timestamp: "2d ago", from: "0xLab_HCM", to: "0xAgri_V3", value: "0 ETH", fee: "0.0008 ETH" }
+      { hash: "0x1f2a...f2", timestamp: "5s ago", from: "0xOracle_W", to: "0xGRE_V3", value: "0 ETH", fee: "0.0002 ETH" },
+      { hash: "0x5e1b...e0", timestamp: "1m ago", from: "0xRetail_3", to: "0xGRE_V3", value: "0 ETH", fee: "0.0003 ETH" },
+      { hash: "0x9c0d...c0", timestamp: "1d ago", from: "0xLog_CL", to: "0xGRE_V3", value: "0 ETH", fee: "0.0006 ETH" },
+      { hash: "0x3a4b...a4", timestamp: "2d ago", from: "0xLab_HCM", to: "0xGRE_V3", value: "0 ETH", fee: "0.0008 ETH" }
     ],
     products: [
       {

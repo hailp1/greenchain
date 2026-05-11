@@ -40,10 +40,10 @@ export default function Verify() {
               <span>Trust Verification Protocol</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-natural-950 tracking-tighter mb-6 italic uppercase">
-              Xác thực <span className="text-emerald-500">Nguồn gốc</span>
+              Provenance <span className="text-emerald-500">Verification</span>
             </h1>
             <p className="text-slate-500 text-sm md:text-lg max-w-2xl mx-auto font-light leading-relaxed">
-              Truy xuất nguồn gốc sản phẩm thông qua mã định danh chuỗi khối (Batch ID) để đảm bảo tính minh bạch và an toàn thực phẩm.
+              Verify the authenticity of products through the Green Chain ledger using a unique Batch ID to ensure transparency and food safety.
             </p>
           </motion.div>
         </header>
@@ -66,7 +66,7 @@ export default function Verify() {
               </div>
               <input 
                 type="text" 
-                placeholder="Nhập mã Batch ID (ví dụ: b8f4...)" 
+                placeholder="Enter Batch ID (e.g. b8f4...)" 
                 className="w-full bg-slate-50 border-none rounded-2xl py-5 pl-16 pr-6 text-sm font-bold text-natural-900 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                 value={batchId}
                 onChange={(e) => setBatchId(e.target.value)}
@@ -83,7 +83,7 @@ export default function Verify() {
               ) : (
                 <>
                   <Search size={18} />
-                  Xác thực ngay
+                  Verify Now
                 </>
               )}
             </button>
@@ -92,11 +92,11 @@ export default function Verify() {
           <div className="mt-6 flex flex-wrap justify-center gap-6">
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-              Bảo mật 256-bit
+              256-bit Encryption
             </div>
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-              Xác thực thời gian thực
+              Real-time Verification
             </div>
             <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
@@ -110,7 +110,7 @@ export default function Verify() {
            {[
              {
                title: "QR Scanning",
-               desc: "Sử dụng camera để quét mã QR in trên bao bì sản phẩm để truy xuất nhanh.",
+               desc: "Use your camera to scan QR codes on product packaging for instant provenance tracking.",
                icon: QrCode,
                color: "text-emerald-500",
                bg: "bg-emerald-50",
@@ -118,14 +118,14 @@ export default function Verify() {
              },
              {
                title: "Global Ledger",
-               desc: "Mọi dữ liệu được lưu trữ trên sổ cái phi tập trung, không thể thay đổi.",
+               desc: "Every data point is recorded on a decentralized, immutable ledger for absolute transparency.",
                icon: Layers,
                color: "text-blue-500",
                bg: "bg-blue-50"
              },
              {
                title: "AI Analysis",
-               desc: "Hệ thống AI đối soát tính nhất quán của dữ liệu từ nông trại đến người dùng.",
+               desc: "Advanced AI models cross-reference data points to ensure consistency from farm to consumer.",
                icon: Sparkles,
                color: "text-amber-500",
                bg: "bg-amber-50"

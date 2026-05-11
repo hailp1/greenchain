@@ -8,7 +8,7 @@ import {
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-const RPC_URL = 'https://rpc.fwdlife.vn';
+const RPC_URL = 'https://rpc.greenchain.vn';
 
 export default function TestFaucet() {
   const [loading, setLoading] = useState(false);
@@ -116,7 +116,7 @@ export default function TestFaucet() {
               </div>
               <div className="space-y-2">
                  <h4 className="text-xs font-black uppercase tracking-widest">PoA Validation</h4>
-                 <p className="text-[11px] text-slate-500 font-medium">Verify that blocks are being minted correctly by the authorized validator set on fwd LIFEchain.</p>
+                 <p className="text-[11px] text-slate-500 font-medium">Verify that blocks are being minted correctly by the authorized validator set on Green Chain.</p>
               </div>
            </div>
            <div className="p-8 bg-white rounded-3xl border border-slate-200 shadow-sm flex items-start gap-6">

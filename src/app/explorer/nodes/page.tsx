@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { ethers } from 'ethers';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { RPC_URL } from '@/lib/contracts/config';
 
 // Pre-defined Authority Nodes (The 3 Real Nodes + Genesis)
 const AUTHORITY_NODES = [
@@ -27,7 +28,7 @@ export default function NodesPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const provider = new ethers.JsonRpcProvider("https://rpc.fwdlife.vn");
+        const provider = new ethers.JsonRpcProvider(RPC_URL);
         
         // 1. Identify Active Miners from last 100 blocks
         let activeMiners = new Set<string>();
@@ -159,7 +160,7 @@ export default function NodesPage() {
            <div className="relative z-10 space-y-4">
               <h3 className="text-lg font-black uppercase italic tracking-widest text-blue-400">Institutional Infrastructure</h3>
               <p className="text-sm text-slate-400 font-medium max-w-2xl leading-relaxed">
-                 The fwd LIFEchain network is powered by a hybrid consensus model. **Authority Nodes** (running on private VPCs) handle block production, while **100+ Dockerized Auditor Clusters** ensure cross-continental data verification for agricultural export standards.
+                 The Green Chain network is powered by a hybrid consensus model. **Authority Nodes** (running on private VPCs) handle block production, while **100+ Dockerized Auditor Clusters** ensure cross-continental data verification for international export standards.
               </p>
            </div>
         </div>
@@ -174,7 +175,7 @@ export default function NodesPage() {
                        <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Identity / Role</th>
                        <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Health Status</th>
                        <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Reputation</th>
-                       <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Staked AGRI</th>
+                       <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Staked GRE</th>
                     </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100">
@@ -222,7 +223,7 @@ export default function NodesPage() {
                              <td className="px-8 py-6 text-right">
                                 <div className="flex flex-col">
                                    <span className="text-sm font-black text-slate-900 italic">{node.staked.toLocaleString()}</span>
-                                   <span className="text-[9px] font-black text-slate-400 uppercase">AGRI</span>
+                                   <span className="text-[9px] font-black text-slate-400 uppercase">GRE</span>
                                 </div>
                              </td>
                           </tr>
@@ -235,7 +236,7 @@ export default function NodesPage() {
 
         <div className="flex items-center gap-2 text-[10px] text-slate-400 font-black uppercase tracking-widest px-6">
            <Database size={14} />
-           Real-time network topology mapping from fwd LIFEchain mainnet nodes
+           Real-time network topology mapping from Green Chain mainnet nodes
         </div>
 
       </main>

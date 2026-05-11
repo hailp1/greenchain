@@ -40,7 +40,7 @@ export default function ValidatorHub({
               {mounted && Number(web3.stakedBalance) >= 500 ? 'ACTIVE NODE' : 'INACTIVE'}
             </p>
           </div>
-          <p className="text-[7px] font-bold text-slate-400 uppercase mt-2">{mounted && Number(web3.stakedBalance) >= 500 ? 'Syncing with fwd LIFEchain...' : 'Requires 500 AGRI minimum'}</p>
+          <p className="text-[7px] font-bold text-slate-400 uppercase mt-2">{mounted && Number(web3.stakedBalance) >= 500 ? 'Syncing with Green Chain...' : 'Requires 500 GRE minimum'}</p>
         </div>
         <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Voting Power</p>
@@ -54,7 +54,7 @@ export default function ValidatorHub({
         <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-900/5">
           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rewards (APR 12%)</p>
           <p className="text-xl md:text-2xl font-black text-emerald-500">
-            +{mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(4) : '0.0000'} <span className="text-xs opacity-50">AGRI</span>
+            +{mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(4) : '0.0000'} <span className="text-xs opacity-50">GRE</span>
           </p>
           <p className="text-[7px] font-bold text-emerald-600 uppercase mt-2">Next payout in ~12 sec</p>
         </div>
@@ -111,7 +111,7 @@ export default function ValidatorHub({
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Available to Claim</p>
               <p className="text-4xl font-black text-natural-950">
                 {mounted && web3.isConnected ? Number(web3.pendingRewards).toFixed(2) : '0.00'} 
-                <span className="text-xs text-slate-400 ml-1">AGRI</span>
+                <span className="text-xs text-slate-400 ml-1">GRE</span>
               </p>
             </div>
           </div>

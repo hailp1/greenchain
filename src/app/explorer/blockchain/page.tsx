@@ -20,7 +20,7 @@ export default function BlockchainPage() {
             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
                <Globe size={18} />
             </div>
-            <span className="font-black tracking-tighter text-xl">AgriChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
+            <span className="font-black tracking-tighter text-xl">GREChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-[11px] font-bold uppercase tracking-widest text-slate-400">
              <Link href="/explorer" className="hover:text-white transition-colors">Home</Link>
@@ -33,7 +33,7 @@ export default function BlockchainPage() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="mb-12">
            <h1 className="text-4xl font-black tracking-tighter mb-4">Blockchain Overview</h1>
-           <p className="text-slate-500 max-w-2xl leading-relaxed font-light">Báo cáo tình trạng sức khỏe và các thông số vận hành thực tế của mạng lưới AgriChain Core.</p>
+           <p className="text-slate-500 max-w-2xl leading-relaxed font-light">Báo cáo tình trạng sức khỏe và các thông số vận hành thực tế của mạng lưới GREChain Core.</p>
         </div>
 
         {/* Real-time Health Cards */}

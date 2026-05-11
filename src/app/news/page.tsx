@@ -45,7 +45,7 @@ export default function NewsIndexPage() {
     {
       id: "blockchain-vs-traditional",
       title: "Blockchain vs Truy xuất truyền thống: Sự khác biệt nằm ở đâu?",
-      excerpt: "Phân tích kỹ thuật chuyên sâu về kiến trúc dữ liệu phi tập trung, tính bất biến và khả năng chống gian lận của fwd LIFEchain so với các giải pháp tập trung cũ...",
+      excerpt: "Phân tích kỹ thuật chuyên sâu về kiến trúc dữ liệu phi tập trung, tính bất biến và khả năng chống gian lận của Green Chain so với các giải pháp tập trung cũ...",
       date: "24/04/2026",
       author: "Team fwd LIFE",
       category: "Technical",
@@ -72,7 +72,7 @@ export default function NewsIndexPage() {
               </h1>
            </div>
            <p className="text-slate-400 max-w-md text-sm font-light leading-relaxed border-l border-slate-200 pl-8">
-              Nơi hội tụ những báo cáo chiến lược, nghiên cứu học thuật và cập nhật công nghệ mới nhất về hệ sinh thái fwd LIFEchain.
+              Nơi hội tụ những báo cáo chiến lược, nghiên cứu học thuật và cập nhật công nghệ mới nhất về hệ sinh thái Green Chain.
            </p>
         </div>
 

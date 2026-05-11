@@ -14,7 +14,7 @@ export default function NetworkPage() {
     tps: "45.2",
     nodes: "1,420",
     blockTime: "12.2s",
-    totalStaked: "42.5M AGRI",
+    totalStaked: "42.5M GRE",
     uptime: "99.99%",
     marketCap: "$298.4B"
   });
@@ -28,7 +28,7 @@ export default function NetworkPage() {
             <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:rotate-12 transition-transform">
                <Globe size={18} />
             </div>
-            <span className="font-black tracking-tighter text-xl">AgriChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
+            <span className="font-black tracking-tighter text-xl">GREChain<span className="text-emerald-500 text-xs ml-1 uppercase tracking-widest">Explorer</span></span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6 text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -65,7 +65,7 @@ export default function NetworkPage() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-12">
         <div className="mb-12">
            <h1 className="text-4xl font-black tracking-tighter mb-4 uppercase italic">Network <span className="text-emerald-500">Analytics</span></h1>
-           <p className="text-slate-500 text-sm max-w-2xl">Dữ liệu thời gian thực về sức khỏe và hiệu năng của mạng lưới AgriChain Core V3 Mainnet.</p>
+           <p className="text-slate-500 text-sm max-w-2xl">Dữ liệu thời gian thực về sức khỏe và hiệu năng của mạng lưới GREChain Core V3 Mainnet.</p>
         </div>
 
         {/* Real-time Stats Grid */}
@@ -92,7 +92,7 @@ export default function NetworkPage() {
            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                  <h2 className="text-3xl font-black text-white tracking-tighter mb-6 uppercase italic">Node Distribution</h2>
-                 <p className="text-slate-400 mb-8 leading-relaxed">Mạng lưới AgriChain được phân bổ chiến lược tại các trung tâm nông nghiệp và logistics toàn cầu, đảm bảo độ trễ thấp và tính sẵn sàng cao.</p>
+                 <p className="text-slate-400 mb-8 leading-relaxed">Mạng lưới GREChain được phân bổ chiến lược tại các trung tâm nông nghiệp và logistics toàn cầu, đảm bảo độ trễ thấp và tính sẵn sàng cao.</p>
                  <div className="space-y-4">
                     {[
                       { region: "Vietnam (South)", count: 420, percent: 30 },
@@ -133,7 +133,7 @@ export default function NetworkPage() {
               <span className="text-[10px] font-mono font-bold text-emerald-500 animate-pulse">● Connected to Node #VN-01</span>
            </div>
            <div className="p-8 font-mono text-[11px] space-y-3 max-h-[300px] overflow-y-auto bg-slate-900 text-emerald-400/80">
-              <p>[08:42:01] New block minted: #19482415 (Validator: AgriNode_VN_01)</p>
+              <p>[08:42:01] New block minted: #19482415 (Validator: GRENode_VN_01)</p>
               <p>[08:42:05] Consensus reached for transaction 0x5e1b...b8e0 (128 confirmations)</p>
               <p>[08:42:08] Node sync completed: Ninh_Hoà_Safe (Height: 19482415)</p>
               <p className="text-white/40">[08:42:12] Heartbeat sent to all validator nodes...</p>

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-const RPC_URL = 'https://rpc.fwdlife.vn';
+const RPC_URL = 'https://rpc.greenchain.vn';
 const rpcProvider = new ethers.JsonRpcProvider(RPC_URL, undefined, { staticNetwork: true });
 
 function shortAddr(addr: string): string {
@@ -207,7 +207,7 @@ export default function TransactionsPage() {
                   </div>
                   <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none">Global <span className="text-blue-500">Activity</span></h1>
                   <p className="text-slate-400 text-sm md:text-base font-medium max-w-xl italic">
-                     Monitoring agricultural value transfer and token velocity across fwd LIFEchain.
+                     Monitoring GREcultural value transfer and token velocity across Green Chain.
                   </p>
                </div>
                
@@ -279,7 +279,7 @@ export default function TransactionsPage() {
                         <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Method</th>
                         <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Age</th>
                         <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">From / To</th>
-                        <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Value (AGRI)</th>
+                        <th className="px-8 py-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Value (GRE)</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -331,7 +331,7 @@ export default function TransactionsPage() {
                              <td className="px-8 py-6 text-right">
                                 <div className="flex flex-col">
                                    <span className="text-sm font-black text-slate-900 italic">{Number(tx.value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">AGRI</span>
+                                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">GRE</span>
                                 </div>
                              </td>
                           </tr>

@@ -34,7 +34,7 @@ export default function CookiePage() {
                 Cookies là gì?
               </h2>
               <p>
-                Cookies là các tệp văn bản nhỏ được lưu trữ trên thiết bị của bạn khi bạn truy cập fwd LIFEchain. Chúng giúp hệ thống ghi nhớ trạng thái đăng nhập và các tùy chỉnh giao diện để cung cấp trải nghiệm mượt mà hơn.
+                Cookies là các tệp văn bản nhỏ được lưu trữ trên thiết bị của bạn khi bạn truy cập Green Chain. Chúng giúp hệ thống ghi nhớ trạng thái đăng nhập và các tùy chỉnh giao diện để cung cấp trải nghiệm mượt mà hơn.
               </p>
             </section>
 

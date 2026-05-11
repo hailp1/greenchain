@@ -23,7 +23,7 @@ export default function SupplyChain({
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto space-y-12">
       <div className="text-center space-y-4">
         <h2 className="text-4xl md:text-6xl font-black tracking-tighter italic uppercase">Supply Chain <span className="text-emerald-500">Ops</span></h2>
-        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Blockchain Ledger for Agricultural Verification</p>
+        <p className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Blockchain Ledger for GREcultural Verification</p>
       </div>
 
       <div className="bg-white p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-10">
